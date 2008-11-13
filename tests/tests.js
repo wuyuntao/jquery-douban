@@ -17,6 +17,17 @@ test("test factory method", function() {
 module("HTTP Testcases");
 
 test("test factory method", function() {
+    var request = $.douban.http.factory();
+    equals(request.name, 'jquery', "initialize gears http request handler ok");
+    ok(request.get, "GET method ok");
+
+    var request2 = $.douban.http.factory({ type: 'greasemonkey' });
+    equals(request2.name, 'greasemonkey', "initialize gears http request handler ok");
+    ok(request2.post, "POST method ok");
 });
 
-
+test("test jquery http methods", function() {
+    var request = $.douban.http.factory({ type: 'jquery' });
+    var json = request.get('http://api.douban.com/book/subject/2023013?alt=json');
+    equals(json, '');
+});

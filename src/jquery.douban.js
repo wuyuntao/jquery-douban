@@ -46,67 +46,45 @@ function DoubanService(options) {
     this.apiSecret = this.options.apiSecret;
 }
 
+/* Three built-in HTTP request handlers, 'jquery', 'greasemonkey' and 'gears'
+ */
+var jqueryHandler = {
+    name: 'jquery',
+    request: function(options) {
+        throw new Error("Not Implemented Yet");
+    }
+};
+
+var greasemonkeyHandler = {
+    name: 'greasemonkey',
+    request: function(options) {
+        throw new Error("Not Implemented Yet");
+    }
+};
+
+var gearsHandler = {
+    name: 'gears',
+    request: function(options) {
+        throw new Error("Not Implemented Yet");
+    }
+};
+
+/* HTTP module for douban
+ * @usage
+ * // Use Gears HTTP Request API as handler
+ * var request = $.douban.http.factory({ type: 'gears' });
+ * var json = request.get({ url: url, params: params });
+ *
+ * // Register new request handler
+ * $.douban.http.register('air', AirHttpRequestHandler });
+ * var request = $.douban.http.factory({ type: 'air' });
+ * var json = request.post({ url: url, data: data });
+ *
+ * // Unregister request handler
+ * $.douban.unregister('air');
+ *
+ */
 $.douban.http = {
-    /* GET method
-     * @returns     JSON
-     * @param       url String
-     * @param       params String or Dict
-     */
-    get: function(url, params) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    /* POST method
-     * @returns     JSON
-     * @param       url String
-     * @param       data String
-     */
-    post: function(url, data) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    /* PUT method
-     * @returns     JSON
-     * @param       url String
-     * @param       data String
-     */
-    put: function(url, data) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    /* POST method
-     * @returns     JSON
-     * @param       url String
-     */
-    delete: function(url) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    /* Handler should be initialized by ``factory`` */
-    handler: function() { return; },
-
-    /* A dict of HTTP request name and its constructor,
-     */
-    handlerDict: {
-        // 'jquery': jQueryHttpRequestHandler,
-        // 'greasemonkey': GreaseMonkeyHttpRequestHandler,
-        // 'gears': GearsHttpRequestHandler
-    },
-
-    /* Register new HTTP request handler to ``handlerDict``
-     */
-    register: function(name, constructor) {
-        if ($.isFunction(constructor)) {
-            this.handlerDict[name] = constructor;
-        }
-    },
-
-    /* Unregister an existed HTTP request handler
-     */
-    unregister: function(name) {
-        this.handlerDict[name] = undefined;
-    },
-
     /* Default options */
     options: {
         type: 'jquery',
@@ -118,17 +96,92 @@ $.douban.http = {
      * In addition, you can register other handlers either
      * by passing arguments ``httpType`` and ``httpHandler`` to the factory
      * method
-     * TODO
-     * @usage ...
      */
     factory: function(options) {
         var options = $.extend(this.options, options || {});
-        if (this.handlerDict[options.type]) {
-            var constructor = this.handlerDict[options.type];
-            return new constructor();
-        } 
-    }
+        if (typeof this.handlers[options.type] == 'undefined') {
+            if ($.isFunction(options.handler)) {
+                this.register(options.type, options.handler);
+            } else {
+                throw new Error("Invalid HTTP request handler");
+            }
+        }
+        var handler = this.handlers[options.type];
+        return $.extend(this.baseHandler, handler);
+    },
 
+    /* A dict of HTTP request name and its constructor,
+     */
+    handlers: {
+        jquery: jqueryHandler,
+        greasemonkey: greasemonkeyHandler,
+        gears: gearsHandler
+    },
+
+    /* Register new HTTP request handler to ``handlers``
+     */
+    register: function(name, constructor) {
+        if ($.isFunction(constructor)) {
+            this.handlers[name] = constructor;
+        }
+    },
+
+    /* Unregister an existed HTTP request handler
+     */
+    unregister: function(name) {
+        this.handlers[name] = undefined;
+    },
+
+    /* Prototype of HTTP request handler which other handlers should be 
+     * extended from
+     */
+    baseHandler: {
+        /* Name of the handler */
+        name: null,
+
+        /* GET method
+         * @returns     JSON
+         * @param       url String
+         * @param       params String or Dict
+         */
+        get: function(url, params) {
+            throw new Error("Not Implemented Yet");
+        },
+
+        /* POST method
+         * @returns     JSON
+         * @param       url String
+         * @param       data String
+         */
+        post: function(url, data) {
+            throw new Error("Not Implemented Yet");
+        },
+
+        /* PUT method
+         * @returns     JSON
+         * @param       url String
+         * @param       data String
+         */
+        put: function(url, data) {
+            throw new Error("Not Implemented Yet");
+        },
+
+        /* POST method
+         * @returns     JSON
+         * @param       url String
+         */
+        delete: function(url) {
+            throw new Error("Not Implemented Yet");
+        },
+
+        /* Request method which methods above are adapted
+         * @returns     JSON
+         * @param       options Dict
+         */
+        request: function(options) {
+            throw new Error("Not Implemented Yet");
+        }
+    }
 };
 
 })(jQuery);
