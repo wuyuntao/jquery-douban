@@ -1,0 +1,36 @@
+module("Basic Testcases");
+
+test("test factory method", function() {
+    var result = $.douban('somefactory', { id: 1 });
+    equals(result, false, "if factory does not exist, returns");
+
+    $.douban.service = {
+        factory: function(options) { return 'created'; }
+    };
+    var result = $.douban('service', { id: 2 });
+    equals(result, 'created', "if factory exists, returns");
+});
+
+module("HTTP Testcases");
+
+test("test register and unregister http request method", function() {
+    function SomeHttpRequestHandler() {
+        return true
+    }
+    $.douban.http.register('somehttp', SomeHttpRequestHandler);
+    equals($.douban.http.registry.somehttp, SomeHttpRequestHandler, "registered");
+    $.douban.http.unregister('somehttp');
+    equals($.douban.http.registry.somehttp, undefined, "unregistered");
+});
+
+test("test jquery http request method", function() {
+    return;
+});
+
+test("test greasemonkey http request method", function() {
+    return;
+});
+
+test("test gears http request method", function() {
+    return;
+});
