@@ -13,3 +13,10 @@ test("test factory method", function() {
     equals(service2.apiSecret, '4', "api secret expected to be 4");
     equals(service2.options.httpType, 'gears', "http type expected to be \"gears\"");
 });
+
+module("HTTP Testcases");
+
+test("test factory method", function() {
+});
+
+
