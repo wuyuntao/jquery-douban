@@ -9,7 +9,6 @@
 
 /* Factory method of Douban Service
  * @returns     Douban service object
- * @param       factory String
  * @param       options Dict
  * @usage
  * var service = $.douban({ apiKey: 'blahblah', apiSecret: 'blahblah' });
@@ -18,13 +17,8 @@
  *     var id = service.miniblog.add("发送一条广播");
  * }
  */
-$.douban = function(factory, options) {
-    // if ``factory`` argument was ommited, default is 'service'
-    if (!!factory && typeof factory == 'object') {
-        options = factory;
-        factory = 'service';
-    }
-    return new $.douban[factory].factory(options);
+$.douban = function(options) {
+    return new $.douban.service.factory(options);
 };
 
 $.douban.service = {
@@ -89,7 +83,35 @@ $.douban.http = {
     },
 
     /* Handler should be initialized by ``factory`` */
-    _handler: function() { return; },
+    handler: function() { return; },
+
+    /* A dict of HTTP request name and its constructor,
+     */
+    handlerDict: {
+        // 'jquery': jQueryHttpRequestHandler,
+        // 'greasemonkey': GreaseMonkeyHttpRequestHandler,
+        // 'gears': GearsHttpRequestHandler
+    },
+
+    /* Register new HTTP request handler to ``handlerDict``
+     */
+    register: function(name, constructor) {
+        if ($.isFunction(constructor)) {
+            this.handlerDict[name] = constructor;
+        }
+    },
+
+    /* Unregister an existed HTTP request handler
+     */
+    unregister: function(name) {
+        this.handlerDict[name] = undefined;
+    },
+
+    /* Default options */
+    options: {
+        type: 'jquery',
+        handler: null
+    },
 
     /* Create HTTP request handler by the given type
      * including 'jquery', 'greasemonkey' and 'gears'
@@ -100,7 +122,12 @@ $.douban.http = {
      * @usage ...
      */
     factory: function(options) {
-    },
+        var options = $.extend(this.options, options || {});
+        if (this.handlerDict[options.type]) {
+            var constructor = this.handlerDict[options.type];
+            return new constructor();
+        } 
+    }
 
 };
 
