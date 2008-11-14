@@ -18,11 +18,13 @@
  * }
  */
 $.douban = function(options) {
-    return new $.douban.service.factory(options);
+    return $.douban.service.factory(options);
 };
 
 $.douban.service = {
-    factory: DoubanService
+    factory: function(options) {
+        return new DoubanService(options);
+    }
 };
 
 /* Douban service class
@@ -40,7 +42,7 @@ function DoubanService(options) {
         apiSecret: '',
         httpType: 'jquery',
         httpHandler: null
-    }
+    };
     this.options = $.extend(defaults, options || {});;
     this.apiKey = this.options.apiKey;
     this.apiSecret = this.options.apiSecret;
@@ -759,5 +761,204 @@ OAuth.SignatureMethod.registerMethodClass(["HMAC-SHA1", "HMAC-SHA1-Accessor"],
             return signature;
         }
     ));
+
+/* Factory method of OAuth Client
+ * @returns     OAuth client object
+ * @param       options Dict
+ * @usage
+ * var client = $.client.factory({ apiKey: 'blah', apiSecret: 'blah' });
+ * var requestToken = client.getRequestToken();
+ * var url = client.getAuthorizationUrl(requestToken);
+ * var accessToken = client.getAccessToken(requestToken);
+ * var login = client.login(accessToken);
+ */
+$.douban.client = {
+    factory: function(options) {
+        return new OAuthClient(options);
+    }
+};
+
+/* Douban authentication URLs
+ */
+const AUTH_HOST = 'http://www.douban.com';
+const REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token';
+const AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize';
+const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
+
+/* OAuth Client - A light wrapper of OAuth client for DoubanFox
+ */
+function OAuthClient(options) {
+    /* Default options */
+    var defaults = {
+        apiKey: '',
+        apiSecret: '',
+        httpType: 'jquery',
+        httpHandler: null
+    };
+    this.options = $.extend(defaults, options || {});;
+    this.apiKey = this.options.apiKey;
+    this.apiSecret = this.options.apiSecret;
+    this.http = $.douban.http.factory({ type: this.options.httpType, handler: this.options.httpHandler });
+
+    this.userId = null;
+}
+$.extend(OAuthClient.prototype, {
+    /* Get request token
+     * @returns         token object, e.g. { key: 'blah', secret: 'blah' }
+     * @documentation
+     * 通过访问以下 URL 获取未授权的 Request Token
+     * http://www.douban.com/service/auth/request_token
+     *
+     * 该请求需要包含如下参数
+     * oauth_consumer_key       API Key
+     * oauth_signature_method  	签名方法，豆瓣支持OAuth中定义的HMAC-SHA1,
+     *                          RSA-SHA1和PLAINTEXT三种签名方式
+     * oauth_signature  	    签名值
+     * oauth_timestamp  	    时间戳，用格林威治时间1970年1月1日0时0分0秒起
+     *                          的秒数表示，下同
+     * oauth_nonce  	        单次值，一个随机字符串，用于防止重放攻击，下同
+     *
+     * 返回值包括未授权的Request Token和对应的Request Token Secret，例如
+     * oauth_token=ab3cd9j4ks73hf7g&oauth_token_secret=xyz4992k83j47x0b
+     */ 
+    getRequestToken: function() {
+        var token = this.oauthRequest(REQUEST_TOKEN_URL , 'GET');
+        // If get response successfully
+        if (token[0]) {
+            token = $.unparam(token[1]);
+            this.tokenKey = token.oauth_token;
+            this.tokenSecret = token.oauth_token_secret;
+        } else {
+            // Error handling
+            return false;
+        }
+        return token;
+    },
+
+    /* Get authorization URL
+     */
+    getAuthorizationURL: function(requestKey, requestSecret, callback) {
+        var params = $.param({
+            oauth_token: requestKey, oauth_callback: typeof callback == 'string' ? callback : ''
+        });
+        var url = AUTHORIZATION_URL + '?' + params;
+        return url;
+    },
+
+    /* Get access token
+     */
+    getAccessToken: function(requestKey, requestSecret) {
+        var token = this.oauthRequest(ACCESS_TOKEN_URL , 'GET', {
+            oauth_token: requestKey
+        });
+        if (token[0]) {
+            token = $.unparam(token[1]);
+            this.tokenKey = token.oauth_token;
+            this.tokenSecret = token.oauth_token_secret;
+            this.userId = token.douban_user_id;
+        } else {
+            // Error handling
+            return false;
+        }
+        return token;
+    },
+
+    /* Login to Douban
+     */
+    login: function(accessKey, accessSecret, userId) {
+        var client = this;
+
+        if (accessKey && accessSecret) {
+            client.tokenKey = accessKey;
+            client.tokenSecret = accessSecret;
+            client.userId = userId;
+            return true;
+        }
+
+        // Get unauthorized request token
+        client.getRequestToken();
+        if (!client.tokenKey) {
+            alert('Failed to get request token');
+            return false;
+        }
+        // Get authorization URL
+        var authURL = client.getAuthorizationURL(client.tokenKey, client.tokenSecret);
+        if (window.confirm('Ready to authorize your Douban accout?')) {
+            $.DoubanFox.openURL(authURL);
+        }
+
+        // Wait for user 30 seconds to authorize the Douban account
+        window.setTimeout(function() {
+            // Get access token
+            var accessToken = client.getAccessToken(client.tokenKey, client.tokenSecret);
+            if (client.accessKey == accessToken[0]) {
+                return client.login(client.accessKey, client.accessSecret, client.userId);
+            } else {
+                alert('Failed to get access token');
+                return false;
+            }
+        }, 30000);
+    },
+
+    /* Get an OAuth message represented as an object like this:
+     * { method: "GET", action: "http://server.com/path", parameters: ... }
+     * Look into oauth.js for details
+     */
+    getMessage: function(url, method, parameters) {
+        var accessor = { consumerSecret: this.apiSecret, tokenSecret: this.tokenSecret };
+        var parameters = $.extend({
+            oauth_consumer_key: this.apiKey,
+            oauth_signature_method: 'HMAC-SHA1',
+        }, parameters || {});
+        var message = {
+            action: url,
+            method: method || 'GET',
+            parameters: parameters
+        };
+        OAuth.setTimestampAndNonce(message);
+        OAuth.SignatureMethod.sign(message, accessor);
+        return message;
+    },
+
+    /* Get Oauth paramters
+     * @param url       URL string 
+     * @param type      'GET' or 'POST'
+     * @param data      Parameter object
+     *
+     * @return          Parameter object
+     */
+    getParameters: function(url, method, parameters) {
+        var message = this.getMessage(url, method, parameters);
+        return OAuth.getParameterMap(message.parameters);
+    },
+
+    getAuthHeader: function(url, method, parameters) {
+        var params = this.getParameters(url, method, parameters);
+        var header = 'OAuth realm=""';
+        for (var key in params) {
+            header += ', ' + key + '="' + params[key] + '"';
+        }
+        return header;
+    },
+
+    /* OAuth Request
+     * @param url       URL string 
+     * @param type      'GET' or 'POST'
+     * @param data      Parameter object
+     *
+     * @return          [success, data|error]
+     */
+    oauthRequest: function(url, type, data, dataType) {
+        var message = this.getMessage(url, type, data);
+        var response = null;
+        $.ajax({
+            async: false, url: url, type: type, dataType: dataType || "text",
+            data: OAuth.getParameterMap(message.parameters), 
+            error: function(xhr, text, error) { response = [false, error]; },
+            success: function(data) { response = [true, data]; }
+        });
+        return response;
+    }
+});
 
 })(jQuery);

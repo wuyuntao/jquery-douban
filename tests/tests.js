@@ -36,9 +36,9 @@ module("OAuth Client Testcases");
 
 test("test factory method", function() {
     var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
-    equals(service.apiKey, '1', "api key expected to be 1");
-    equals(service.apiSecret, '2', "api secret expected to be 2");
-    equals(service.options.httpType, 'jquery', "http type expected to be \"jquery\"");
+    equals(client.apiKey, '1', "api key expected to be 1");
+    equals(client.apiSecret, '2', "api secret expected to be 2");
+    equals(client.http.name, 'jquery', "http type expected to be \"jquery\"");
 });
 
 test("test authorization steps", function() {
