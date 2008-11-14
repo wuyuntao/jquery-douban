@@ -762,6 +762,23 @@ OAuth.SignatureMethod.registerMethodClass(["HMAC-SHA1", "HMAC-SHA1-Accessor"],
         }
     ));
 
+// Some extension of jQuery
+$.extend({
+    /* The opposiite of jQuery's native $.param() method.
+     * Deserialises a parameter string to an object:
+     */
+    unparam: function(params) {
+        var obj = new Object();
+        $.each(params.split('&'), function() {
+            var param = this.split('=');
+            var key = decodeURIComponent(param[0]);
+            var value = decodeURIComponent(param[1]);
+            obj[key] = value;
+        });
+        return obj;
+    }
+});
+
 /* Factory method of OAuth Client
  * @returns     OAuth client object
  * @param       options Dict

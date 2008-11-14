@@ -1,3 +1,4 @@
+
 module("Basic Testcases");
 
 test("test factory method", function() {
@@ -42,7 +43,10 @@ test("test factory method", function() {
 });
 
 test("test authorization steps", function() {
-    var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
+    // Privileges are granted only in the scope of the requesting function.
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+
+    var client = $.douban.client.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     var requestToken = client.getRequestToken();
     equals(requestToken.key, '3', "get request key");
     equals(requestToken.secret, '4', "get request secret");
@@ -60,6 +64,9 @@ test("test authorization steps", function() {
 });
 
 test("test programmatic login", function() {
+    // Privileges are granted only in the scope of the requesting function.
+    // netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+
     var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
     // TODO ...
 });
