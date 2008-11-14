@@ -31,3 +31,35 @@ test("test jquery http methods", function() {
     var json = request.get('http://api.douban.com/book/subject/2023013?alt=json');
     equals(json, '');
 });
+
+module("OAuth Client Testcases");
+
+test("test factory method", function() {
+    var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
+    equals(service.apiKey, '1', "api key expected to be 1");
+    equals(service.apiSecret, '2', "api secret expected to be 2");
+    equals(service.options.httpType, 'jquery', "http type expected to be \"jquery\"");
+});
+
+test("test authorization steps", function() {
+    var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
+    var requestToken = client.getRequestToken();
+    equals(requestToken.key, '3', "get request key");
+    equals(requestToken.secret, '4', "get request secret");
+
+    var url = client.getAuthorizationUrl(requestToken);
+    equals(url, 'http://www.douban.com/auth/revoke?blahblah', "get authorization url");
+
+    var accessToken = client.getAccessToken(requestToken);
+    equals(accessToken.key, '5', "get access key");
+    equals(accessToken.secret, '6', "get access secret");
+
+    var login = client.login(accessToken);
+    ok(login, "access is authenticated");
+    ok(client.isAuthenticated(), "access is authenticated");
+});
+
+test("test programmatic login", function() {
+    var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
+    // TODO ...
+});
