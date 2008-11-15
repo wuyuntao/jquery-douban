@@ -7,14 +7,14 @@
  *
  */
 
-/* Douban authentication URLs
- */
+// {{{ Douban authentication and API URLs
 const AUTH_HOST = 'http://www.douban.com';
 const REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token';
 const AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize';
 const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
+// }}}
 
-/* Factory method of Douban Service
+/* {{{ Factory method of jQuery Douban
  * @returns     Douban service object
  * @param       options Dict
  * @usage
@@ -24,37 +24,52 @@ const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
  *     var id = service.miniblog.add("发送一条广播");
  * }
  */
-$.douban = function(options) {
-    return $.douban.service.factory(options);
+$.douban = function(factory, options) {
+    if (typeof factory != 'string') {
+        options = factory;
+        factory = 'service';
+    }
+    if (typeof $.douban[factory] != 'undefined') {
+        return $.douban[factory].factory(options);
+    } else {
+        return false;
+    }
 };
+// }}}
 
+/* {{{ Factory method of Douban Service
+ * @returns     Douban service object
+ * @param       options Dict
+ * @usage
+ * var service = $.douban.service.factory({ apiKey: 'blah', apiSecret: 'blah' });
+ * var id = service.miniblog.add("发送广播");
+ * service.miniblog.delete(id);
+ */
 $.douban.service = {
     factory: function(options) {
         return new DoubanService(options);
     }
 };
+// }}}
 
-/* Douban service class
- * @returns     null
+/* {{{ Factory method of OAuth Client
+ * @returns     OAuth client object
  * @param       options Dict
- * @option      apiKey String
- * @option      apiSecret String
- * @option      httpType String
- * @option      httpHandler String
+ * @usage
+ * var client = $.douban.client.factory({ apiKey: 'blah', apiSecret: 'blah' });
+ * var requestToken = client.getRequestToken();
+ * var url = client.getAuthorizationUrl(requestToken);
+ * var accessToken = client.getAccessToken(requestToken);
+ * var login = client.login(accessToken);
  */
-function DoubanService(options) {
-    /* Default options */
-    var defaults = {
-        apiKey: '',
-        apiSecret: '',
-        httpType: 'jquery',
-        httpHandler: null
-    };
-    this.options = $.extend(defaults, options || {});;
-    this.api = new Token(this.options.apiKey, this.options.apiSecret);
-}
+$.douban.client = {
+    factory: function(options) {
+        return new OAuthClient(options);
+    }
+};
+// }}}
 
-/* Three built-in HTTP request handlers, 'jquery', 'greasemonkey' and 'gears'
+/* {{{ Built-in HTTP request handlers, 'jquery', 'greasemonkey' and 'gears'
  */
 var jqueryHandler = {
     name: 'jquery',
@@ -76,8 +91,9 @@ var gearsHandler = {
         throw new Error("Not Implemented Yet");
     }
 };
+// }}}
 
-/* HTTP module for douban
+/* {{{ Factory method of HTTP request handlers
  * @usage
  * // Use Gears HTTP Request API as handler
  * var request = $.douban.http.factory({ type: 'gears' });
@@ -203,6 +219,7 @@ $.douban.http = {
         }
     }
 };
+// }}}
 
 /* {{{ sha1.js
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
@@ -782,7 +799,7 @@ OAuth.SignatureMethod.registerMethodClass(["HMAC-SHA1", "HMAC-SHA1-Accessor"],
     ));
 /* }}} */
 
-/* Some extensions of jQuery
+/* {{{ Some utilities
  */
 $.extend({
     /* The opposiite of jQuery's native $.param() method.
@@ -799,24 +816,167 @@ $.extend({
         return obj;
     }
 });
+// }}}
 
-/* Factory method of OAuth Client
- * @returns     OAuth client object
+/* {{{ Douban service
+ * @returns     null
  * @param       options Dict
- * @usage
- * var client = $.client.factory({ apiKey: 'blah', apiSecret: 'blah' });
- * var requestToken = client.getRequestToken();
- * var url = client.getAuthorizationUrl(requestToken);
- * var accessToken = client.getAccessToken(requestToken);
- * var login = client.login(accessToken);
+ * @option      apiKey String
+ * @option      apiSecret String
+ * @option      httpType String
+ * @option      httpHandler String
  */
-$.douban.client = {
-    factory: function(options) {
-        return new OAuthClient(options);
-    }
-};
+function DoubanService(options) {
+    /* Default options */
+    var defaults = {
+        apiKey: '',
+        apiSecret: '',
+        httpType: 'jquery',
+        httpHandler: null
+    };
+    this.options = $.extend(defaults, options || {});;
+    this.api = new Token(this.options.apiKey, this.options.apiSecret);
+    this.http = $.douban.http.factory({ type: this.options.httpType,
+                                        handler: this.options.httpHandler });
+    this.client = $.douban.client.factory({ apiKey: this.api.key,
+                                            apiSecret: this.api.secret,
+                                            type: this.options.httpType,
+                                            handler: this.options.httpHandler });
+}
+$.extend(DoubanService.prototype, {
+    login: function(accessToken) {
+        return this.client.login(accessToken);
+    },
 
-/* OAuth Client - A light wrapper of OAuth client for DoubanFox
+    /* Douban User API
+     * @method      get             获取用户信息
+     * @method      search          获取当前授权用户信息
+     * @method      current         搜索用户
+     * @method      friend          获取用户朋友
+     * @method      contact         获取用户关注的人
+     */
+    user: {
+        get: function(name) {
+            throw new Error("Not Implemented Yet");
+        },
+
+        search: function(name) {
+            throw new Error("Not Implemented Yet");
+        },
+
+        current: function() {
+            throw new Error("Not Implemented Yet");
+        },
+
+        friend: function(user) {
+            throw new Error("Not Implemented Yet");
+        },
+
+        contact: function(user) {
+            throw new Error("Not Implemented Yet");
+        }
+    },
+
+    /* Douban Subject API
+     * @method      book            获取书籍信息
+     * @method      movie           获取电影信息
+     * @method      music           获取音乐信息
+     * @method      search          搜索书籍、电影、音乐
+     */
+    subject: {
+        book: function(id) {
+            throw new Error("Not Implemented Yet");
+        },
+
+        movie: function(id) {
+            throw new Error("Not Implemented Yet");
+        },
+
+        music: function(id) {
+            throw new Error("Not Implemented Yet");
+        },
+
+        search: function(name) {
+            throw new Error("Not Implemented Yet");
+        }
+    },
+
+    /* Douban Review API
+     * @method      get             获取评论信息
+     * @method      user            特定用户的所有评论
+     * @method      subject         特定书籍、电影、音乐的所有评论
+     * @method      add             发布新评论
+     * @method      update          修改评论
+     * @method      delete          删除评论
+     */
+    review: {
+    },
+
+    /* Douban Collection API
+     * @method      get             获取收藏信息
+     * @method      user            获取用户收藏信息
+     * @method      add             添加收藏
+     * @method      update          更新收藏信息
+     * @method      delete          删除收藏
+     */
+    collection: {
+    },
+
+    /* Douban Miniblog API
+     * @method      get             获取用户广播
+     * @method      contact         获取用户友邻广播
+     * @method      add             添加广播
+     * @method      delete          删除广播
+     */
+    miniblog: {
+    },
+
+    /* Douban Note API
+     * @method      get             获取日记
+     * @method      user            获取用户的所有日记
+     * @method      add             发表新日记
+     * @method      update          更新日记
+     * @method      delete          删除日记
+     */
+    note: {
+    },
+
+    /* Douban Event API
+     * @method      get             获取活动
+     * @method      join            参加活动
+     * @method      user            获取用户的所有活动
+     * @method      city            获取城市的所有活动
+     * @method      search          搜索活动
+     * @method      add             创建新活动
+     * @method      update          更新活动
+     * @method      delete          删除活动
+     */
+    event: {
+    },
+
+    /* Douban Recommendation API
+     * @method      user            获取用户的所有推荐
+     * @method      get             获取推荐
+     * @method      add             发表新推荐
+     * @method      delete          删除推荐
+     * @method      getReply        获取推荐回复
+     * @method      addReply        发表新回复
+     * @method      deleteReply     删除回复
+     */
+    recommendation: {
+    },
+
+    /* Douban Tag API
+     * @method      subject         某个书籍、电影、音乐中标记最多的标签
+     * @method      user            用户对书籍、电影、音乐标记的所有标签
+    */
+    tag: {
+    }
+});
+
+// }}}
+
+/* {{{ OAuth Client
  */
 function OAuthClient(options) {
     /* Default options */
@@ -956,9 +1116,11 @@ $.extend(OAuthClient.prototype, {
     }
 });
 
+/* A simple token object */
 function Token(key, secret) {
     this.key = key || '';
     this.secret = secret || '';
 }
+// }}}
 
 })(jQuery);

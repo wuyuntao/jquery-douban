@@ -1,4 +1,4 @@
-
+// {{{ Basic Testcases
 module("Basic Testcases");
 
 test("test factory method", function() {
@@ -13,8 +13,16 @@ test("test factory method", function() {
     equals(service2.api.key, '3', "api key expected to be 3");
     equals(service2.api.secret, '4', "api secret expected to be 4");
     equals(service2.options.httpType, 'gears', "http type expected to be \"gears\"");
-});
 
+    var client = $.douban('client', { apiKey: '5', apiSecret: '6' });
+    ok(client, "initialize douban client ok");
+    equals(client.api.key, '5', "api key expected to be 5");
+    equals(client.api.secret, '6', "api secret expected to be 6");
+    equals(client.options.httpType, 'jquery', "http type expected to be \"jquery\"");
+});
+// }}}
+
+// {{{ HTTP Testcases
 module("HTTP Testcases");
 
 test("test factory method", function() {
@@ -37,7 +45,9 @@ test("test jquery http methods", function() {
                 function(json) { response = json; });
     ok(response, 'get response ok');
 });
+// }}}
 
+// {{{ OAuth Client Testcases
 module("OAuth Client Testcases");
 
 test("test factory method", function() {
@@ -89,3 +99,52 @@ test("test programmatic login", function() {
     ok(login, "login successful");
     ok(client.isAuthenticated(), "access is authenticated");
 });
+// }}}
+
+// {{{ Douban Service Testcases
+module("Douban Service Testcases");
+
+test("test factory method", function() {
+    var service = $.douban.service.factory({ apiKey: '1', apiSecret: '2' });
+    equals(service.api.key, '1', "api key expected to be 1");
+    equals(service.api.secret, '2', "api secret expected to be 2");
+    equals(service.http.name, 'jquery', "http type expected to be \"jquery\"");
+    ok(service.client, "client initialized");
+});
+
+test("test client login", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+
+    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var accessToken = { key: '6fcf833aff0589884f6e89b0fd109c98', secret: 'b693646c5d1929ab' };
+    var login = service.login(accessToken);
+    ok(login, "login successful");
+});
+
+test("test user api", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+
+    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    service.login({ key: '6fcf833aff0589884f6e89b0fd109c98', secret: 'b693646c5d1929ab' });
+
+    // get user profile
+    var user = service.user.get('ahbei');
+    equals(user.name, '阿北', "get user name ok");
+
+    // search people
+    var result = service.user.search('keso');
+    equals(result.length, 50, "search people ok");
+
+    // get current authenticated user
+    var me = service.user.current();
+    equals(me.name, 'wu yuntao', "get my name ok");
+
+    // get user's friends
+    var friends = service.user.friend('ahbei');
+    equals(result.length, 50, "get user's friends ok");
+
+    // get user's contacts
+    var contacts = service.user.contact('ahbei');
+    equals(contacts.length, 50, "get user's contacts ok");
+});
+// }}}
