@@ -844,11 +844,14 @@ function DoubanService(options) {
                                             handler: this.options.httpHandler });
 }
 $.extend(DoubanService.prototype, {
+    /* {{{ Adapter methods of client
+     */
     login: function(accessToken) {
         return this.client.login(accessToken);
     },
+    // }}}
 
-    /* Douban User API
+    /* {{{ Douban User API
      * @method      get             获取用户信息
      * @method      search          获取当前授权用户信息
      * @method      current         搜索用户
@@ -876,8 +879,9 @@ $.extend(DoubanService.prototype, {
             throw new Error("Not Implemented Yet");
         }
     },
+    // }}}
 
-    /* Douban Subject API
+    /* {{{ Douban Subject API
      * @method      book            获取书籍信息
      * @method      movie           获取电影信息
      * @method      music           获取音乐信息
@@ -900,8 +904,9 @@ $.extend(DoubanService.prototype, {
             throw new Error("Not Implemented Yet");
         }
     },
+    // }}}
 
-    /* Douban Review API
+    /* {{{ Douban Review API
      * @method      get             获取评论信息
      * @method      getUser         特定用户的所有评论
      * @method      getSubject      特定书籍、电影、音乐的所有评论
@@ -934,8 +939,9 @@ $.extend(DoubanService.prototype, {
             throw new Error("Not Implemented Yet");
         }
     },
+    // }}}
 
-    /* Douban Collection API
+    /* {{{ Douban Collection API
      * @method      get             获取收藏信息
      * @method      getUser         获取用户收藏信息
      * @method      add             添加收藏
@@ -963,8 +969,9 @@ $.extend(DoubanService.prototype, {
             throw new Error("Not Implemented Yet");
         }
     },
+    // }}}
 
-    /* Douban Miniblog API
+    /* {{{ Douban Miniblog API
      * @method      getUser         获取用户广播
      * @method      getContact      获取用户友邻广播
      * @method      add             添加广播
@@ -987,8 +994,9 @@ $.extend(DoubanService.prototype, {
             throw new Error("Not Implemented Yet");
         }
     },
+    // }}}
 
-    /* Douban Note API
+    /* {{{ Douban Note API
      * @method      get             获取日记
      * @method      getUser         获取用户的所有日记
      * @method      add             发表新日记
@@ -1016,8 +1024,9 @@ $.extend(DoubanService.prototype, {
             throw new Error("Not Implemented Yet");
         }
     },
+    // }}}
 
-    /* Douban Event API
+    /* {{{ Douban Event API
      * @method      get             获取活动
      * @method      getUser         获取用户的所有活动
      * @method      getCity         获取城市的所有活动
@@ -1060,8 +1069,9 @@ $.extend(DoubanService.prototype, {
             throw new Error("Not Implemented Yet");
         }
     },
+    // }}}
 
-    /* Douban Recommendation API
+    /* {{{ Douban Recommendation API
      * @method      get             获取推荐
      * @method      getUser         获取用户的所有推荐
      * @method      add             发表新推荐
@@ -1101,8 +1111,9 @@ $.extend(DoubanService.prototype, {
             }
         }
     },
+    // }}}
 
-    /* Douban Tag API
+    /* {{{ Douban Tag API
      * @method      getSubject      某个书籍、电影、音乐中标记最多的标签
      * @method      getUser         用户对书籍、电影、音乐标记的所有标签
     */
@@ -1115,6 +1126,7 @@ $.extend(DoubanService.prototype, {
             throw new Error("Not Implemented Yet");
         }
     }
+    // }}}
 });
 
 // }}}
