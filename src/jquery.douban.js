@@ -51,8 +51,7 @@ function DoubanService(options) {
         httpHandler: null
     };
     this.options = $.extend(defaults, options || {});;
-    this.apiKey = this.options.apiKey;
-    this.apiSecret = this.options.apiSecret;
+    this.api = new Token(this.options.apiKey, this.options.apiSecret);
 }
 
 /* Three built-in HTTP request handlers, 'jquery', 'greasemonkey' and 'gears'
@@ -828,32 +827,32 @@ function OAuthClient(options) {
         httpHandler: null
     };
     this.options = $.extend(defaults, options || {});;
-    this.apiKey = this.options.apiKey;
-    this.apiSecret = this.options.apiSecret;
+    this.api = new Token(this.options.apiKey, this.options.apiSecret);
     this.http = $.douban.http.factory({ type: this.options.httpType, handler: this.options.httpHandler });
 
-    this.requestToken = null;
-    this.authorizationUrl = null;
-    this.accessToken = null;
-    this.userId = null;
+    this.requestToken = new Token();
+    this.accessToken = new Token();
+    this.authorizationUrl = '';
+    this.userId = '';
 }
 $.extend(OAuthClient.prototype, {
     /* Get request token
-     * @returns         token object, e.g. { key: 'blah', secret: 'blah' }
+     * @returns         Token object
      */ 
     getRequestToken: function() {
         var token = null;
         this.oauthRequest(REQUEST_TOKEN_URL, null, function(data) {
-            var data = $.unparam(data);
-            token = { key: data.oauth_token, secret: data.oauth_token_secret };
+            data = $.unparam(data);
+            token = { key: data.oauth_token,
+                      secret: data.oauth_token_secret };
         });
         this.requestToken = token;
-        return token;
+        return this.requestToken
     },
 
     /* Get authorization URL
      * @returns     url string
-     * @param       requestToken Dict. If not specified, using
+     * @param       requestToken Token. If not specified, using
      *              ``this.requestToken`` instead
      * @param       callbackUrl String
      */
@@ -863,83 +862,66 @@ $.extend(OAuthClient.prototype, {
             callbackUrl = requestToken;
             requestToken = this.requestToken;
         }
-        var params = $.param({
-            oauth_token: requestToken.key, oauth_callback: callbackUrl
-        });
-        var url = AUTHORIZATION_URL + '?' + params;
-        this.authorizationUrl = url;
-        return url;
+        var params = $.param({ oauth_token: requestToken.key,
+                               oauth_callback: callbackUrl });
+        this.authorizationUrl = AUTHORIZATION_URL + '?' + params;
+        return this.authorizationUrl
     },
 
     /* Get access token
+     * @returns     token object
+     * @param       requestToken Token. If not specified, using
+     *              ``this.requestToken`` instead
      */
     getAccessToken: function(requestToken) {
-        var token = this.oauthRequest(ACCESS_TOKEN_URL , 'GET', {
-            oauth_token: requestToken.key
-        });
-        if (token[0]) {
-            token = $.unparam(token[1]);
-            this.tokenKey = token.oauth_token;
-            this.tokenSecret = token.oauth_token_secret;
-            this.userId = token.douban_user_id;
-            return { key: token.oauth_token, secret: token.oauth_token_secret };
-        } else {
-            // Error handling
-            return false;
+        var token = null;
+        var userId = null;
+        requestToken = requestToken || this.requestToken;
+        this.oauthRequest(ACCESS_TOKEN_URL,
+                          { oauth_token: requestToken.key },
+                          callback);
+        this.userId = userId;
+        this.accessToken = token;
+        return this.accessToken;
+
+        function callback(data) {
+            data = $.unparam(data);
+            token = { key: data.oauth_token,
+                      secret: data.oauth_token_secret };
+            userId = data.douban_user_id;
         }
-        return token;
     },
 
     /* Login to Douban
      */
-    login: function(accessKey, accessSecret, userId) {
-        var client = this;
-
-        if (accessKey && accessSecret) {
-            client.tokenKey = accessKey;
-            client.tokenSecret = accessSecret;
-            client.userId = userId;
+    login: function(accessToken) {
+        accessToken = accessToken || this.accessToken;
+        // check length of access token
+        if (accessToken.key.length == 32 && accessToken.secret.length == 16) {
+            this.accessToken = accessToken;
             return true;
         }
-
-        // Get unauthorized request token
-        client.getRequestToken();
-        if (!client.tokenKey) {
-            alert('Failed to get request token');
-            return false;
-        }
-        // Get authorization URL
-        var authURL = client.getAuthorizationURL(client.tokenKey, client.tokenSecret);
-        if (window.confirm('Ready to authorize your Douban accout?')) {
-            $.DoubanFox.openURL(authURL);
-        }
-
-        // Wait for user 30 seconds to authorize the Douban account
-        window.setTimeout(function() {
-            // Get access token
-            var accessToken = client.getAccessToken(client.tokenKey, client.tokenSecret);
-            if (client.accessKey == accessToken[0]) {
-                return client.login(client.accessKey, client.accessSecret, client.userId);
-            } else {
-                alert('Failed to get access token');
-                return false;
-            }
-        }, 30000);
     },
+
+    isAuthenticated: function() {
+        return this.login();
+    },
+        
 
     /* Get an OAuth message represented as an object like this:
      * { method: "GET", action: "http://server.com/path", parameters: ... }
      * Look into oauth.js for details
      */
-    getMessage: function(url, method, parameters) {
-        var accessor = { consumerSecret: this.apiSecret, tokenSecret: this.tokenSecret };
+    getMessage: function(url, parameters) {
+        var accessor = { consumerSecret: this.api.secret,
+                         tokenSecret: this.requestToken.secret };
         var parameters = $.extend({
-            oauth_consumer_key: this.apiKey,
+            oauth_consumer_key: this.api.key,
             oauth_signature_method: 'HMAC-SHA1',
         }, parameters || {});
         var message = {
             action: url,
-            method: method || 'GET',
+            method: 'GET',
             parameters: parameters
         };
         OAuth.setTimestampAndNonce(message);
@@ -954,8 +936,8 @@ $.extend(OAuthClient.prototype, {
      *
      * @return          Parameter object
      */
-    getParameters: function(url, method, parameters) {
-        var message = this.getMessage(url, method, parameters);
+    getParameters: function(url, parameters) {
+        var message = this.getMessage(url, parameters);
         return OAuth.getParameterMap(message.parameters);
     },
 
@@ -966,10 +948,14 @@ $.extend(OAuthClient.prototype, {
      * @param           callback Function
      */
     oauthRequest: function(url, data, callback) {
-        var message = this.getMessage(url, 'GET', data);
-        var data = OAuth.getParameterMap(message.parameters);
+        var data = this.getParameters(url, data);
         this.http.get(url, data, callback); 
     }
 });
+
+function Token(key, secret) {
+    this.key = key || '';
+    this.secret = secret || '';
+}
 
 })(jQuery);

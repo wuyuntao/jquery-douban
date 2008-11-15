@@ -4,14 +4,14 @@ module("Basic Testcases");
 test("test factory method", function() {
     var service = $.douban({ apiKey: '1', apiSecret: '2' });
     ok(service, "initialize douban service ok");
-    equals(service.apiKey, '1', "api key expected to be 1");
-    equals(service.apiSecret, '2', "api secret expected to be 2");
+    equals(service.api.key, '1', "api key expected to be 1");
+    equals(service.api.secret, '2', "api secret expected to be 2");
     equals(service.options.httpType, 'jquery', "http type expected to be \"jquery\"");
 
     var service2 = $.douban({ apiKey: '3', apiSecret: '4', httpType: 'gears' });
     ok(service2, "initialize douban service ok");
-    equals(service2.apiKey, '3', "api key expected to be 3");
-    equals(service2.apiSecret, '4', "api secret expected to be 4");
+    equals(service2.api.key, '3', "api key expected to be 3");
+    equals(service2.api.secret, '4', "api secret expected to be 4");
     equals(service2.options.httpType, 'gears', "http type expected to be \"gears\"");
 });
 
@@ -42,8 +42,8 @@ module("OAuth Client Testcases");
 
 test("test factory method", function() {
     var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
-    equals(client.apiKey, '1', "api key expected to be 1");
-    equals(client.apiSecret, '2', "api secret expected to be 2");
+    equals(client.api.key, '1', "api key expected to be 1");
+    equals(client.api.secret, '2', "api secret expected to be 2");
     equals(client.http.name, 'jquery', "http type expected to be \"jquery\"");
 });
 
@@ -69,22 +69,23 @@ test("test authorization step 2: get authorization url", function() {
     equals(url2, 'http://www.douban.com/service/auth/authorize?oauth_token=5&oauth_callback=mycallback');
 });
 
-test("test authorization steps 3 & 4", function() {
+test("test authorization step 3: get access token ", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    // var accessToken = client.getAccessToken(requestToken);
-    // equals(accessToken.key, '5', "get access key");
-    // equals(accessToken.secret, '6', "get access secret");
-
-    // var login = client.login(accessToken);
-    // ok(login, "access is authenticated");
-    // ok(client.isAuthenticated(), "access is authenticated");
+    var client = $.douban.client.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    client.requestToken = { key: '6af14a5ae303c71f40d3df10a90b555d',
+                            secret: '7f25d398fc683123' };
+    var accessToken = client.getAccessToken();
+    // When the client is authenticated, the request token will be invalid
+    equals(accessToken.key, '6fcf833aff0589884f6e89b0fd109c98', "get access key");
+    equals(accessToken.secret, 'b693646c5d1929ab', "get access secret");
+    equals(client.userId, 'wyt', "get username");
 });
 
 test("test programmatic login", function() {
-    // Privileges are granted only in the scope of the requesting function.
-    // netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
-
     var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
-    // TODO ...
+    var accessToken = { key: '6fcf833aff0589884f6e89b0fd109c98', secret: 'b693646c5d1929ab' };
+    var login = client.login(accessToken);
+    ok(login, "login successful");
+    ok(client.isAuthenticated(), "access is authenticated");
 });
