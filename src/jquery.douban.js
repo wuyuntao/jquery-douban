@@ -7,6 +7,13 @@
  *
  */
 
+/* Douban authentication URLs
+ */
+const AUTH_HOST = 'http://www.douban.com';
+const REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token';
+const AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize';
+const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
+
 /* Factory method of Douban Service
  * @returns     Douban service object
  * @param       options Dict
@@ -53,7 +60,7 @@ function DoubanService(options) {
 var jqueryHandler = {
     name: 'jquery',
     request: function(options) {
-        throw new Error("Not Implemented Yet");
+        return $.ajax(options);
     }
 };
 
@@ -144,10 +151,23 @@ $.douban.http = {
         /* GET method
          * @returns     JSON
          * @param       url String
-         * @param       params String or Dict
+         * @param       params Dict or String
          */
-        get: function(url, params) {
-            throw new Error("Not Implemented Yet");
+        get: function( url, data, callback, type ) {
+            // shift arguments if data argument was ommited
+            if ($.isFunction(data)) {
+                callback = data;
+                data = null;
+            }
+
+            return this.request({
+                async: false,
+                type: "GET",
+                url: url,
+                data: data,
+                success: callback,
+                dataType: type
+            });
         },
 
         /* POST method
@@ -161,8 +181,7 @@ $.douban.http = {
 
         /* PUT method
          * @returns     JSON
-         * @param       url String
-         * @param       data String
+         * @param       options Dict
          */
         put: function(url, data) {
             throw new Error("Not Implemented Yet");
@@ -176,7 +195,7 @@ $.douban.http = {
             throw new Error("Not Implemented Yet");
         },
 
-        /* Request method which methods above are adapted
+        /* Request method which methods above are adapted to
          * @returns     JSON
          * @param       options Dict
          */
@@ -186,7 +205,7 @@ $.douban.http = {
     }
 };
 
-/* sha1.js
+/* {{{ sha1.js
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
  * in FIPS PUB 180-1
  * Version 2.1a Copyright Paul Johnston 2000 - 2002.
@@ -371,8 +390,9 @@ function binb2b64(binarray) {
     }
     return str;
 }
+/* }}} */
 
-/* oauth.js
+/* {{{ oauth.js
  * Copyright 2008 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -761,8 +781,10 @@ OAuth.SignatureMethod.registerMethodClass(["HMAC-SHA1", "HMAC-SHA1-Accessor"],
             return signature;
         }
     ));
+/* }}} */
 
-// Some extension of jQuery
+/* Some extensions of jQuery
+ */
 $.extend({
     /* The opposiite of jQuery's native $.param() method.
      * Deserialises a parameter string to an object:
@@ -795,13 +817,6 @@ $.douban.client = {
     }
 };
 
-/* Douban authentication URLs
- */
-const AUTH_HOST = 'http://www.douban.com';
-const REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token';
-const AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize';
-const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
-
 /* OAuth Client - A light wrapper of OAuth client for DoubanFox
  */
 function OAuthClient(options) {
@@ -817,6 +832,9 @@ function OAuthClient(options) {
     this.apiSecret = this.options.apiSecret;
     this.http = $.douban.http.factory({ type: this.options.httpType, handler: this.options.httpHandler });
 
+    this.requestToken = null;
+    this.authorizationUrl = null;
+    this.accessToken = null;
     this.userId = null;
 }
 $.extend(OAuthClient.prototype, {
@@ -839,24 +857,31 @@ $.extend(OAuthClient.prototype, {
      * oauth_token=ab3cd9j4ks73hf7g&oauth_token_secret=xyz4992k83j47x0b
      */ 
     getRequestToken: function() {
-        var token = this.oauthRequest(REQUEST_TOKEN_URL , 'GET');
-        // If get response successfully
-        if (token[0]) {
-            token = $.unparam(token[1]);
-            this.tokenKey = token.oauth_token;
-            this.tokenSecret = token.oauth_token_secret;
-        } else {
-            // Error handling
-            return false;
-        }
+        var token = null;
+        this.oauthRequest(REQUEST_TOKEN_URL, null, function(data) {
+            var data = $.unparam(data);
+            token = { key: data.oauth_token, secret: data.oauth_token_secret };
+        });
         return token;
     },
 
     /* Get authorization URL
+     * @returns     url string
+     * @documentation
+     *  获得Request Token之后，需要请求用户授权该Request Token。第三方应用需要
+     *  将浏览器跳转到如下URL，跳转后用户会看到请求授权的页面，用户可以选择同意
+     *  或者拒绝授权。
+     *  http://www.douban.com/service/auth/authorize
+     *
+     *  该请求包含两个可选参数以及若干附加参数
+     *  oauth_token         上一步中获得的Request Token，如果不存在用户会被要求
+     *                      填写Request Token
+     *  oauth_callback 	    如果包含这个参数，认证成功后浏览器会被重定向到
+     *                      http://callback?oauth_token=ab3cd9j4ks73hf7g
      */
-    getAuthorizationURL: function(requestKey, requestSecret, callback) {
+    getAuthorizationUrl: function(requestToken, callback) {
         var params = $.param({
-            oauth_token: requestKey, oauth_callback: typeof callback == 'string' ? callback : ''
+            oauth_token: requestToken.key, oauth_callback: typeof callback == 'string' ? callback : ''
         });
         var url = AUTHORIZATION_URL + '?' + params;
         return url;
@@ -864,15 +889,16 @@ $.extend(OAuthClient.prototype, {
 
     /* Get access token
      */
-    getAccessToken: function(requestKey, requestSecret) {
+    getAccessToken: function(requestToken) {
         var token = this.oauthRequest(ACCESS_TOKEN_URL , 'GET', {
-            oauth_token: requestKey
+            oauth_token: requestToken.key
         });
         if (token[0]) {
             token = $.unparam(token[1]);
             this.tokenKey = token.oauth_token;
             this.tokenSecret = token.oauth_token_secret;
             this.userId = token.douban_user_id;
+            return { key: token.oauth_token, secret: token.oauth_token_secret };
         } else {
             // Error handling
             return false;
@@ -949,32 +975,17 @@ $.extend(OAuthClient.prototype, {
         return OAuth.getParameterMap(message.parameters);
     },
 
-    getAuthHeader: function(url, method, parameters) {
-        var params = this.getParameters(url, method, parameters);
-        var header = 'OAuth realm=""';
-        for (var key in params) {
-            header += ', ' + key + '="' + params[key] + '"';
-        }
-        return header;
-    },
-
     /* OAuth Request
-     * @param url       URL string 
-     * @param type      'GET' or 'POST'
-     * @param data      Parameter object
-     *
-     * @return          [success, data|error]
+     * @returns         null
+     * @param           url String 
+     * @param           data Dict 
+     * @param           callback Function
      */
-    oauthRequest: function(url, type, data, dataType) {
-        var message = this.getMessage(url, type, data);
-        var response = null;
-        $.ajax({
-            async: false, url: url, type: type, dataType: dataType || "text",
-            data: OAuth.getParameterMap(message.parameters), 
-            error: function(xhr, text, error) { response = [false, error]; },
-            success: function(data) { response = [true, data]; }
-        });
-        return response;
+    oauthRequest: function(url, data, callback) {
+        var message = this.getMessage(url, 'GET', data);
+        var data = OAuth.getParameterMap(message.parameters);
+        console.debug(data);
+        this.http.get(url, data, callback); 
     }
 });
 

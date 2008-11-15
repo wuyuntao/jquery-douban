@@ -28,9 +28,14 @@ test("test factory method", function() {
 });
 
 test("test jquery http methods", function() {
+    // Privileges are granted only in the scope of the requesting function.
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+
     var request = $.douban.http.factory({ type: 'jquery' });
-    var json = request.get('http://api.douban.com/book/subject/2023013?alt=json');
-    equals(json, '');
+    var response = null;
+    request.get('http://api.douban.com/book/subject/2023013?alt=json', {},
+                function(json) { response = json; });
+    ok(response, 'get response ok');
 });
 
 module("OAuth Client Testcases");
@@ -42,25 +47,32 @@ test("test factory method", function() {
     equals(client.http.name, 'jquery', "http type expected to be \"jquery\"");
 });
 
-test("test authorization steps", function() {
-    // Privileges are granted only in the scope of the requesting function.
+test("test authorization steps 1 & 2", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
     var client = $.douban.client.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     var requestToken = client.getRequestToken();
-    equals(requestToken.key, '3', "get request key");
-    equals(requestToken.secret, '4', "get request secret");
+    equals(requestToken.key.length, 32, "check the length of request key ( \"" + requestToken.key + "\" )");
+    equals(requestToken.secret.length, 16, "check the length of request secret ( \"" + requestToken.secret + "\" )");
 
-    var url = client.getAuthorizationUrl(requestToken);
-    equals(url, 'http://www.douban.com/auth/revoke?blahblah', "get authorization url");
+    var callback = 'blog.luliban.com';
+    var urlPattern = /http:\/\/www\.douban\.com\/service\/auth\/authorize\?oauth_token=([0-9a-z]+)&oauth_callback=blog\.luliban\.com/gi;
+    var url = client.getAuthorizationUrl(requestToken, callback);
+    ok(urlPattern.test(url), "check the pattern authorization url ( \"" + url + "\" )");
+    // FIXME:
+    // no callback?
+});
 
-    var accessToken = client.getAccessToken(requestToken);
-    equals(accessToken.key, '5', "get access key");
-    equals(accessToken.secret, '6', "get access secret");
+test("test authorization steps 3 & 4", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var login = client.login(accessToken);
-    ok(login, "access is authenticated");
-    ok(client.isAuthenticated(), "access is authenticated");
+    // var accessToken = client.getAccessToken(requestToken);
+    // equals(accessToken.key, '5', "get access key");
+    // equals(accessToken.secret, '6', "get access secret");
+
+    // var login = client.login(accessToken);
+    // ok(login, "access is authenticated");
+    // ok(client.isAuthenticated(), "access is authenticated");
 });
 
 test("test programmatic login", function() {
