@@ -840,21 +840,6 @@ function OAuthClient(options) {
 $.extend(OAuthClient.prototype, {
     /* Get request token
      * @returns         token object, e.g. { key: 'blah', secret: 'blah' }
-     * @documentation
-     * 通过访问以下 URL 获取未授权的 Request Token
-     * http://www.douban.com/service/auth/request_token
-     *
-     * 该请求需要包含如下参数
-     * oauth_consumer_key       API Key
-     * oauth_signature_method  	签名方法，豆瓣支持OAuth中定义的HMAC-SHA1,
-     *                          RSA-SHA1和PLAINTEXT三种签名方式
-     * oauth_signature  	    签名值
-     * oauth_timestamp  	    时间戳，用格林威治时间1970年1月1日0时0分0秒起
-     *                          的秒数表示，下同
-     * oauth_nonce  	        单次值，一个随机字符串，用于防止重放攻击，下同
-     *
-     * 返回值包括未授权的Request Token和对应的Request Token Secret，例如
-     * oauth_token=ab3cd9j4ks73hf7g&oauth_token_secret=xyz4992k83j47x0b
      */ 
     getRequestToken: function() {
         var token = null;
@@ -862,28 +847,27 @@ $.extend(OAuthClient.prototype, {
             var data = $.unparam(data);
             token = { key: data.oauth_token, secret: data.oauth_token_secret };
         });
+        this.requestToken = token;
         return token;
     },
 
     /* Get authorization URL
      * @returns     url string
-     * @documentation
-     *  获得Request Token之后，需要请求用户授权该Request Token。第三方应用需要
-     *  将浏览器跳转到如下URL，跳转后用户会看到请求授权的页面，用户可以选择同意
-     *  或者拒绝授权。
-     *  http://www.douban.com/service/auth/authorize
-     *
-     *  该请求包含两个可选参数以及若干附加参数
-     *  oauth_token         上一步中获得的Request Token，如果不存在用户会被要求
-     *                      填写Request Token
-     *  oauth_callback 	    如果包含这个参数，认证成功后浏览器会被重定向到
-     *                      http://callback?oauth_token=ab3cd9j4ks73hf7g
+     * @param       requestToken Dict. If not specified, using
+     *              ``this.requestToken`` instead
+     * @param       callbackUrl String
      */
-    getAuthorizationUrl: function(requestToken, callback) {
+    getAuthorizationUrl: function(requestToken, callbackUrl) {
+        // shift arguments if ``requestToken`` was ommited
+        if (typeof requestToken == 'string') {
+            callbackUrl = requestToken;
+            requestToken = this.requestToken;
+        }
         var params = $.param({
-            oauth_token: requestToken.key, oauth_callback: typeof callback == 'string' ? callback : ''
+            oauth_token: requestToken.key, oauth_callback: callbackUrl
         });
         var url = AUTHORIZATION_URL + '?' + params;
+        this.authorizationUrl = url;
         return url;
     },
 
@@ -984,7 +968,6 @@ $.extend(OAuthClient.prototype, {
     oauthRequest: function(url, data, callback) {
         var message = this.getMessage(url, 'GET', data);
         var data = OAuth.getParameterMap(message.parameters);
-        console.debug(data);
         this.http.get(url, data, callback); 
     }
 });

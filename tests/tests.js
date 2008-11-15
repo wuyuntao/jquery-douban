@@ -47,20 +47,26 @@ test("test factory method", function() {
     equals(client.http.name, 'jquery', "http type expected to be \"jquery\"");
 });
 
-test("test authorization steps 1 & 2", function() {
+test("test authorization step 1: get request token", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
     var client = $.douban.client.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     var requestToken = client.getRequestToken();
     equals(requestToken.key.length, 32, "check the length of request key ( \"" + requestToken.key + "\" )");
     equals(requestToken.secret.length, 16, "check the length of request secret ( \"" + requestToken.secret + "\" )");
+});
 
-    var callback = 'blog.luliban.com';
-    var urlPattern = /http:\/\/www\.douban\.com\/service\/auth\/authorize\?oauth_token=([0-9a-z]+)&oauth_callback=blog\.luliban\.com/gi;
-    var url = client.getAuthorizationUrl(requestToken, callback);
-    ok(urlPattern.test(url), "check the pattern authorization url ( \"" + url + "\" )");
-    // FIXME:
-    // no callback?
+test("test authorization step 2: get authorization url", function() {
+    var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
+    var callback = 'mycallback';
+    // Set request token manually
+    client.requestToken = { key: '3', secret: '4' };
+
+    var url = client.getAuthorizationUrl(callback);
+    equals(url, 'http://www.douban.com/service/auth/authorize?oauth_token=3&oauth_callback=mycallback');
+
+    var url2 = client.getAuthorizationUrl({ key: '5', secret: '6' }, callback);
+    equals(url2, 'http://www.douban.com/service/auth/authorize?oauth_token=5&oauth_callback=mycallback');
 });
 
 test("test authorization steps 3 & 4", function() {
