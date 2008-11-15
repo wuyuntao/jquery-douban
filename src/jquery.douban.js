@@ -892,7 +892,8 @@ $.extend(OAuthClient.prototype, {
         }
     },
 
-    /* Login to Douban
+    /* Save access token
+     * returns      if login Boolean
      */
     login: function(accessToken) {
         accessToken = accessToken || this.accessToken;
@@ -903,10 +904,12 @@ $.extend(OAuthClient.prototype, {
         }
     },
 
+    /* Check if useris authenticated
+     * returns      if authenticated Boolean
+     */
     isAuthenticated: function() {
         return this.login();
     },
-        
 
     /* Get an OAuth message represented as an object like this:
      * { method: "GET", action: "http://server.com/path", parameters: ... }
