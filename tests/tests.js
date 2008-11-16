@@ -121,6 +121,19 @@ test("test client login", function() {
     ok(login, "login successful");
 });
 
+test("test user class", function() {
+    var json = {"content":{"$t":""},"db:uid":{"$t":"whoami"},"link":[{"@rel":"self","@href":"http://api.douban.com/people/2139418"},{"@rel":"alternate","@href":"http://www.douban.com/people/whoami/"},{"@rel":"icon","@href":"http://otho.douban.com/icon/u2139418-1.jpg"}],"id":{"$t":"http://api.douban.com/people/2139418"},"title":{"$t":"我是谁"}};
+    var user = $.douban.user.factory(json);
+    equals(user.id, "http://api.douban.com/people/2139418", "get user id ok");
+    equals(user.userName, "whoami", "get user name ok");
+    equals(user.screenName, "我是谁", "get screen name ok");
+    equals(user.location, "", "get user location ok");
+    equals(user.blog, "", "get user blog ok");
+    equals(user.intro, "", "get user introduction ok");
+    equals(user.url, "http://www.douban.com/people/whoami/", "get user homepage ok");
+    equals(user.iconUrl, "http://otho.douban.com/icon/u2139418-1.jpg", "get user icon url ok");
+});
+
 test("test user api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
@@ -128,8 +141,15 @@ test("test user api", function() {
     service.login({ key: '6fcf833aff0589884f6e89b0fd109c98', secret: 'b693646c5d1929ab' });
 
     // get user profile
-    var user = service.user.get('ahbei');
-    equals(user.name, '阿北', "get user name ok");
+    var ahbei = service.user.get('ahbei');
+    equals(ahbei.id, "http://api.douban.com/people/1000001", "get user id ok");
+    equals(ahbei.userName, "ahbei", "get user name ok");
+    equals(ahbei.screenName, "阿北", "get screen name ok");
+    equals(ahbei.location, "北京", "get location ok");
+    equals(ahbei.blog, "http://ahbei.com/", "get blog ok");
+    equals(ahbei.intro, "豆瓣的临时总管。现在多数时间在忙忙碌碌地为豆瓣添砖加瓦。坐在马桶上看书，算是一天中最放松的时间。\r\n\r\n我不但喜欢读书、旅行和音乐电影，还曾经是一个乐此不疲的实践者，有一墙碟、两墙书、三大洲的车船票为记。现在自己游荡差不多够了，开始懂得分享和回馈。豆瓣是一个开始，希望它对你同样有用。\r\n\r\n(我的朋友邀请原则：一般是线下朋友，见过不只一次面。谢谢“关注” )。\r\n", "get introduction ok");
+    equals(ahbei.url, "http://www.douban.com/people/ahbei/", "get user url ok");
+    equals(ahbei.iconUrl, "http://otho.douban.com/icon/u1000001-14.jpg", "get user icon url ok");
 
     // search people
     var result = service.user.search('keso');
