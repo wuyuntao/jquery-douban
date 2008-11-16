@@ -12,6 +12,13 @@ const AUTH_HOST = 'http://www.douban.com';
 const REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token';
 const AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize';
 const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
+
+const API_HOST = 'http://api.douban.com';
+const SEARCH_PEOPLE_URL = API_HOST + '/people';
+const GET_PEOPLE_URL = SEARCH_PEOPLE_URL  + '/{USERNAME}';
+const GET_CURRENT_URL = SEARCH_PEOPLE_URL  + '/@me';
+const GET_FRIENDS_URL = GET_PEOPLE_URL + '/friends';
+const GET_CONTACTS_URL = GET_PEOPLE_URL + '/contacts';
 // }}}
 
 /* {{{ Factory method of jQuery Douban
@@ -177,7 +184,7 @@ $.douban.http = {
          * @param       url String
          * @param       params Dict or String
          */
-        get: function( url, data, callback, type ) {
+        get: function(url, data, callback, type) {
             // shift arguments if data argument was ommited
             if ($.isFunction(data)) {
                 callback = data;
@@ -827,7 +834,9 @@ $.extend({
 });
 // }}}
 
-/* {{{ Douban service
+/* {{{ Douban services
+
+/* Douban service
  * @returns     null
  * @param       options Dict
  * @option      apiKey String
@@ -851,6 +860,7 @@ function DoubanService(options) {
                                             apiSecret: this.api.secret,
                                             type: this.options.httpType,
                                             handler: this.options.httpHandler });
+    this.user = new DoubanUserService(this);
 }
 $.extend(DoubanService.prototype, {
     /* {{{ Adapter methods of client
@@ -876,36 +886,6 @@ $.extend(DoubanService.prototype, {
 
     delete: function(url) {
         throw new Error("Not Implemented Yet");
-    },
-    // }}}
-
-    /* {{{ Douban User API
-     * @method      get             获取用户信息
-     * @method      search          获取当前授权用户信息
-     * @method      current         搜索用户
-     * @method      friend          获取用户朋友
-     * @method      contact         获取用户关注的人
-     */
-    user: {
-        get: function(name) {
-            throw new Error("Not Implemented Yet");
-        },
-
-        search: function(name) {
-            throw new Error("Not Implemented Yet");
-        },
-
-        current: function() {
-            throw new Error("Not Implemented Yet");
-        },
-
-        friend: function(user) {
-            throw new Error("Not Implemented Yet");
-        },
-
-        contact: function(user) {
-            throw new Error("Not Implemented Yet");
-        }
     },
     // }}}
 
@@ -1156,9 +1136,46 @@ $.extend(DoubanService.prototype, {
     }
     // }}}
 });
+
+/* {{{ Douban User Service
+ * @method      get             获取用户信息
+ * @method      search          获取当前授权用户信息
+ * @method      current         搜索用户
+ * @method      friend          获取用户朋友
+ * @method      contact         获取用户关注的人
+ */
+function DoubanUserService(service) {
+    this.service = service;
+}
+$.extend(DoubanUserService.prototype, {
+    get: function(name) {
+        var url = GET_PEOPLE_URL.replace(/\{USERNAME\}/, name);
+        var json = this.service.get(url);
+        return json ? new DoubanUser(json) : false;
+    },
+
+    search: function(name) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    current: function() {
+        throw new Error("Not Implemented Yet");
+    },
+
+    friend: function(user) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    contact: function(user) {
+        throw new Error("Not Implemented Yet");
+    }
+});
+// }}}
+
 // }}}
 
 /* {{{ Douban user
+ * @param           data            Well formated json feed
  * @attribute       id              用户ID，"http://api.douban.com/people/1000001"
  * @attribute       userName        用户名，"ahbei"
  * @attribute       screenName      昵称，"阿北"
@@ -1184,7 +1201,6 @@ $.extend(DoubanUser.prototype, {
         this.blog = getUrl(json, 'homepage');
     },
 });
-
 // }}}
 
 /* {{{ OAuth client
