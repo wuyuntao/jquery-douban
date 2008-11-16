@@ -94,6 +94,19 @@ var jqueryHandler = {
     }
 };
 
+var greasemonkeyHandler = {
+    name: 'greasemonkey',
+    request: function(options) {
+        throw new Error("Not Implemented Yet");
+    }
+};
+
+var gearsHandler = {
+    name: 'gears',
+    request: function(options) {
+        throw new Error("Not Implemented Yet");
+    }
+};
 // }}}
 
 /* {{{ Factory method of HTTP request handlers
@@ -847,8 +860,6 @@ function DoubanService(options) {
     this.user = new DoubanUserService(this);
 }
 $.extend(DoubanService.prototype, {
-    // Initialization
-    init: function
     /* {{{ Adapter methods of client
      */
     login: function(accessToken) {
