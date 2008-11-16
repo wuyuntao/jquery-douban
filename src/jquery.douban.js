@@ -85,7 +85,7 @@ $.douban.user = {
 };
 // }}}
 
-/* {{{ Built-in HTTP request handlers: 'jquery'
+/* {{{ Built-in HTTP request handlers: 'jquery', 'greasemonkey' and 'gears'
  */
 var jqueryHandler = {
     name: 'jquery',
