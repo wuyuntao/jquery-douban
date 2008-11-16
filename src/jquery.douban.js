@@ -69,6 +69,15 @@ $.douban.client = {
 };
 // }}}
 
+/* {{{ Factory method of douban user
+ */
+$.douban.user = {
+    factory: function(data) {
+        return new DoubanUser(data);
+    }
+};
+// }}}
+
 /* {{{ Built-in HTTP request handlers, 'jquery', 'greasemonkey' and 'gears'
  */
 var jqueryHandler = {
@@ -1128,10 +1137,38 @@ $.extend(DoubanService.prototype, {
     }
     // }}}
 });
+// }}}
+
+/* {{{ Douban user
+ * @attribute       id              用户ID，"http://api.douban.com/people/1000001"
+ * @attribute       userName        用户名，"ahbei"
+ * @attribute       screenName      昵称，"阿北"
+ * @attribute       location        常居地，"北京"
+ * @attribute       blog            网志主页，"http://ahbei.com/"
+ * @attribute       intro           自我介绍，"豆瓣的临时总管..."
+ * @attribute       url             豆瓣主页，"http://www.douban.com/people/ahbei/"
+ * @attribute       iconUrl         头像，"http://otho.douban.com/icon/u1000001-14.jpg"
+ * @method          createFromJson  由豆瓣返回的用户JSON，初始化用户数据
+ */
+function DoubanUser(data) {
+    this.createFromJson(data);
+}
+$.extend(DoubanUser.prototype, {
+    createFromJson: function(json) {
+        this.id = getId(json);
+        this.userName = getAttr(json, 'db:uid')
+        this.screenName = getAttr(json, 'title');
+        this.location = getAttr(json, 'db:location');
+        this.intro = getAttr(json, 'content');
+        this.url = getUrl(json);
+        this.iconUrl = getIconUrl(json);
+        this.blog = getUrl(json, 'homepage');
+    },
+});
 
 // }}}
 
-/* {{{ OAuth Client
+/* {{{ OAuth client
  */
 function OAuthClient(options) {
     /* Default options */
@@ -1275,6 +1312,36 @@ $.extend(OAuthClient.prototype, {
 function Token(key, secret) {
     this.key = key || '';
     this.secret = secret || '';
+}
+// }}}
+
+/* {{{ Douban GData JSON feed parsers
+ */
+// Get attributes from json
+function getAttr(json, attr) {
+    return typeof json[attr] == 'undefined' ? '' : json[attr]['$t'];
+}
+
+// Get id from json
+function getId(json) {
+    return getAttr(json, 'id');
+}
+
+// Get url from json links
+function getUrl(json, attr) {
+    attr = attr || 'alternate';
+    for (i in json['link']) {
+        var link = json['link'][i];
+        if (link['@rel'] == attr) {
+            return link['@href'];
+        }
+    }
+    return '';
+}
+
+// Get icon url from json links
+function getIconUrl(json) {
+    return getUrl(json, 'icon');
 }
 // }}}
 
