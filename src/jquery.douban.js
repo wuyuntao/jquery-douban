@@ -85,7 +85,7 @@ $.douban.user = {
 };
 // }}}
 
-/* {{{ Built-in HTTP request handlers, 'jquery', 'greasemonkey' and 'gears'
+/* {{{ Built-in HTTP request handlers: 'jquery'
  */
 var jqueryHandler = {
     name: 'jquery',
@@ -94,19 +94,6 @@ var jqueryHandler = {
     }
 };
 
-var greasemonkeyHandler = {
-    name: 'greasemonkey',
-    request: function(options) {
-        throw new Error("Not Implemented Yet");
-    }
-};
-
-var gearsHandler = {
-    name: 'gears',
-    request: function(options) {
-        throw new Error("Not Implemented Yet");
-    }
-};
 // }}}
 
 /* {{{ Factory method of HTTP request handlers
