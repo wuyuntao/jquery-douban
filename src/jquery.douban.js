@@ -69,7 +69,7 @@ $.douban.client = {
 };
 // }}}
 
-/* {{{ Factory method of douban user
+/* {{{ Factory method of Douban User
  */
 $.douban.user = {
     factory: function(data) {
@@ -857,6 +857,25 @@ $.extend(DoubanService.prototype, {
      */
     login: function(accessToken) {
         return this.client.login(accessToken);
+    },
+    // }}}
+
+    /* {{{ Adapter methods of http handler
+     */
+    get: function(url, params) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    post: function(url, data) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    put: function(url, data) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    delete: function(url) {
+        throw new Error("Not Implemented Yet");
     },
     // }}}
 
