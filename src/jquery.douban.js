@@ -837,19 +837,18 @@ function DoubanService(options) {
         apiKey: '',
         apiSecret: '',
         httpType: 'jquery',
-        httpHandler: null
     };
     this.options = $.extend(defaults, options || {});;
     this.api = new Token(this.options.apiKey, this.options.apiSecret);
-    this.http = $.douban.http.factory({ type: this.options.httpType,
-                                        handler: this.options.httpHandler });
+    this.http = $.douban.http.factory({ type: this.options.httpType });
     this.client = $.douban.client.factory({ apiKey: this.api.key,
                                             apiSecret: this.api.secret,
-                                            type: this.options.httpType,
-                                            handler: this.options.httpHandler });
+                                            type: this.options.httpType });
     this.user = new DoubanUserService(this);
 }
 $.extend(DoubanService.prototype, {
+    // Initialization
+    init: function
     /* {{{ Adapter methods of client
      */
     login: function(accessToken) {
@@ -952,11 +951,10 @@ function OAuthClient(options) {
         apiKey: '',
         apiSecret: '',
         httpType: 'jquery',
-        httpHandler: null
     };
     this.options = $.extend(defaults, options || {});;
     this.api = new Token(this.options.apiKey, this.options.apiSecret);
-    this.http = $.douban.http.factory({ type: this.options.httpType, handler: this.options.httpHandler });
+    this.http = $.douban.http.factory({ type: this.options.httpType });
 
     this.requestToken = new Token();
     this.accessToken = new Token();
