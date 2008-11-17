@@ -869,8 +869,13 @@ $.extend(DoubanService.prototype, {
 
     /* {{{ Adapter methods of http handler
      */
-    get: function(url, params) {
-        throw new Error("Not Implemented Yet");
+    get: function(url, params, callback) {
+        var json = null;
+        this.http.get(url, params, function(data) {
+            json = data;
+            if ($.isFunction(callback)) callback(data);
+        }, 'json');
+        return json;
     },
 
     post: function(url, data) {
@@ -901,7 +906,8 @@ function DoubanUserService(service) {
 $.extend(DoubanUserService.prototype, {
     get: function(name) {
         var url = GET_PEOPLE_URL.replace(/\{USERNAME\}/, name);
-        var json = this.service.get(url);
+        var json = this.service.get(url, { alt: 'json' });
+        console.debug(json);
         return json ? new DoubanUser(json) : false;
     },
 
