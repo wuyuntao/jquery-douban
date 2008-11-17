@@ -14,9 +14,10 @@ const AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize';
 const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
 
 const API_HOST = 'http://api.douban.com';
-const SEARCH_PEOPLE_URL = API_HOST + '/people';
-const GET_PEOPLE_URL = SEARCH_PEOPLE_URL  + '/{USERNAME}';
-const GET_CURRENT_URL = SEARCH_PEOPLE_URL  + '/@me';
+const PEOPLE_URL = API_HOST + '/people';
+const SEARCH_PEOPLE_URL = PEOPLE_URL + '?q={QUERY}&alt=json&start-index={OFFSET}&max-results={LIMIT}';
+const GET_PEOPLE_URL = PEOPLE_URL  + '/{USERNAME}?alt=json';
+const GET_CURRENT_URL = PEOPLE_URL  + '/@me';
 const GET_FRIENDS_URL = GET_PEOPLE_URL + '/friends';
 const GET_CONTACTS_URL = GET_PEOPLE_URL + '/contacts';
 // }}}
@@ -906,13 +907,16 @@ function DoubanUserService(service) {
 $.extend(DoubanUserService.prototype, {
     get: function(name) {
         var url = GET_PEOPLE_URL.replace(/\{USERNAME\}/, name);
-        var json = this.service.get(url, { alt: 'json' });
-        console.debug(json);
+        var json = this.service.get(url);
         return json ? new DoubanUser(json) : false;
     },
 
-    search: function(name) {
-        throw new Error("Not Implemented Yet");
+    search: function(query, offset, limit) {
+        var url = SEARCH_PEOPLE_URL.replace(/\{QUERY\}/, query)
+                                   .replace(/\{OFFSET\}/, offset)
+                                   .replace(/\{LIMIT\}/, limit);
+        var json = this.service.get(url);
+        return json ? new DoubanUserEntries(json) : false;
     },
 
     current: function() {
@@ -931,8 +935,8 @@ $.extend(DoubanUserService.prototype, {
 
 // }}}
 
-/* {{{ Douban user
- * @param           data            Well formated json feed
+/* Douban user
+ * @param           data            Well-formatted json feed
  * @attribute       id              用户ID，"http://api.douban.com/people/1000001"
  * @attribute       userName        用户名，"ahbei"
  * @attribute       screenName      昵称，"阿北"
@@ -958,7 +962,29 @@ $.extend(DoubanUser.prototype, {
         this.blog = getUrl(json, 'homepage');
     },
 });
-// }}}
+
+/* Douban user entries
+ * @param       data                Well-formatted json feed
+ * @attribute   offset
+ * @attribute   limit
+ * @attribute   entries
+ * @method      createFromJson
+ */
+function DoubanUserEntries(data) {
+    this.createFromJson(data);
+}
+$.extend(DoubanUserEntries.prototype, {
+    createFromJson: function(json) {
+        this.query = getTitle(json).replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
+        this.total = getTotal(json);
+        this.offset = getOffset(json);
+        this.limit = getLimit(json);
+        this.entries = []
+        for (var i = 0, len = json.entry.length; i < len; i++) {
+            this.entries.push(new DoubanUser(json.entry[i]));
+        }
+    },
+});
 
 /* {{{ OAuth client
  */
@@ -1116,6 +1142,26 @@ function getAttr(json, attr) {
 // Get id from json
 function getId(json) {
     return getAttr(json, 'id');
+}
+
+// Get title
+function getTitle(json) {
+    return getAttr(json, 'title');
+}
+
+// Get total
+function getTotal(json) {
+    return parseInt(getAttr(json, "opensearch:totalResults"));
+}
+
+// Get offset
+function getOffset(json) {
+    return parseInt(getAttr(json, "opensearch:startIndex"));
+}
+
+// Get limit
+function getLimit(json) {
+    return parseInt(getAttr(json, "opensearch:itemsPerPage"));
 }
 
 // Get url from json links
