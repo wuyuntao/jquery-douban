@@ -180,15 +180,17 @@ test("test user api", function() {
 
     // get current authenticated user
     var me = service.user.current();
-    equals(me.name, 'wu yuntao', "get my name ok");
+    equals(me.id, "http://api.douban.com/people/1139389", "get user id ok");
 
     // get user's friends
-    var friends = service.user.friend('ahbei');
-    equals(result.length, 50, "get user's friends ok");
+    var friends = service.user.friends('wyt', 7, 4);
+    equals(friends.total, 71);
+    equals(friends.entries.length, 4, "get user's friends ok");
 
     // get user's contacts
-    var contacts = service.user.contact('ahbei');
-    equals(contacts.length, 50, "get user's contacts ok");
+    var contacts = service.user.contacts('wyt', 2, 5);
+    equals(contacts.total, 110);
+    equals(contacts.entries.length, 5, "get user's contacts ok");
 });
 
 test("test misc", function() {
