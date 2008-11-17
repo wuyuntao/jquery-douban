@@ -110,6 +110,12 @@ test("test programmatic login", function() {
     ok(login, "login successful");
     ok(client.isAuthenticated(), "access is authenticated");
 });
+
+test("test auth headers", function() {
+    var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
+    var headers = client.getAuthHeaders('http://api.douban.com/people/1000001', 'GET', { 'alt': 'json' });
+    ok(headers, "get headers ( \"" + headers + "\" )");
+});
 // }}}
 
 // {{{ Douban Service Testcases
