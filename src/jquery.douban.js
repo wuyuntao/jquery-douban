@@ -17,7 +17,7 @@ const API_HOST = 'http://api.douban.com';
 const PEOPLE_URL = API_HOST + '/people';
 const SEARCH_PEOPLE_URL = PEOPLE_URL;
 const GET_PEOPLE_URL = PEOPLE_URL  + '/{USERNAME}';
-const GET_CURRENT_URL = PEOPLE_URL  + '/@me';
+const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // hack: %40 => @
 const GET_FRIENDS_URL = GET_PEOPLE_URL + '/friends';
 const GET_CONTACTS_URL = GET_PEOPLE_URL + '/contacts';
 // }}}
@@ -259,6 +259,7 @@ $.extend(DoubanService.prototype, {
     setParams: function(params) {
         params = $.extend({ 'apikey': this.api.key, 'alt': 'json' }, params || {});
         return params;
+        // return params || {};
     },
 
     /* Set headers for request
@@ -295,7 +296,6 @@ $.extend(DoubanUserService.prototype, {
 
     search: function(query, offset, limit) {
         var url = SEARCH_PEOPLE_URL;
-        console.debug(params);
         var params = { 'q': query, 'start-index': offset || 0, 'max-results': limit || 50 };
         var json = this.service.get(url, params);
         return json ? new DoubanUserEntries(json) : false;

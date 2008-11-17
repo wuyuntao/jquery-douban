@@ -157,6 +157,7 @@ test("test user api", function() {
     equals(ahbei.intro, "豆瓣的临时总管。现在多数时间在忙忙碌碌地为豆瓣添砖加瓦。坐在马桶上看书，算是一天中最放松的时间。\r\n\r\n我不但喜欢读书、旅行和音乐电影，还曾经是一个乐此不疲的实践者，有一墙碟、两墙书、三大洲的车船票为记。现在自己游荡差不多够了，开始懂得分享和回馈。豆瓣是一个开始，希望它对你同样有用。\r\n\r\n(我的朋友邀请原则：一般是线下朋友，见过不只一次面。谢谢“关注” )。\r\n", "get introduction ok");
     equals(ahbei.url, "http://www.douban.com/people/ahbei/", "get user url ok");
     equals(ahbei.iconUrl, "http://otho.douban.com/icon/u1000001-14.jpg", "get user icon url ok");
+
     // get user's friends
     var friends = service.user.friends('wyt', 7, 4);
     equals(friends.total, 71);
@@ -167,6 +168,11 @@ test("test user api", function() {
     equals(contacts.total, 110);
     equals(contacts.entries.length, 5, "get user's contacts ok");
 
+    // get current authenticated user
+    var me = service.user.current();
+    equals(me.id, "http://api.douban.com/people/1139389", "get current user name ok");
+    equals(me.userName, "wyt", "get current user id ok");
+
     // search people
     var result = service.user.search('ke', 6, 3);
     equals(result.total, 48, "search people total results ok");
@@ -176,10 +182,6 @@ test("test user api", function() {
     equals(result.entries[0].id, "http://api.douban.com/people/1282010", "get user id ok");
     equals(result.entries[1].id, "http://api.douban.com/people/1110946", "get user id ok");
     equals(result.entries[2].id, "http://api.douban.com/people/1652131", "get user id ok");
-
-    // get current authenticated user
-    var me = service.user.current();
-    equals(me.id, "http://api.douban.com/people/1139389", "get user id ok");
 });
 // }}}
 
