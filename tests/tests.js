@@ -152,8 +152,14 @@ test("test user api", function() {
     equals(ahbei.iconUrl, "http://otho.douban.com/icon/u1000001-14.jpg", "get user icon url ok");
 
     // search people
-    var result = service.user.search('keso');
-    equals(result.length, 50, "search people ok");
+    var result = service.user.search('ke', 6, 3);
+    equals(result.total, 48, "search people total results ok");
+    equals(result.offset, 6, "search people start index ok");
+    equals(result.limit, 3, "search people max results ok");
+    equals(result.entries.length, 3, "search people ok");
+    equals(result.entries[0].id, "http://api.douban.com/people/1282010", "get user id ok");
+    equals(result.entries[1].id, "http://api.douban.com/people/1110946", "get user id ok");
+    equals(result.entries[2].id, "http://api.douban.com/people/1652131", "get user id ok");
 
     // get current authenticated user
     var me = service.user.current();
@@ -166,5 +172,8 @@ test("test user api", function() {
     // get user's contacts
     var contacts = service.user.contact('ahbei');
     equals(contacts.length, 50, "get user's contacts ok");
+});
+
+test("test misc", function() {
 });
 // }}}
