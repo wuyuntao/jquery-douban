@@ -1,3 +1,6 @@
+test("test misc", function() {
+});
+
 // {{{ Basic Testcases
 module("Basic Testcases");
 
@@ -138,19 +141,6 @@ test("test client login", function() {
     ok(login, "login successful");
 });
 
-test("test user class", function() {
-    var json = {"content":{"$t":""},"db:uid":{"$t":"whoami"},"link":[{"@rel":"self","@href":"http://api.douban.com/people/2139418"},{"@rel":"alternate","@href":"http://www.douban.com/people/whoami/"},{"@rel":"icon","@href":"http://otho.douban.com/icon/u2139418-1.jpg"}],"id":{"$t":"http://api.douban.com/people/2139418"},"title":{"$t":"我是谁"}};
-    var user = $.douban.user.factory(json);
-    equals(user.id, "http://api.douban.com/people/2139418", "get user id ok");
-    equals(user.userName, "whoami", "get user name ok");
-    equals(user.screenName, "我是谁", "get screen name ok");
-    equals(user.location, "", "get user location ok");
-    equals(user.blog, "", "get user blog ok");
-    equals(user.intro, "", "get user introduction ok");
-    equals(user.url, "http://www.douban.com/people/whoami/", "get user homepage ok");
-    equals(user.iconUrl, "http://otho.douban.com/icon/u2139418-1.jpg", "get user icon url ok");
-});
-
 test("test user api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
@@ -167,6 +157,15 @@ test("test user api", function() {
     equals(ahbei.intro, "豆瓣的临时总管。现在多数时间在忙忙碌碌地为豆瓣添砖加瓦。坐在马桶上看书，算是一天中最放松的时间。\r\n\r\n我不但喜欢读书、旅行和音乐电影，还曾经是一个乐此不疲的实践者，有一墙碟、两墙书、三大洲的车船票为记。现在自己游荡差不多够了，开始懂得分享和回馈。豆瓣是一个开始，希望它对你同样有用。\r\n\r\n(我的朋友邀请原则：一般是线下朋友，见过不只一次面。谢谢“关注” )。\r\n", "get introduction ok");
     equals(ahbei.url, "http://www.douban.com/people/ahbei/", "get user url ok");
     equals(ahbei.iconUrl, "http://otho.douban.com/icon/u1000001-14.jpg", "get user icon url ok");
+    // get user's friends
+    var friends = service.user.friends('wyt', 7, 4);
+    equals(friends.total, 71);
+    equals(friends.entries.length, 4, "get user's friends ok");
+
+    // get user's contacts
+    var contacts = service.user.contacts('wyt', 2, 5);
+    equals(contacts.total, 110);
+    equals(contacts.entries.length, 5, "get user's contacts ok");
 
     // search people
     var result = service.user.search('ke', 6, 3);
@@ -181,18 +180,23 @@ test("test user api", function() {
     // get current authenticated user
     var me = service.user.current();
     equals(me.id, "http://api.douban.com/people/1139389", "get user id ok");
+});
+// }}}
 
-    // get user's friends
-    var friends = service.user.friends('wyt', 7, 4);
-    equals(friends.total, 71);
-    equals(friends.entries.length, 4, "get user's friends ok");
+// {{{ Douban Object Testcases
+module("Douban Object Testcases");
 
-    // get user's contacts
-    var contacts = service.user.contacts('wyt', 2, 5);
-    equals(contacts.total, 110);
-    equals(contacts.entries.length, 5, "get user's contacts ok");
+test("test user object", function() {
+    var json = {"content":{"$t":""},"db:uid":{"$t":"whoami"},"link":[{"@rel":"self","@href":"http://api.douban.com/people/2139418"},{"@rel":"alternate","@href":"http://www.douban.com/people/whoami/"},{"@rel":"icon","@href":"http://otho.douban.com/icon/u2139418-1.jpg"}],"id":{"$t":"http://api.douban.com/people/2139418"},"title":{"$t":"我是谁"}};
+    var user = $.douban.user.factory(json);
+    equals(user.id, "http://api.douban.com/people/2139418", "get user id ok");
+    equals(user.userName, "whoami", "get user name ok");
+    equals(user.screenName, "我是谁", "get screen name ok");
+    equals(user.location, "", "get user location ok");
+    equals(user.blog, "", "get user blog ok");
+    equals(user.intro, "", "get user introduction ok");
+    equals(user.url, "http://www.douban.com/people/whoami/", "get user homepage ok");
+    equals(user.iconUrl, "http://otho.douban.com/icon/u2139418-1.jpg", "get user icon url ok");
 });
 
-test("test misc", function() {
-});
 // }}}
