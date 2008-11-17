@@ -86,157 +86,92 @@ $.douban.user = {
 };
 // }}}
 
-/* {{{ Built-in HTTP request handlers: 'jquery', 'greasemonkey' and 'gears'
- */
-var jqueryHandler = {
-    name: 'jquery',
-    request: function(options) {
-        return $.ajax(options);
-    }
-};
-
-var greasemonkeyHandler = {
-    name: 'greasemonkey',
-    request: function(options) {
-        throw new Error("Not Implemented Yet");
-    }
-};
-
-var gearsHandler = {
-    name: 'gears',
-    request: function(options) {
-        throw new Error("Not Implemented Yet");
-    }
-};
-// }}}
-
-/* {{{ Factory method of HTTP request handlers
+/* Factory method of HTTP request handlers
  * @usage
- * // Use Gears HTTP Request API as handler
- * var request = $.douban.http.factory({ type: 'gears' });
- * var json = request.get({ url: url, params: params });
- *
  * // Register new request handler
  * $.douban.http.register('air', AirHttpRequestHandler });
- * var request = $.douban.http.factory({ type: 'air' });
- * var json = request.post({ url: url, data: data });
- *
+ * // Use Gears HTTP Request API as handler
+ * $.douban.http.setActive('gears');
+ * // Get some url
+ * var json = $.douban.http({ url: url, params: params });
  * // Unregister request handler
- * $.douban.unregister('air');
+ * $.douban.http.unregister('air');
  *
  */
-$.douban.http = {
+$.douban.http = function(options) {
+    return $.douban.http.activeHandler(options);
+};
+
+/* Create HTTP request handler by the given type
+ * including 'jquery', 'greasemonkey' and 'gears'
+ * In addition, you can register other handlers either
+ * by passing arguments ``httpType`` and ``httpHandler`` to the factory
+ * method
+ */
+$.douban.http.factory = function(options) {
     /* Default options */
-    options: {
+    var defaults = {
         type: 'jquery',
         handler: null
     },
-
-    /* Create HTTP request handler by the given type
-     * including 'jquery', 'greasemonkey' and 'gears'
-     * In addition, you can register other handlers either
-     * by passing arguments ``httpType`` and ``httpHandler`` to the factory
-     * method
-     */
-    factory: function(options) {
-        var options = $.extend(this.options, options || {});
-        if (typeof this.handlers[options.type] == 'undefined') {
-            if ($.isFunction(options.handler)) {
-                this.register(options.type, options.handler);
-            } else {
-                throw new Error("Invalid HTTP request handler");
-            }
-        }
-        var handler = this.handlers[options.type];
-        return $.extend(this.baseHandler, handler);
-    },
-
-    /* A dict of HTTP request name and its constructor,
-     */
-    handlers: {
-        jquery: jqueryHandler,
-        greasemonkey: greasemonkeyHandler,
-        gears: gearsHandler
-    },
-
-    /* Register new HTTP request handler to ``handlers``
-     */
-    register: function(name, constructor) {
-        if ($.isFunction(constructor)) {
-            this.handlers[name] = constructor;
-        }
-    },
-
-    /* Unregister an existed HTTP request handler
-     */
-    unregister: function(name) {
-        this.handlers[name] = undefined;
-    },
-
-    /* Prototype of HTTP request handler which other handlers should be 
-     * extended from
-     */
-    baseHandler: {
-        /* Name of the handler */
-        name: null,
-
-        /* GET method
-         * @returns     JSON
-         * @param       url String
-         * @param       params Dict or String
-         */
-        get: function(url, data, callback, type) {
-            // shift arguments if data argument was ommited
-            if ($.isFunction(data)) {
-                callback = data;
-                data = null;
-            }
-
-            return this.request({
-                async: false,
-                type: "GET",
-                url: url,
-                data: data,
-                success: callback,
-                dataType: type
-            });
-        },
-
-        /* POST method
-         * @returns     JSON
-         * @param       url String
-         * @param       data String
-         */
-        post: function(url, data) {
-            throw new Error("Not Implemented Yet");
-        },
-
-        /* PUT method
-         * @returns     JSON
-         * @param       options Dict
-         */
-        put: function(url, data) {
-            throw new Error("Not Implemented Yet");
-        },
-
-        /* POST method
-         * @returns     JSON
-         * @param       url String
-         */
-        delete: function(url) {
-            throw new Error("Not Implemented Yet");
-        },
-
-        /* Request method which methods above are adapted to
-         * @returns     JSON
-         * @param       options Dict
-         */
-        request: function(options) {
-            throw new Error("Not Implemented Yet");
+    options = $.extend(defaults, options || {});
+    if (typeof $.douban.http.handlers[options.type] == 'undefined') {
+        // Register and set active the new handler
+        if ($.isFunction(options.handler)) {
+            $.douban.http.register(options.type, options.handler);
+        } else {
+            throw new Error("Invalid HTTP request handler");
         }
     }
+    return $.douban.http.handlers[options.type];
 };
-// }}}
+
+/* Default handler is jquery
+ */
+$.douban.http.activeHandler = jqueryHandler;
+
+/* A dict of HTTP request name and its constructor,
+ */
+$.douban.http.handlers = {
+    jquery: jqueryHandler,
+    greasemonkey: greasemonkeyHandler,
+    gears: gearsHandler
+};
+
+$.douban.http.setActive = function(name) {
+    $.douban.http.activeHandler = $.douban.http.handlers[name];
+}
+
+/* Register new HTTP request handler to ``handlers``
+ */
+$.douban.http.register = function(name, handler) {
+    if ($.isFunction(handler)) {
+        $.douban.http.handlers[name] = constructor;
+    }
+};
+
+/* Unregister an existed HTTP request handler
+ */
+$.douban.http.unregister = function(name) {
+    $.douban.http.handlers[name] = undefined;
+};
+
+/* Built-in HTTP request handlers: 'jquery', 'greasemonkey' and 'gears'
+ */
+function jqueryHandler(options) {
+    return $.ajax(options);
+}
+jqueryHandler.name = 'jquery';
+
+function greasemonkeyHandler(options) {
+    throw new Error("Not Implemented Yet");
+}
+greasemonkeyHandler.name = 'greasemonkey';
+
+function gearsHandler(options) {
+    throw new Error("Not Implemented Yet");
+}
+gearsHandler.name = 'gears';
 
 /* {{{ sha1.js
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
@@ -868,15 +803,20 @@ $.extend(DoubanService.prototype, {
     },
     // }}}
 
-    /* {{{ Adapter methods of http handler
-     */
     get: function(url, params, callback) {
         var json = null;
-        this.http.get(url, params, function(data) {
+        this.http({ async: false,
+                    url: url,
+                    type: 'GET',
+                    data: params,
+                    dataType: 'json',
+                    success: onSuccess });
+        return json;
+
+        function onSuccess(data) {
             json = data;
             if ($.isFunction(callback)) callback(data);
-        }, 'json');
-        return json;
+        }
     },
 
     post: function(url, data) {
@@ -889,9 +829,7 @@ $.extend(DoubanService.prototype, {
 
     delete: function(url) {
         throw new Error("Not Implemented Yet");
-    },
-    // }}}
-
+    }
 });
 
 /* {{{ Douban User Service
@@ -1121,7 +1059,7 @@ $.extend(OAuthClient.prototype, {
      */
     oauthRequest: function(url, data, callback) {
         var data = this.getParameters(url, data);
-        this.http.get(url, data, callback); 
+        this.http({ async: false, url: url, data: data, success: callback });
     }
 });
 

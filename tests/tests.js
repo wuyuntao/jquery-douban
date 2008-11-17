@@ -26,24 +26,35 @@ test("test factory method", function() {
 module("HTTP Testcases");
 
 test("test factory method", function() {
+    equals($.douban.http.activeHandler.name, 'jquery', "default handler is 'jquyer'");
+    $.douban.http.setActive('gears');
+    equals($.douban.http.activeHandler.name, 'gears', "set handler to 'geas' ok");
+
     var request = $.douban.http.factory();
-    equals(request.name, 'jquery', "initialize gears http request handler ok");
-    ok(request.get, "GET method ok");
+    equals(request.name, 'jquery', "initialize jquery http request handler ok");
 
     var request2 = $.douban.http.factory({ type: 'greasemonkey' });
-    equals(request2.name, 'greasemonkey', "initialize gears http request handler ok");
-    ok(request2.post, "POST method ok");
+    equals(request2.name, 'greasemonkey', "initialize greasemonkey http request handler ok");
+
+    $.douban.http.setActive('jquery');
 });
 
 test("test jquery http methods", function() {
     // Privileges are granted only in the scope of the requesting function.
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var request = $.douban.http.factory({ type: 'jquery' });
     var response = null;
-    request.get('http://api.douban.com/book/subject/2023013?alt=json', {},
-                function(json) { response = json; });
+    var request = $.douban.http({ async: false,
+                                  url: 'http://api.douban.com/book/subject/2023013?alt=json',
+                                  success: function(json) { response = json } });
     ok(response, 'get response ok');
+
+    var reponse2 = null;
+    var request2 = $.douban.http.factory();
+    var response2 = request2({ async: false,
+                               url: 'http://api.douban.com/book/subject/2023013?alt=json',
+                               success: function(json) { response = json } });
+    ok(response2, 'get response ok');
 });
 // }}}
 
