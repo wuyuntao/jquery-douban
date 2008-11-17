@@ -15,7 +15,7 @@ const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
 
 const API_HOST = 'http://api.douban.com';
 const PEOPLE_URL = API_HOST + '/people';
-const SEARCH_PEOPLE_URL = PEOPLE_URL;
+const SEARCH_PEOPLE_URL = PEOPLE_URL + '/';         // bug? 没有'/'的话，不能使用
 const GET_PEOPLE_URL = PEOPLE_URL  + '/{USERNAME}';
 const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // hack: %40 => @
 const GET_FRIENDS_URL = GET_PEOPLE_URL + '/friends';
@@ -259,7 +259,6 @@ $.extend(DoubanService.prototype, {
     setParams: function(params) {
         params = $.extend({ 'apikey': this.api.key, 'alt': 'json' }, params || {});
         return params;
-        // return params || {};
     },
 
     /* Set headers for request
