@@ -86,6 +86,14 @@ $.douban.user = {
 };
 // }}}
 
+$.douban.note = {
+    factory: function(data) {
+        return new DoubanNote(data);
+    }
+};
+// }}}
+
+
 /* Factory method of HTTP request handlers
  * @usage
  * // Register new request handler
@@ -176,6 +184,17 @@ gearsHandler.name = 'gears';
 /* {{{ Some utilities
  */
 $.extend({
+    // parse date string to Date object
+    parseDate: function(str) {
+        var re = /^(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})/;
+        var date = str.match(re);
+        for (var i = 1, len = date.length; i < len; i++) {
+            date[i] = parseInt(date[i]);
+            if (i == 2) date[i] -= 1;
+        }
+        return new Date(date[1], date[2], date[3], date[4], date[5], date[6]);
+    },
+
     /* The opposiite of jQuery's native $.param() method.
      * Deserialises a parameter string to an object:
      */
@@ -218,12 +237,11 @@ function DoubanService(options) {
     this.user = new DoubanUserService(this);
 }
 $.extend(DoubanService.prototype, {
-    /* {{{ Adapter methods of client
+    /* Adapter methods of client
      */
     login: function(accessToken) {
         return this.client.login(accessToken);
     },
-    // }}}
 
     get: function(url, params, callback) {
         var json = null;
@@ -338,9 +356,9 @@ function DoubanUser(data) {
 }
 $.extend(DoubanUser.prototype, {
     createFromJson: function(json) {
-        this.id = getId(json);
-        this.userName = getAttr(json, 'db:uid')
-        this.screenName = getAttr(json, 'title');
+        this.id = getUserId(json);
+        this.userName = getAttr(json, 'db:uid');
+        this.screenName = getScreenName(json);
         this.location = getAttr(json, 'db:location');
         this.intro = getAttr(json, 'content');
         this.url = getUrl(json);
@@ -351,6 +369,7 @@ $.extend(DoubanUser.prototype, {
 
 /* Douban user entries
  * @param       data                Well-formatted json feed
+ * @attribute   total
  * @attribute   offset
  * @attribute   limit
  * @attribute   entries
@@ -372,6 +391,59 @@ $.extend(DoubanUserEntries.prototype, {
     },
 });
 
+/* Douban note
+ * @param           data            Well-formatted json feed
+ * @attribute       id              用户ID，"http://api.douban.com/people/1000001"
+ * @attribute       userName        用户名，"ahbei"
+ * @attribute       screenName      昵称，"阿北"
+ * @attribute       location        常居地，"北京"
+ * @attribute       blog            网志主页，"http://ahbei.com/"
+ * @attribute       intro           自我介绍，"豆瓣的临时总管..."
+ * @attribute       url             豆瓣主页，"http://www.douban.com/people/ahbei/"
+ * @attribute       iconUrl         头像，"http://otho.douban.com/icon/u1000001-14.jpg"
+ * @method          createFromJson  由豆瓣返回的用户JSON，初始化用户数据
+ */
+function DoubanNote(data) {
+    this.createFromJson(data);
+}
+$.extend(DoubanNote.prototype, {
+    createFromJson: function(json) {
+        this.id = getId(json);
+        this.title = getTitle(json)
+        this.author = new DoubanUser(json.author);
+        this.summary = getAttr(json, 'summary');
+        this.content = getAttr(json, 'content');
+        this.published = getPublished(json);
+        this.updated = getUpdated(json);
+        this.url = getUrl(json);
+        this.isPublic = getAttr(json, 'privacy') == 'public' ? true: false;
+        this.isReplyEnabled = getAttr(json, 'can_reply') == 'yes' ? true: false;
+    },
+});
+
+/* Douban user entries
+ * @param       data                Well-formatted json feed
+ * @attribute   total
+ * @attribute   offset
+ * @attribute   limit
+ * @attribute   entries
+ * @method      createFromJson
+ */
+function DoubanNoteEntries(data) {
+    this.createFromJson(data);
+}
+$.extend(DoubanNoteEntries.prototype, {
+    createFromJson: function(json) {
+        this.title = getTitle(json);
+        this.total = getTotal(json);
+        this.offset = getOffset(json);
+        this.limit = getLimit(json);
+        this.entries = []
+        for (var i = 0, len = json.entry.length; i < len; i++) {
+            this.entries.push(new DoubanNote(json.entry[i]));
+        }
+    },
+});
 /* OAuth client
  */
 function OAuthClient(options) {
@@ -531,16 +603,26 @@ function Token(key, secret) {
     this.secret = secret || '';
 }
 
-/* {{{ Douban GData JSON feed parsers
+/* Douban GData JSON feed parsers
  */
 // Get attributes from json
 function getAttr(json, attr) {
-    return typeof json[attr] == 'undefined' ? '' : json[attr]['$t'];
+    if (typeof json[attr] != 'undefined') return json[attr]['$t'];
+    var attrs = json['db:attribute'];
+    if (typeof attrs != 'undefined') {
+        for (var i in attrs) {
+            if (attrs[i]['@name'] == attr) return attrs[i]['$t'];
+        }
+    }
+    return '';
 }
 
-// Get id from json
-function getId(json) {
-    return getAttr(json, 'id');
+function getUserId(json) {
+    return getAttr(json, 'id') || getAttr(json, 'uri');
+}
+
+function getScreenName(json) {
+    return getTitle(json) || getAttr(json, 'name');
 }
 
 // Get title
@@ -566,19 +648,36 @@ function getLimit(json) {
 // Get url from json links
 function getUrl(json, attr) {
     attr = attr || 'alternate';
-    for (i in json['link']) {
-        var link = json['link'][i];
-        if (link['@rel'] == attr) {
-            return link['@href'];
-        }
+    var links = json['link'];
+    for (var i in links) {
+        if (links[i]['@rel'] == attr) return links[i]['@href'];
     }
     return '';
+}
+
+// Get id from json
+function getId(json) {
+    return getUrl(json, 'self');
 }
 
 // Get icon url from json links
 function getIconUrl(json) {
     return getUrl(json, 'icon');
 }
-// }}}
+
+// Get time
+function getTime(json, attr) {
+    return $.parseDate(getAttr(json, attr));
+}
+
+// Get published time
+function getPublished(json) {
+    return getTime(json, 'published');
+}
+
+// Get updated time
+function getUpdated(json) {
+    return getTime(json, 'updated');
+}
 
 })(jQuery);

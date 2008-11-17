@@ -202,18 +202,20 @@ test("test user object", function() {
 });
 
 test("test note object", function() {
-    var json = {"updated":{"$t":"2008-04-29T10:38:04+08:00"},"author":{"link":[{"@rel":"self","@href":"http://api.douban.com/people/1139389"},{"@rel":"alternate","@href":"http://www.douban.com/people/wyt/"},{"@rel":"icon","@href":"http://otho.douban.com/icon/u1139389-21.jpg"}],"uri":{"$t":"http://api.douban.com/people/1139389"},"name":{"$t":"wu yuntao"}},"title":{"$t":"纪念一下"},"summary":{"$t":"这是摘要"},"content":{"$t":"这是全文"},"link":[{"@rel":"self","@href":"http://api.douban.com/note/10671354"},{"@rel":"alternate","@href":"http://www.douban.com/note/10671354/"}],"published":{"$t":"2008-04-29T10:38:04+08:00"},"db:attribute":[{"$t":"public","@name":"privacy"},{"$t":"yes","@name":"can_reply"}],"id":{"$t":"http://api.douban.com/note/10671354"}};
+    var json = {"updated":{"$t":"2008-04-30T10:48:04+08:00"},"author":{"link":[{"@rel":"self","@href":"http://api.douban.com/people/1139389"},{"@rel":"alternate","@href":"http://www.douban.com/people/wyt/"},{"@rel":"icon","@href":"http://otho.douban.com/icon/u1139389-21.jpg"}],"uri":{"$t":"http://api.douban.com/people/1139389"},"name":{"$t":"wu yuntao"}},"title":{"$t":"纪念一下"},"summary":{"$t":"这是摘要"},"content":{"$t":"这是全文"},"link":[{"@rel":"self","@href":"http://api.douban.com/note/10671354"},{"@rel":"alternate","@href":"http://www.douban.com/note/10671354/"}],"published":{"$t":"2008-04-29T10:38:04+08:00"},"db:attribute":[{"$t":"public","@name":"privacy"},{"$t":"yes","@name":"can_reply"}],"id":{"$t":"http://api.douban.com/note/10671354"}};
 
     var note = $.douban.note.factory(json);
+    var date1 = new Date(2008, 03, 29, 10, 38, 04);
+    var date2 = new Date(2008, 03, 30, 10, 48, 04);
     equals(note.id, "http://api.douban.com/note/10671354", "get note id ok");
     equals(note.title, "纪念一下", "get note title ok");
     equals(note.author.id, "http://api.douban.com/people/1139389", "get author id ok");
-    equals(note.author.userName, "wyt", "get author name ok");
+    equals(note.author.screenName, "wu yuntao", "get author name ok");
     equals(note.summary, "这是摘要", "get note summary ok");
     equals(note.content, "这是全文", "get note content ok");
-    equals(note.published, new Date(), "get note published time ok");
-    equals(note.updated, new Date(), "get note updated time ok");
-    equals(note.url, "http://www.douban.com/note/10671354", "get note url ok");
+    equals(note.published.getTime(), date1.getTime(), "get note published time ok");
+    equals(note.updated.getTime(), date2.getTime(), "get note updated time ok");
+    equals(note.url, "http://www.douban.com/note/10671354/", "get note url ok");
     equals(note.isPublic, true, "check if note is public ok");
     equals(note.isReplyEnabled, true, "check if is able to reply ok");
 });
