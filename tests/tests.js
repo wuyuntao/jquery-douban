@@ -232,7 +232,7 @@ test("test note api", function() {
 
     // delete the note
     service.note.delete(note4);
-    var note5 = service.note.get(note4.id);
+    var note5 = service.note.get(note4);
     ok(!note5, "note deleted");
 });
 

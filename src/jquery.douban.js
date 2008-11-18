@@ -286,7 +286,7 @@ $.extend(DoubanService.prototype, {
 
     post: function(url, data, callback) {
         var json = null;
-        var params = this.setParams(params);
+        var params = this.setParams();
         var setHeaders = this.setHeaders(url, 'POST', params);
         var url = url + '?' + $.param(params);
         this.http({ async: false,
@@ -308,7 +308,7 @@ $.extend(DoubanService.prototype, {
 
     put: function(url, data, callback) {
         var json = null;
-        var params = this.setParams(params);
+        var params = this.setParams();
         var setHeaders = this.setHeaders(url, 'PUT', params);
         var url = url + '?' + $.param(params);
         this.http({ async: false,
@@ -328,8 +328,22 @@ $.extend(DoubanService.prototype, {
         }
     },
 
-    delete: function(url) {
-        throw new Error("Not Implemented Yet");
+    delete: function(url, callback) {
+        var response = null;
+        var params = this.setParams();
+        var setHeaders = this.setHeaders(url, 'DELETE', params);
+        this.http({ async: false,
+                    url: url,
+                    type: 'DELETE',
+                    data: params,
+                    beforeSend: setHeaders,
+                    success: onSuccess });
+        return response;
+
+        function onSuccess(data) {
+            response = data;
+            if ($.isFunction(callback)) callback(data);
+        }
     },
 
     setParams: function(params) {
@@ -403,8 +417,9 @@ function DoubanNoteService(service) {
     this.service = service;
 }
 $.extend(DoubanNoteService.prototype, {
-    get: function(id) {
-        var url = GET_NOTE_URL.replace(/\{NOTEID\}/, id);
+    get: function(note) {
+        if (typeof note == 'object') var url = note.id;
+        else var url = GET_NOTE_URL.replace(/\{NOTEID\}/, note);
         var json = this.service.get(url);
         return json ? new DoubanNote(json) : false;
     },
@@ -432,8 +447,11 @@ $.extend(DoubanNoteService.prototype, {
         return json ? new DoubanNote(json) : false;
     },
 
-    delete: function(id) {
-        throw new Error("Not Implemented Yet");
+    delete: function(note) {
+        if (typeof note == 'object') var url = note.id;
+        else if (note.match(/\d+/)) var url = UPDATE_NOTE_URL.replace(/\{NOTEID\}/, note);
+        var response = this.service.delete(url);
+        return response == 'ok' ? true : false;
     }
 });
 
