@@ -306,8 +306,26 @@ $.extend(DoubanService.prototype, {
         }
     },
 
-    put: function(url, data) {
-        throw new Error("Not Implemented Yet");
+    put: function(url, data, callback) {
+        var json = null;
+        var params = this.setParams(params);
+        var setHeaders = this.setHeaders(url, 'PUT', params);
+        var url = url + '?' + $.param(params);
+        this.http({ async: false,
+                    url: url,
+                    data: data,
+                    dataType: 'json',
+                    type: 'PUT',
+                    contentType: 'application/atom+xml',
+                    processData: false,
+                    beforeSend: setHeaders,
+                    success: onSuccess });
+        return json;
+
+        function onSuccess(data) {
+            json = data;
+            if ($.isFunction(callback)) callback(data);
+        }
     },
 
     delete: function(url) {
@@ -393,7 +411,7 @@ $.extend(DoubanNoteService.prototype, {
 
     getForUser: function(user, offset, limit) {
         if (typeof user == 'object') var url = user.id + '/notes';
-        if (typeof user == 'string') var url = GET_USERS_NOTE_URL.replace(/\{USERNAME\}/, user);
+        else if (typeof user == 'string') var url = GET_USERS_NOTE_URL.replace(/\{USERNAME\}/, user);
         var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
         var json = this.service.get(url, params);
         return json ? new DoubanNoteEntries(json) : false;
@@ -406,8 +424,12 @@ $.extend(DoubanNoteService.prototype, {
         return json ? new DoubanNote(json) : false;
     },
 
-    update: function(id, title, content) {
-        throw new Error("Not Implemented Yet");
+    update: function(note, title, content, isPublic, isReplyEnabled) {
+        if (typeof note == 'object') var url = note.id;
+        else if (note.match(/\d+/)) var url = UPDATE_NOTE_URL.replace(/\{NOTEID\}/, note);
+        var data = $.douban.note.createXml(title, content, isPublic, isReplyEnabled);
+        var json = this.service.put(url, data);
+        return json ? new DoubanNote(json) : false;
     },
 
     delete: function(id) {

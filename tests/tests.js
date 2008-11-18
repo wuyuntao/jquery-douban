@@ -227,12 +227,12 @@ test("test note api", function() {
     // update the note
     var note4 = service.note.update(note3, "功能多不如DD多", "错了，当时不是这样的");
     equals(note4.id, note3.id, "get id of note ok");
-    equals(note4.title, '功能多不如D多', "get title of note ok");
+    equals(note4.title, '功能多不如DD多', "get title of note ok");
     equals(note4.content, '错了，当时不是这样的', "get title of note ok");
 
     // delete the note
-    service.note.delete(noteId);
-    var note5 = service.note.get(noteId);
+    service.note.delete(note4);
+    var note5 = service.note.get(note4.id);
     ok(!note5, "note deleted");
 });
 
