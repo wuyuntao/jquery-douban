@@ -96,10 +96,24 @@ $.douban.user = {
 $.douban.note = {
     factory: function(data) {
         return new DoubanNote(data);
+    },
+
+    /* create POST or PUT xml
+     * @param       title String
+     * @param       content String
+     * @param       isPublic Boolean
+     * @param       isReplyEnabled Boolean
+     */
+    createXml: function(title, content, isPublic, isReplyEnabled) {
+        isPublic = isPublic ? 'public' : 'private';
+        isReplyEnabled = isReplyEnabled ? 'yes' : 'no';
+        var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>{TITLE}</title><content>{CONTENT}</content><db:attribute name="privacy">{IS_PUBLIC}</db:attribute><db:attribute name="can_reply">{IS_REPLY_ENABLED}</db:attribute></entry>';
+        return xml.replace(/\{TITLE\}/, title)
+                  .replace(/\{CONTENT\}/, content)
+                  .replace(/\{IS_PUBLIC\}/, isPublic)
+                  .replace(/\{IS_REPLY_ENABLED\}/, isReplyEnabled);
     }
 };
-// }}}
-
 
 /* Factory method of HTTP request handlers
  * @usage
@@ -270,8 +284,26 @@ $.extend(DoubanService.prototype, {
         }
     },
 
-    post: function(url, data) {
-        throw new Error("Not Implemented Yet");
+    post: function(url, data, callback) {
+        var json = null;
+        var params = this.setParams(params);
+        var setHeaders = this.setHeaders(url, 'POST', params);
+        var url = url + '?' + $.param(params);
+        this.http({ async: false,
+                    url: url,
+                    data: data,
+                    dataType: 'json',
+                    type: 'POST',
+                    contentType: 'application/atom+xml',
+                    processData: false,
+                    beforeSend: setHeaders,
+                    success: onSuccess });
+        return json;
+
+        function onSuccess(data) {
+            json = data;
+            if ($.isFunction(callback)) callback(data);
+        }
     },
 
     put: function(url, data) {
@@ -367,8 +399,11 @@ $.extend(DoubanNoteService.prototype, {
         return json ? new DoubanNoteEntries(json) : false;
     },
 
-    add: function(title, content) {
-        throw new Error("Not Implemented Yet");
+    add: function(title, content, isPublic, isReplyEnabled) {
+        var url = ADD_NOTE_URL;
+        var data = $.douban.note.createXml(title, content, isPublic, isReplyEnabled);
+        var json = this.service.post(url, data);
+        return json ? new DoubanNote(json) : false;
     },
 
     update: function(id, title, content) {

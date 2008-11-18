@@ -168,7 +168,7 @@ test("test user api", function() {
 
     // search people
     var result = service.user.search('ke', 6, 3);
-    equals(result.total, 48, "search people total results ok");
+    equals(result.total, 49, "search people total results ok");
     equals(result.offset, 6, "search people start index ok");
     equals(result.limit, 3, "search people max results ok");
     equals(result.entries.length, 3, "search people ok");
@@ -184,7 +184,6 @@ test("test note api", function() {
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
 
     // get note by id
-    /*
     var note = service.note.get('21700087');
     var date1 = new Date(2008, 10, 18, 01, 48, 21);
     var date2 = new Date(2008, 10, 18, 02, 04, 50);
@@ -199,7 +198,6 @@ test("test note api", function() {
     equals(note.url, "http://www.douban.com/note/21700087/", "get note url ok");
     equals(note.isPublic, true, "check if note is public ok");
     equals(note.isReplyEnabled, true, "check if is able to reply ok");
-    */
 
     // get note by api url
     // var note2 = service.note.get('http://api.douban.com/note/18209070');
@@ -221,16 +219,14 @@ test("test note api", function() {
     equals(notes2.entries[0].id, "http://api.douban.com/note/20573790", "get note id ok");
 
     // publish a new note
-    var noteId = service.note.add("功能多不如MM多", "没错，当时就是这样");
-    var note3 = service.note.get(noteId);
-    equals(note3.id, 'http://api.douban.com/note/18209070', "get id of note ok");
+    var note3 = service.note.add("功能多不如MM多", "没错，当时就是这样");
+    ok(note3.id.match(/http:\/\/api\.douban\.com\/note\/\d+/), "get id of note ok");
     equals(note3.title, '功能多不如MM多', "get title of note ok");
     equals(note3.content, '没错，当时就是这样', "get title of note ok");
 
     // update the note
-    service.note.update(noteId, "功能多不如DD多", "错了，当时不是这样的");
-    var note4 = service.note.get(noteId);
-    equals(note4.id, 'http://api.douban.com/note/18209070', "get id of note ok");
+    var note4 = service.note.update(note3, "功能多不如DD多", "错了，当时不是这样的");
+    equals(note4.id, note3.id, "get id of note ok");
     equals(note4.title, '功能多不如D多', "get title of note ok");
     equals(note4.content, '错了，当时不是这样的', "get title of note ok");
 
@@ -272,6 +268,10 @@ test("test note object", function() {
     equals(note.url, "http://www.douban.com/note/10671354/", "get note url ok");
     equals(note.isPublic, true, "check if note is public ok");
     equals(note.isReplyEnabled, true, "check if is able to reply ok");
+
+    // create xml
+    var xml = $.douban.note.createXml("标题", "内容", true, false);
+    equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>标题</title><content>内容</content><db:attribute name="privacy">public</db:attribute><db:attribute name="can_reply">no</db:attribute></entry>', "get xml ok");
 });
 
 // vim: foldmethod=indent
