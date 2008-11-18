@@ -20,6 +20,13 @@ const GET_PEOPLE_URL = PEOPLE_URL  + '/{USERNAME}';
 const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // hack: %40 => @
 const GET_FRIENDS_URL = GET_PEOPLE_URL + '/friends';
 const GET_CONTACTS_URL = GET_PEOPLE_URL + '/contacts';
+
+const NOTE_URL = API_HOST + '/note';
+const GET_NOTE_URL = NOTE_URL + '/{NOTEID}';
+const GET_USERS_NOTE_URL = GET_PEOPLE_URL + '/notes';
+const ADD_NOTE_URL = API_HOST + '/notes';
+const UPDATE_NOTE_URL = GET_NOTE_URL;
+const DELETE_NOTE_URL = GET_NOTE_URL;
 // }}}
 
 /* {{{ Factory method of jQuery Douban
@@ -235,6 +242,7 @@ function DoubanService(options) {
                                             apiSecret: this.api.secret,
                                             type: this.options.httpType });
     this.user = new DoubanUserService(this);
+    this.note = new DoubanNoteService(this);
 }
 $.extend(DoubanService.prototype, {
     /* Adapter methods of client
@@ -339,6 +347,39 @@ $.extend(DoubanUserService.prototype, {
     }
 });
 
+/* Douban note service
+ */
+function DoubanNoteService(service) {
+    this.service = service;
+}
+$.extend(DoubanNoteService.prototype, {
+    get: function(id) {
+        var url = GET_NOTE_URL.replace(/\{NOTEID\}/, id);
+        var json = this.service.get(url);
+        return json ? new DoubanNote(json) : false;
+    },
+
+    getForUser: function(user, offset, limit) {
+        if (typeof user == 'object') var url = user.id + '/notes';
+        if (typeof user == 'string') var url = GET_USERS_NOTE_URL.replace(/\{USERNAME\}/, user);
+        var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
+        var json = this.service.get(url, params);
+        return json ? new DoubanNoteEntries(json) : false;
+    },
+
+    add: function(title, content) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    update: function(id, title, content) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    delete: function(id) {
+        throw new Error("Not Implemented Yet");
+    }
+});
+
 /* Douban user
  * @param           data            Well-formatted json feed
  * @attribute       id              用户ID，"http://api.douban.com/people/1000001"
@@ -384,7 +425,7 @@ $.extend(DoubanUserEntries.prototype, {
         this.total = getTotal(json);
         this.offset = getOffset(json);
         this.limit = getLimit(json);
-        this.entries = []
+        this.entries = [];
         for (var i = 0, len = json.entry.length; i < len; i++) {
             this.entries.push(new DoubanUser(json.entry[i]));
         }
@@ -410,7 +451,8 @@ $.extend(DoubanNote.prototype, {
     createFromJson: function(json) {
         this.id = getId(json);
         this.title = getTitle(json)
-        this.author = new DoubanUser(json.author);
+        if (typeof json.author != 'undefined')
+            this.author = new DoubanUser(json.author);
         this.summary = getAttr(json, 'summary');
         this.content = getAttr(json, 'content');
         this.published = getPublished(json);
@@ -418,7 +460,7 @@ $.extend(DoubanNote.prototype, {
         this.url = getUrl(json);
         this.isPublic = getAttr(json, 'privacy') == 'public' ? true: false;
         this.isReplyEnabled = getAttr(json, 'can_reply') == 'yes' ? true: false;
-    },
+    }
 });
 
 /* Douban user entries
@@ -435,10 +477,11 @@ function DoubanNoteEntries(data) {
 $.extend(DoubanNoteEntries.prototype, {
     createFromJson: function(json) {
         this.title = getTitle(json);
-        this.total = getTotal(json);
+        this.author = new DoubanUser(json.author);
+        // this.total = getTotal(json);
         this.offset = getOffset(json);
         this.limit = getLimit(json);
-        this.entries = []
+        this.entries = [];
         for (var i = 0, len = json.entry.length; i < len; i++) {
             this.entries.push(new DoubanNote(json.entry[i]));
         }
