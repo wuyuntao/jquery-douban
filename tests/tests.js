@@ -31,7 +31,7 @@ test("test factory method", function() {
     ok(service, "initialize douban service ok");
     equals(service.api.key, '1', "api key expected to be 1");
     equals(service.api.secret, '2', "api secret expected to be 2");
-    equals(service.options.httpType, 'jquery', "http type expected to be \"jquery\"");
+    equals(service._http.name, 'jquery', "http type expected to be \"jquery\"");
 
     var service2 = $.douban({ apiKey: '3', apiSecret: '4', httpType: 'gears' });
     ok(service2, "initialize douban service ok");
@@ -144,8 +144,8 @@ test("test factory method", function() {
     var service = $.douban.service.factory({ apiKey: '1', apiSecret: '2' });
     equals(service.api.key, '1', "api key expected to be 1");
     equals(service.api.secret, '2', "api secret expected to be 2");
-    equals(service.http.name, 'jquery', "http type expected to be \"jquery\"");
-    ok(service.client, "client initialized");
+    equals(service._http.name, 'jquery', "http type expected to be \"jquery\"");
+    ok(service._client, "client initialized");
 });
 
 test("test client login", function() {

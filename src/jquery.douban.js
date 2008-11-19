@@ -30,7 +30,8 @@ const UPDATE_NOTE_URL = GET_NOTE_URL;
 const DELETE_NOTE_URL = GET_NOTE_URL;
 // }}}
 
-/* {{{ Factory method of jQuery Douban
+// {{{ jQuery Douban
+/* Factory method of jQuery Douban
  * @returns     Douban service object
  * @param       options Dict
  * @usage
@@ -51,9 +52,8 @@ $.douban = function(factory, options) {
         return false;
     }
 };
-// }}}
 
-/* {{{ Factory method of Douban Service
+/* Factory method of Douban Service
  * @returns     Douban service object
  * @param       options Dict
  * @usage
@@ -66,13 +66,13 @@ $.douban.service = {
         return new DoubanService(options);
     }
 };
-// }}}
 
-/* {{{ Factory method of OAuth Client
+/* Factory method of OAuth Client
  * @returns     OAuth client object
  * @param       options Dict
  * @usage
- * var client = $.douban.client.factory({ apiKey: 'blah', apiSecret: 'blah' });
+ * var apiToken = { apiKey: 'blah', apiSecret: 'blah' };
+ * var client = $.douban.client.factory({ apiToken: apiToken })
  * var requestToken = client.getRequestToken();
  * var url = client.getAuthorizationUrl(requestToken);
  * var accessToken = client.getAccessToken(requestToken);
@@ -83,36 +83,21 @@ $.douban.client = {
         return new OAuthClient(options);
     }
 };
-// }}}
 
-/* {{{ Factory method of Douban User
+/* Factory method of Douban User
  */
 $.douban.user = {
     factory: function(data) {
         return new User(data);
     }
 };
-// }}}
 
 $.douban.note = {
     factory: function(data) {
         return new Note(data);
     },
-
-    /* create POST or PUT xml
-     * @param       title String
-     * @param       content String
-     * @param       isPublic Boolean
-     * @param       isReplyEnabled Boolean
-     */
     createXml: function(title, content, isPublic, isReplyEnabled) {
-        isPublic = isPublic ? 'public' : 'private';
-        isReplyEnabled = isReplyEnabled ? 'yes' : 'no';
-        var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>{TITLE}</title><content>{CONTENT}</content><db:attribute name="privacy">{IS_PUBLIC}</db:attribute><db:attribute name="can_reply">{IS_REPLY_ENABLED}</db:attribute></entry>';
-        return xml.replace(/\{TITLE\}/, title)
-                  .replace(/\{CONTENT\}/, content)
-                  .replace(/\{IS_PUBLIC\}/, isPublic)
-                  .replace(/\{IS_REPLY_ENABLED\}/, isReplyEnabled);
+        return Note.createXml(title, content, isPublic, isReplyEnabled);
     }
 };
 
@@ -202,6 +187,7 @@ function gearsHandler(options) {
     throw new Error("Not Implemented Yet");
 }
 gearsHandler.name = 'gears';
+// }}}
 
 /* {{{ Some utilities
  */
@@ -316,9 +302,9 @@ $.extend({
 });
 // }}}
 
-/* Douban services
+/* {{{ Douban service classes, like ``DoubanService`` and ``UserService``
 
-/* Douban service
+/* Douban client
  * @returns     null
  * @param       options Dict
  * @option      apiKey String
@@ -326,40 +312,38 @@ $.extend({
  * @option      httpType String
  * @option      httpHandler String
  */
-function DoubanService(options) {
-    /* Default options */
-    var defaults = {
-        apiKey: '',
-        apiSecret: '',
-        httpType: 'jquery',
-    };
-    this.options = $.extend(defaults, options || {});;
-    this.api = new Token(this.options.apiKey, this.options.apiSecret);
-    this.http = $.douban.http.factory({ type: this.options.httpType });
-    this.client = $.douban.client.factory({ apiKey: this.api.key,
-                                            apiSecret: this.api.secret,
-                                            type: this.options.httpType });
-    this.user = new DoubanUserService(this);
-    this.note = new DoubanNoteService(this);
-}
-$.extend(DoubanService.prototype, {
-    /* Adapter methods of client
-     */
+var DoubanService = $.class({
+    init: function(options) {
+        var defaults = {
+            apiKey: '',
+            apiSecret: '',
+            httpType: 'jquery',
+        };
+        this.options = $.extend(defaults, options || {});;
+        this.api = new Token(this.options.apiKey, this.options.apiSecret);
+        this._http = $.douban.http.factory({ type: this.options.httpType });
+        this._client = $.douban.client.factory({ apiKey: this.api.key,
+                                                 apiSecret: this.api.secret,
+                                                 type: this.options.httpType });
+        this.user = new UserService(this);
+        this.note = new NoteService(this);
+    },
+
     login: function(accessToken) {
-        return this.client.login(accessToken);
+        return this._client.login(accessToken);
     },
 
     get: function(url, params, callback) {
         var json = null;
         var params = this.setParams(params);
         var setHeaders = this.setHeaders(url, 'GET', params);
-        this.http({ async: false,
-                    url: url,
-                    type: 'GET',
-                    data: params,
-                    dataType: 'json',
-                    beforeSend: setHeaders,
-                    success: onSuccess });
+        this._http({ async: false,
+                     url: url,
+                     type: 'GET',
+                     data: params,
+                     dataType: 'json',
+                     beforeSend: setHeaders,
+                     success: onSuccess });
         return json;
 
         function onSuccess(data) {
@@ -373,15 +357,15 @@ $.extend(DoubanService.prototype, {
         var params = this.setParams();
         var setHeaders = this.setHeaders(url, 'POST', params);
         var url = url + '?' + $.param(params);
-        this.http({ async: false,
-                    url: url,
-                    data: data,
-                    dataType: 'json',
-                    type: 'POST',
-                    contentType: 'application/atom+xml',
-                    processData: false,
-                    beforeSend: setHeaders,
-                    success: onSuccess });
+        this._http({ async: false,
+                     url: url,
+                     data: data,
+                     dataType: 'json',
+                     type: 'POST',
+                     contentType: 'application/atom+xml',
+                     processData: false,
+                     beforeSend: setHeaders,
+                     success: onSuccess });
         return json;
 
         function onSuccess(data) {
@@ -395,15 +379,15 @@ $.extend(DoubanService.prototype, {
         var params = this.setParams();
         var setHeaders = this.setHeaders(url, 'PUT', params);
         var url = url + '?' + $.param(params);
-        this.http({ async: false,
-                    url: url,
-                    data: data,
-                    dataType: 'json',
-                    type: 'PUT',
-                    contentType: 'application/atom+xml',
-                    processData: false,
-                    beforeSend: setHeaders,
-                    success: onSuccess });
+        this._http({ async: false,
+                     url: url,
+                     data: data,
+                     dataType: 'json',
+                     type: 'PUT',
+                     contentType: 'application/atom+xml',
+                     processData: false,
+                     beforeSend: setHeaders,
+                     success: onSuccess });
         return json;
 
         function onSuccess(data) {
@@ -416,12 +400,12 @@ $.extend(DoubanService.prototype, {
         var response = null;
         var params = this.setParams();
         var setHeaders = this.setHeaders(url, 'DELETE', params);
-        this.http({ async: false,
-                    url: url,
-                    type: 'DELETE',
-                    data: params,
-                    beforeSend: setHeaders,
-                    success: onSuccess });
+        this._http({ async: false,
+                     url: url,
+                     type: 'DELETE',
+                     data: params,
+                     beforeSend: setHeaders,
+                     success: onSuccess });
         return response;
 
         function onSuccess(data) {
@@ -442,7 +426,7 @@ $.extend(DoubanService.prototype, {
      * @param       params Dict
      */
     setHeaders: function(url, type, params) {
-        var headers = this.client.getAuthHeaders(url, type, params);
+        var headers = this._client.getAuthHeaders(url, type, params);
         return function(xhr) {
             xhr.setRequestHeader('Authorization', headers);
             xhr.setRequestHeader('WWW-Authenticate', 'OAuth realm=""');
@@ -450,61 +434,68 @@ $.extend(DoubanService.prototype, {
     }
 });
 
-/* Douban User Service
+/* Base class of Douban API services
+ */
+var BaseService = $.class({
+    init: function(service) {
+        this._service = service;
+    }
+});
+
+/* Douban User API Service
  * @method      get             获取用户信息
  * @method      search          获取当前授权用户信息
  * @method      current         搜索用户
  * @method      friend          获取用户朋友
  * @method      contact         获取用户关注的人
  */
-function DoubanUserService(service) {
-    this.service = service;
-}
-$.extend(DoubanUserService.prototype, {
+var UserService = $.class(BaseService, {
     get: function(name) {
         var url = GET_PEOPLE_URL.replace(/\{USERNAME\}/, name);
-        var json = this.service.get(url);
+        var json = this._service.get(url);
         return json ? new User(json) : false;
     },
 
     search: function(query, offset, limit) {
         var url = SEARCH_PEOPLE_URL;
         var params = { 'q': query, 'start-index': offset || 0, 'max-results': limit || 50 };
-        var json = this.service.get(url, params);
+        var json = this._service.get(url, params);
         return json ? new UserEntries(json) : false;
     },
 
     current: function() {
         var url = GET_CURRENT_URL;
-        var json = this.service.get(url);
+        var json = this._service.get(url);
         return json ? new User(json) : false;
     },
 
     friends: function(user, offset, limit) {
         var url = GET_FRIENDS_URL.replace(/\{USERNAME\}/, user);
         var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
-        var json = this.service.get(url, params);
+        var json = this._service.get(url, params);
         return json ? new UserEntries(json) : false;
     },
 
     contacts: function(user, offset, limit) {
         var url = GET_CONTACTS_URL.replace(/\{USERNAME\}/, user);
         var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
-        var json = this.service.get(url, params);
+        var json = this._service.get(url, params);
         return json ? new UserEntries(json) : false;
     }
 });
 
-/* Douban note service
+/* Douban Note API Service
+ * @method      get             获取日记
+ * @method      getForUser      获取用户的所有日记
+ * @method      add             发表新日记
+ * @method      update          更新日记
+ * @method      delete          删除日记
  */
-function DoubanNoteService(service) {
-    this.service = service;
-}
-$.extend(DoubanNoteService.prototype, {
+var NoteService = $.class(BaseService, {
     get: function(note) {
         if (typeof note == 'object') var url = note.id;
         else var url = GET_NOTE_URL.replace(/\{NOTEID\}/, note);
-        var json = this.service.get(url);
+        var json = this._service.get(url);
         return json ? new Note(json) : false;
     },
 
@@ -512,32 +503,33 @@ $.extend(DoubanNoteService.prototype, {
         if (typeof user == 'object') var url = user.id + '/notes';
         else if (typeof user == 'string') var url = GET_USERS_NOTE_URL.replace(/\{USERNAME\}/, user);
         var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
-        var json = this.service.get(url, params);
+        var json = this._service.get(url, params);
         return json ? new NoteEntries(json) : false;
     },
 
     add: function(title, content, isPublic, isReplyEnabled) {
         var url = ADD_NOTE_URL;
-        var data = $.douban.note.createXml(title, content, isPublic, isReplyEnabled);
-        var json = this.service.post(url, data);
+        var data = Note.createXml(title, content, isPublic, isReplyEnabled);
+        var json = this._service.post(url, data);
         return json ? new Note(json) : false;
     },
 
     update: function(note, title, content, isPublic, isReplyEnabled) {
         if (typeof note == 'object') var url = note.id;
         else if (note.match(/\d+/)) var url = UPDATE_NOTE_URL.replace(/\{NOTEID\}/, note);
-        var data = $.douban.note.createXml(title, content, isPublic, isReplyEnabled);
-        var json = this.service.put(url, data);
+        var data = Note.createXml(title, content, isPublic, isReplyEnabled);
+        var json = this._service.put(url, data);
         return json ? new Note(json) : false;
     },
 
     delete: function(note) {
         if (typeof note == 'object') var url = note.id;
         else if (note.match(/\d+/)) var url = UPDATE_NOTE_URL.replace(/\{NOTEID\}/, note);
-        var response = this.service.delete(url);
+        var response = this._service.delete(url);
         return response == 'ok' ? true : false;
     }
 });
+// }}}
 
 // {{{ Douban object classes like ``User`` and ``Note``
 /* Base class of douban object like user and note 
@@ -749,6 +741,22 @@ var Note = $.class(DoubanObject, {
         return this.getAttr('can_reply') == 'yes' ? true: false;
     }
 });
+// Class methods
+/* create POST or PUT xml
+* @param       title String
+* @param       content String
+* @param       isPublic Boolean
+* @param       isReplyEnabled Boolean
+*/
+Note.createXml = function(title, content, isPublic, isReplyEnabled) {
+    isPublic = isPublic ? 'public' : 'private';
+    isReplyEnabled = isReplyEnabled ? 'yes' : 'no';
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>{TITLE}</title><content>{CONTENT}</content><db:attribute name="privacy">{IS_PUBLIC}</db:attribute><db:attribute name="can_reply">{IS_REPLY_ENABLED}</db:attribute></entry>';
+    return xml.replace(/\{TITLE\}/, title)
+              .replace(/\{CONTENT\}/, content)
+              .replace(/\{IS_PUBLIC\}/, isPublic)
+              .replace(/\{IS_REPLY_ENABLED\}/, isReplyEnabled);
+};
 
 /* Douban note entries
  * @param       data                Well-formatted json feed
