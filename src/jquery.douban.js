@@ -247,6 +247,19 @@ $.extend({
         return names.length == 1 && !names[0] ? [] : names;
     },
 
+    bind: function(func, scope) {
+      return function() {
+        return func.apply(scope, $.makeArray(arguments));
+      }
+    },
+
+    wrap: function(func, wrapper) {
+      var __method = func;
+      return function() {
+        return wrapper.apply(this, [$.bind(__method, this)].concat($.makeArray(arguments)));
+      }
+    },
+
     /* Class creation and inheriance.
      * Copied from Low Pro for jQuery
      * http://www.danwebb.net/2008/2/3/how-to-use-low-pro-for-jquery
@@ -613,6 +626,20 @@ var DoubanObjectEntries = $.class(DoubanObject, {
         this.createFromJson();
     },
 
+    /* Create object from given JSON feed.
+     * Get general attributes for entry feed, like ``total`` and ``limit``
+     * @param   data JSON
+     */
+    createFromJson: function(doubanObject) {
+        this.total = this.getTotal();
+        this.offset = this.getOffset();
+        this.limit = this.getLimit();
+        this.entries = [];
+        for (var i = 0, len = this._entries.length; i < len; i++) {
+            this.entries.push(new doubanObject(this._entries[i]));
+        }
+    },
+
     getTotal: function() {
         return parseInt(this.getAttr("opensearch:totalResults") || "0");
     },
@@ -623,7 +650,7 @@ var DoubanObjectEntries = $.class(DoubanObject, {
 
     getLimit: function() {
         return parseInt(this.getAttr("opensearch:itemsPerPage") || "0");
-    },
+    }
 
 });
 
@@ -682,15 +709,9 @@ var User = $.class(DoubanObject, {
  * @method      createFromJson
  */
 var UserEntries = $.class(DoubanObjectEntries, {
-    createFromJson: function() {
+    createFromJson: function($super) {
         this.query = this.getTitle().replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
-        this.total = this.getTotal();
-        this.offset = this.getOffset();
-        this.limit = this.getLimit();
-        this.entries = [];
-        for (var i = 0, len = this._entries.length; i < len; i++) {
-            this.entries.push(new User(this._entries[i]));
-        }
+        $super(User);
     }
 });
 
@@ -727,7 +748,6 @@ var Note = $.class(DoubanObject, {
     getIsReplyEnabled: function() {
         return this.getAttr('can_reply') == 'yes' ? true: false;
     }
-
 });
 
 /* Douban note entries
@@ -739,17 +759,11 @@ var Note = $.class(DoubanObject, {
  * @method      createFromJson
  */
 var NoteEntries = $.class(DoubanObjectEntries, {
-    createFromJson: function() {
+    createFromJson: function($super) {
         this.title = this.getTitle();
         this.author = this.getAuthor();
-        this.total = this.getTotal();
-        this.offset = this.getOffset();
-        this.limit = this.getLimit();
-        this.entries = [];
-        for (var i = 0, len = this._entries.length; i < len; i++) {
-            this.entries.push(new Note(this._entries[i]));
-        }
-    },
+        $super(Note);
+    }
 });
 // }}}
 
