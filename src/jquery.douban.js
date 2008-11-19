@@ -84,11 +84,11 @@ $.douban.client = {
     }
 };
 
-/* Factory method of Douban User
+/* Factory method of Douban objects
  */
-$.douban.user = {
+$.douban.book = {
     factory: function(data) {
-        return new User(data);
+        return new Book(data);
     }
 };
 
@@ -98,6 +98,12 @@ $.douban.note = {
     },
     createXml: function(title, content, isPublic, isReplyEnabled) {
         return Note.createXml(title, content, isPublic, isReplyEnabled);
+    }
+};
+
+$.douban.user = {
+    factory: function(data) {
+        return new User(data);
     }
 };
 
@@ -141,6 +147,24 @@ $.douban.http.factory = function(options) {
     return $.douban.http.handlers[options.type];
 };
 
+/* Setup HTTP settings */
+$.douban.http.setup = function(options) {
+    $.douban.http.settings = $.extend($.douban.http.settings, options || {});
+};
+
+/* Default settings
+ */
+$.douban.http.settings = {
+    url: location.href,
+    type: 'GET',
+    params: null,
+    data: null,
+    headers: null,
+    contentType: 'application/atom+xml',
+    dataType: 'json',
+    processData: true
+};
+
 /* Default handler is jquery
  */
 $.douban.http.activeHandler = jqueryHandler;
@@ -174,6 +198,7 @@ $.douban.http.unregister = function(name) {
 /* Built-in HTTP request handlers: 'jquery', 'greasemonkey' and 'gears'
  */
 function jqueryHandler(options) {
+    // options = $.extend($.douban.http.settings, options);
     return $.ajax(options);
 }
 jqueryHandler.name = 'jquery';
@@ -595,7 +620,7 @@ var DoubanObject = $.class({
     },
 
     getIconUrl: function() {
-        return this.getUrl('icon');
+        return this.getUrl('icon') || this.getUrl('image');
     },
 
     getTime: function(attr) {
@@ -608,7 +633,15 @@ var DoubanObject = $.class({
 
     getUpdated: function() {
         return this.getTime('updated');
+    },
+
+    getTags: function() {
+        var tags = [], entries = this._feed['db:tag'] || [];
+        for (var i = 0, len = entries.length; i < len; i++)
+            tags.push(new Tag(entries[i]['@name'], entries[i]['@count']));
+        return tags;
     }
+
 });
 
 var DoubanObjectEntries = $.class(DoubanObject, {
@@ -773,6 +806,91 @@ var NoteEntries = $.class(DoubanObjectEntries, {
         $super(Note);
     }
 });
+
+var Subject = $.class(DoubanObject, {
+    createFromJson: function() {
+    },
+
+    getArtists: function(name) {
+        var artists = [], entries = this._feed[name] || [];
+        for (var i = 0, len = entries.length; i < len; i++)
+            artists.push(entries[i]['name']['$t']);
+        return artists;
+    },
+
+    getPubdate: function() {
+        return this.getAttr('pubdate');
+    }
+});
+
+var Book = $.class(Subject, {
+    createFromJson: function($super) {
+        this.id = this.getId();
+        this.title = this.getTitle();
+        this.authors = this.getAuthors();
+        this.translators = this.getTranslators();
+        this.isbn10 = this.getIsbn10();
+        this.isbn13 = this.getIsbn13();
+        this.publisher = this.getPublisher();
+        this.price = this.getPrice();
+        this.pubdate = this.getPubdate();
+        this.binding = this.getBinding();
+        this.authorIntro = this.getAuthorIntro();
+        this.summary = this.getSummary();
+        this.url = this.getUrl();
+        this.iconUrl = this.getIconUrl();
+        this.tags = this.getTags();
+        this.rating = this.getRating();
+        this.votes = this.getVotes();
+        $super();
+    },
+
+    getAuthors: function() {
+        return this.getArtists('author');
+    },
+
+    getTranslators: function() {
+        return this.getArtists('translator');
+    },
+
+    getIsbn10: function() {
+        return this.getAttr('isbn10');
+    },
+
+    getIsbn13: function() {
+        return this.getAttr('isbn13');
+    },
+
+    getPublisher: function() {
+        return this.getAttr('publisher');
+    },
+
+    getPrice: function() {
+        return this.getAttr('price');
+    },
+
+    getBinding: function() {
+        return this.getAttr('binding');
+    },
+
+    getAuthorIntro: function() {
+        return this.getAttr('author-intro');
+    },
+
+    getRating: function() {
+        return parseFloat(this._feed['gd:rating']['@average']);
+    },
+
+    getVotes: function() {
+        return this._feed['gd:rating']['@numRaters'];
+    }
+});
+
+/* A simple tag object */
+function Tag(name, count) {
+    this.name = name;
+    this.count = count;
+}
 // }}}
 
 /* {{{ OAuth client
@@ -786,7 +904,7 @@ function OAuthClient(options) {
     };
     this.options = $.extend(defaults, options || {});;
     this.api = new Token(this.options.apiKey, this.options.apiSecret);
-    this.http = $.douban.http.factory({ type: this.options.httpType });
+    this._http = $.douban.http.factory({ type: this.options.httpType });
 
     this.requestToken = new Token();
     this.accessToken = new Token();
@@ -924,7 +1042,7 @@ $.extend(OAuthClient.prototype, {
      */
     oauthRequest: function(url, data, callback) {
         var data = this.getParameters(url, 'GET', data);
-        this.http({ async: false, url: url, data: data, success: callback });
+        this._http({ async: false, url: url, data: data, success: callback });
     }
 });
 
