@@ -1,4 +1,26 @@
 test("test misc", function() {
+    // class inheritance
+    var Person = $.class({
+        init: function(name, sex) {
+            this.name = name;
+            this.sex = sex;
+        },
+        getName: function() {
+            return this.name;
+        },
+        getSex: function() {
+            return this.sex;
+        }
+    });
+    var Boy = $.class(Person, {
+        init: function(name) {
+            this.name = name;
+            this.sex = 'male';
+        }
+    });
+    var mike = new Boy('mike');
+    equals(mike.getName(), 'mike');
+    equals(mike.getSex(), 'male');
 });
 
 module("Basic Testcases");

@@ -15,7 +15,8 @@ const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
 
 const API_HOST = 'http://api.douban.com';
 const PEOPLE_URL = API_HOST + '/people';
-const SEARCH_PEOPLE_URL = PEOPLE_URL + '/';         // bug? 没有'/'的话，不能使用
+// API BUG: 不加'/'的话，使用不能。http://www.douban.com/group/topic/4655057/ 
+const SEARCH_PEOPLE_URL = PEOPLE_URL + '/';
 const GET_PEOPLE_URL = PEOPLE_URL  + '/{USERNAME}';
 const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // hack: %40 => @
 const GET_FRIENDS_URL = GET_PEOPLE_URL + '/friends';
@@ -204,8 +205,71 @@ gearsHandler.name = 'gears';
 
 /* {{{ Some utilities
  */
+// Add methods to class
+// Copied from Low Pro for jQuery
+// http://www.danwebb.net/2008/2/3/how-to-use-low-pro-for-jquery
+function addMethods(source) {
+    var ancestor   = this.superclass && this.superclass.prototype;
+    var properties = $.keys(source);
+
+    if (!$.keys({ toString: true }).length) 
+        properties.push("toString", "valueOf");
+
+    for (var i = 0, length = properties.length; i < length; i++) {
+        var property = properties[i], value = source[property];
+        if (ancestor && $.isFunction(value) && $.argumentNames(value)[0] == "$super") {
+        
+            var method = value, value = $.extend($.wrap((function(m) {
+                return function() { return ancestor[m].apply(this, arguments) };
+            })(property), method), {
+                valueOf:  function() { return method },
+                toString: function() { return method.toString() }
+            });
+        }
+        this.prototype[property] = value;
+    }
+    return this;
+}
+
 $.extend({
-    // parse date string to Date object
+    // Class creation and inheriance.
+    // Copied from Low Pro for jQuery
+    // http://www.danwebb.net/2008/2/3/how-to-use-low-pro-for-jquery
+    keys: function(obj) {
+        var keys = [];
+        for (var key in obj) keys.push(key);
+        return keys;
+    },
+
+    argumentNames: function(func) {
+        var names = func.toString().match(/^[\s\(]*function[^(]*\((.*?)\)/)[1].split(/, ?/);
+        return names.length == 1 && !names[0] ? [] : names;
+    },
+    class: function() {
+        var parent = null;
+        var properties = $.makeArray(arguments);
+        if ($.isFunction(properties[0])) parent = properties.shift();
+        var klass = function() {
+            this.init.apply(this, arguments);
+        };
+        klass.superclass = parent;
+        klass.subclasses = [];
+        klass.addMethods = addMethods;
+        if (parent) {
+            var subclass = function() { };
+            subclass.prototype = parent.prototype;
+            klass.prototype = new subclass;
+            parent.subclasses.push(klass);
+        }
+        for (var i = 0, len = properties.length; i < len; i++)
+            klass.addMethods(properties[i]);
+        if (!klass.prototype.init)
+            klass.prototype.init = function() {};
+        klass.prototype.constructor = klass;
+        return klass;
+    },
+
+    // Parse datetime string to Date object
     parseDate: function(str) {
         var re = /^(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})/;
         var date = str.match(re);
