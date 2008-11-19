@@ -86,7 +86,7 @@ test("test factory method", function() {
     var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
     equals(client.api.key, '1', "api key expected to be 1");
     equals(client.api.secret, '2', "api secret expected to be 2");
-    equals(client.http.name, 'jquery', "http type expected to be \"jquery\"");
+    equals(client._http.name, 'jquery', "http type expected to be \"jquery\"");
 });
 
 test("test authorization step 1: get request token", function() {
@@ -297,4 +297,29 @@ test("test note object", function() {
     equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>标题</title><content>内容</content><db:attribute name="privacy">public</db:attribute><db:attribute name="can_reply">no</db:attribute></entry>', "get xml ok");
 });
 
+test("test book object", function() {
+    var json = {"category":{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#book"},"db:tag":[{"@count":1,"@name":"日本"},{"@count":1,"@name":"轻小说"}],"title":{"$t":"とある魔術の禁書目録(インデックス) (電撃文庫)"},"author":[{"name":{"$t":"鎌池 和馬"}},{"name":{"$t":"灰村 キヨタカ"}}],"summary":{"$t":"登場!"},"link":[{"@rel":"self","@href":"http://api.douban.com/book/subject/3137911"},{"@rel":"alternate","@href":"http://www.douban.com/subject/3137911/"},{"@rel":"image","@href":"http://otho.douban.com/spic/s3168047.jpg"}],"db:attribute":[{"$t":"484022658X","@name":"isbn10"},{"$t":"9784840226585","@name":"isbn13"},{"$t":"とある魔術の禁書目録(インデックス) (電撃文庫)","@name":"title"},{"$t":"297","@name":"pages"},{"$t":"鎌池 和馬","@name":"author"},{"$t":"灰村 キヨタカ","@name":"author"},{"$t":"JPY 5.99","@name":"price"},{"$t":"メディアワークス","@name":"publisher"},{"$t":"文庫","@name":"binding"},{"$t":"2004-04","@name":"pubdate"}],"id":{"$t":"http://api.douban.com/book/subject/3137911"},"gd:rating":{"@min":1,"@numRaters":2,"@average":"3.00","@max":5}};
+
+    var book = $.douban.book.factory(json);
+    equals(book.id, "http://api.douban.com/book/subject/3137911");
+    equals(book.title, "とある魔術の禁書目録(インデックス) (電撃文庫)");
+    equals(book.authors.length, 2);
+    equals(book.authors[0], "鎌池 和馬");
+    equals(book.authors[1], "灰村 キヨタカ");
+    equals(book.translators.length, 0);
+    equals(book.isbn10, "484022658X");
+    equals(book.isbn13, "9784840226585");
+    equals(book.publisher, "メディアワークス");
+    equals(book.price, "JPY 5.99");
+    equals(book.binding, "文庫");
+    equals(book.pubdate, "2004-04");
+    equals(book.authorIntro, "");
+    equals(book.url, "http://www.douban.com/subject/3137911/");
+    equals(book.iconUrl, "http://otho.douban.com/spic/s3168047.jpg");
+    equals(book.tags.length, 2);
+    equals(book.tags[0].name, "日本");
+    equals(book.tags[0].count, 1);
+    equals(book.rating, 3.0);
+    equals(book.votes, 2);
+});
 // vim: foldmethod=indent
