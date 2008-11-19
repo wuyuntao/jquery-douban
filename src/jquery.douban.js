@@ -458,7 +458,7 @@ $.extend(DoubanUserService.prototype, {
         var url = SEARCH_PEOPLE_URL;
         var params = { 'q': query, 'start-index': offset || 0, 'max-results': limit || 50 };
         var json = this.service.get(url, params);
-        return json ? new DoubanUserEntries(json) : false;
+        return json ? new UserEntries(json) : false;
     },
 
     current: function() {
@@ -471,14 +471,14 @@ $.extend(DoubanUserService.prototype, {
         var url = GET_FRIENDS_URL.replace(/\{USERNAME\}/, user);
         var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
         var json = this.service.get(url, params);
-        return json ? new DoubanUserEntries(json) : false;
+        return json ? new UserEntries(json) : false;
     },
 
     contacts: function(user, offset, limit) {
         var url = GET_CONTACTS_URL.replace(/\{USERNAME\}/, user);
         var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
         var json = this.service.get(url, params);
-        return json ? new DoubanUserEntries(json) : false;
+        return json ? new UserEntries(json) : false;
     }
 });
 
@@ -526,6 +526,7 @@ $.extend(DoubanNoteService.prototype, {
     }
 });
 
+// {{{ Douban object classes like ``User`` and ``Note``
 /* Base class of douban object like user and note 
  * @param   feed JSON. Gdata JSON feed
  */
@@ -535,7 +536,7 @@ var DoubanObject = $.class({
         this.createFromJson();
     },
 
-    /* Create object from given JSON feed. Implement in subclass.
+    /* Create object from given JSON feed. Please implement it in subclass.
      * @param   data JSON
      */
     createFromJson: function() {
@@ -580,18 +581,6 @@ var DoubanObject = $.class({
         return this.getAttr('content');
     },
 
-    getTotal: function() {
-        return parseInt(this.getAttr("opensearch:totalResults"));
-    },
-
-    getOffset: function() {
-        return parseInt(this.getAttr("opensearch:startIndex"));
-    },
-
-    getLimit: function() {
-        return parseInt(this.getAttr("opensearch:itemsPerPage"));
-    },
-
     getIconUrl: function() {
         return this.getUrl('icon');
     },
@@ -607,6 +596,27 @@ var DoubanObject = $.class({
     getUpdated: function() {
         return this.getTime('updated');
     }
+});
+
+var DoubanObjectEntries = $.class(DoubanObject, {
+    init: function(feed) {
+        this._feed = feed;
+        this._entries = feed.entry;
+        this.createFromJson();
+    },
+
+    getTotal: function() {
+        return parseInt(this.getAttr("opensearch:totalResults"));
+    },
+
+    getOffset: function() {
+        return parseInt(this.getAttr("opensearch:startIndex"));
+    },
+
+    getLimit: function() {
+        return parseInt(this.getAttr("opensearch:itemsPerPage"));
+    },
+
 });
 
 /* Douban user class
@@ -663,20 +673,17 @@ var User = $.class(DoubanObject, {
  * @attribute   entries
  * @method      createFromJson
  */
-function DoubanUserEntries(data) {
-    this.createFromJson(data);
-}
-$.extend(DoubanUserEntries.prototype, {
-    createFromJson: function(json) {
-        this.query = getTitle(json).replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
-        this.total = getTotal(json);
-        this.offset = getOffset(json);
-        this.limit = getLimit(json);
+var UserEntries = $.class(DoubanObjectEntries, {
+    createFromJson: function() {
+        this.query = this.getTitle().replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
+        this.total = this.getTotal();
+        this.offset = this.getOffset();
+        this.limit = this.getLimit();
         this.entries = [];
-        for (var i = 0, len = json.entry.length; i < len; i++) {
-            this.entries.push(new User(json.entry[i]));
+        for (var i = 0, len = this._entries.length; i < len; i++) {
+            this.entries.push(new User(this._entries[i]));
         }
-    },
+    }
 });
 
 /* Douban note
@@ -734,6 +741,8 @@ $.extend(DoubanNoteEntries.prototype, {
         }
     },
 });
+// }}}
+
 /* {{{ OAuth client
  */
 function OAuthClient(options) {
