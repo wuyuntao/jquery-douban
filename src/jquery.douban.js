@@ -96,7 +96,7 @@ $.douban.user = {
 
 $.douban.note = {
     factory: function(data) {
-        return new DoubanNote(data);
+        return new Note(data);
     },
 
     /* create POST or PUT xml
@@ -492,7 +492,7 @@ $.extend(DoubanNoteService.prototype, {
         if (typeof note == 'object') var url = note.id;
         else var url = GET_NOTE_URL.replace(/\{NOTEID\}/, note);
         var json = this.service.get(url);
-        return json ? new DoubanNote(json) : false;
+        return json ? new Note(json) : false;
     },
 
     getForUser: function(user, offset, limit) {
@@ -507,7 +507,7 @@ $.extend(DoubanNoteService.prototype, {
         var url = ADD_NOTE_URL;
         var data = $.douban.note.createXml(title, content, isPublic, isReplyEnabled);
         var json = this.service.post(url, data);
-        return json ? new DoubanNote(json) : false;
+        return json ? new Note(json) : false;
     },
 
     update: function(note, title, content, isPublic, isReplyEnabled) {
@@ -515,7 +515,7 @@ $.extend(DoubanNoteService.prototype, {
         else if (note.match(/\d+/)) var url = UPDATE_NOTE_URL.replace(/\{NOTEID\}/, note);
         var data = $.douban.note.createXml(title, content, isPublic, isReplyEnabled);
         var json = this.service.put(url, data);
-        return json ? new DoubanNote(json) : false;
+        return json ? new Note(json) : false;
     },
 
     delete: function(note) {
@@ -575,6 +575,10 @@ var DoubanObject = $.class({
 
     getTitle: function() {
         return this.getAttr('title');
+    },
+
+    getSummary: function() {
+        return this.getAttr('summary');
     },
 
     getContent: function() {
@@ -698,23 +702,32 @@ var UserEntries = $.class(DoubanObjectEntries, {
  * @attribute       iconUrl         头像，"http://otho.douban.com/icon/u1000001-14.jpg"
  * @method          createFromJson  由豆瓣返回的用户JSON，初始化用户数据
  */
-function DoubanNote(data) {
-    this.createFromJson(data);
-}
-$.extend(DoubanNote.prototype, {
-    createFromJson: function(json) {
-        this.id = getId(json);
-        this.title = getTitle(json)
-        if (typeof json.author != 'undefined')
-            this.author = new User(json.author);
-        this.summary = getAttr(json, 'summary');
-        this.content = getAttr(json, 'content');
-        this.published = getPublished(json);
-        this.updated = getUpdated(json);
-        this.url = getUrl(json);
-        this.isPublic = getAttr(json, 'privacy') == 'public' ? true: false;
-        this.isReplyEnabled = getAttr(json, 'can_reply') == 'yes' ? true: false;
+var Note = $.class(DoubanObject, {
+    createFromJson: function() {
+        this.id = this.getId();
+        this.title = this.getTitle();
+        this.author = this.getAuthor();
+        this.summary = this.getSummary();
+        this.content = this.getContent();
+        this.published = this.getPublished();
+        this.updated = this.getUpdated();
+        this.url = this.getUrl();
+        this.isPublic = this.getIsPublic();
+        this.isReplyEnabled = this.getIsReplyEnabled();
+    },
+
+    getAuthor: function() {
+        return typeof this._feed.author == 'undefined' ? undefined : new User(this._feed.author);
+    },
+
+    getIsPublic: function() {
+        return this.getAttr('privacy') == 'public' ? true: false;
+    },
+
+    getIsReplyEnabled: function() {
+        return this.getAttr('can_reply') == 'yes' ? true: false;
     }
+
 });
 
 /* Douban user entries
@@ -737,7 +750,7 @@ $.extend(DoubanNoteEntries.prototype, {
         this.limit = getLimit(json);
         this.entries = [];
         for (var i = 0, len = json.entry.length; i < len; i++) {
-            this.entries.push(new DoubanNote(json.entry[i]));
+            this.entries.push(new Note(json.entry[i]));
         }
     },
 });
