@@ -89,7 +89,7 @@ $.douban.client = {
  */
 $.douban.user = {
     factory: function(data) {
-        return new DoubanUser(data);
+        return new User(data);
     }
 };
 // }}}
@@ -232,19 +232,25 @@ function addMethods(source) {
 }
 
 $.extend({
-    // Class creation and inheriance.
-    // Copied from Low Pro for jQuery
-    // http://www.danwebb.net/2008/2/3/how-to-use-low-pro-for-jquery
+    /* Get keys of an object
+     */
     keys: function(obj) {
         var keys = [];
         for (var key in obj) keys.push(key);
         return keys;
     },
 
+    /* Returns argument names of a function
+     */
     argumentNames: function(func) {
         var names = func.toString().match(/^[\s\(]*function[^(]*\((.*?)\)/)[1].split(/, ?/);
         return names.length == 1 && !names[0] ? [] : names;
     },
+
+    /* Class creation and inheriance.
+     * Copied from Low Pro for jQuery
+     * http://www.danwebb.net/2008/2/3/how-to-use-low-pro-for-jquery
+     */
     class: function() {
         var parent = null;
         var properties = $.makeArray(arguments);
@@ -269,7 +275,8 @@ $.extend({
         return klass;
     },
 
-    // Parse datetime string to Date object
+    /* Parse datetime string to Date object
+     */
     parseDate: function(str) {
         var re = /^(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})/;
         var date = str.match(re);
@@ -444,7 +451,7 @@ $.extend(DoubanUserService.prototype, {
     get: function(name) {
         var url = GET_PEOPLE_URL.replace(/\{USERNAME\}/, name);
         var json = this.service.get(url);
-        return json ? new DoubanUser(json) : false;
+        return json ? new User(json) : false;
     },
 
     search: function(query, offset, limit) {
@@ -457,7 +464,7 @@ $.extend(DoubanUserService.prototype, {
     current: function() {
         var url = GET_CURRENT_URL;
         var json = this.service.get(url);
-        return json ? new DoubanUser(json) : false;
+        return json ? new User(json) : false;
     },
 
     friends: function(user, offset, limit) {
@@ -519,7 +526,90 @@ $.extend(DoubanNoteService.prototype, {
     }
 });
 
-/* Douban user
+/* Base class of douban object like user and note 
+ * @param   feed JSON. Gdata JSON feed
+ */
+var DoubanObject = $.class({
+    init: function(feed) {
+        this._feed = feed;
+        this.createFromJson();
+    },
+
+    /* Create object from given JSON feed. Implement in subclass.
+     * @param   data JSON
+     */
+    createFromJson: function() {
+        throw new Error("Not Implemented Yet");
+    },
+
+    /* Get read-only json feed
+     */
+    getFeed: function() {
+        return this._feed;
+    },
+
+    /* JSON feed parsers
+     */
+    getAttr: function (attr) {
+        if (typeof this._feed[attr] != 'undefined') return this._feed[attr]['$t'];
+        var attrs = this._feed['db:attribute'];
+        if (typeof attrs != 'undefined')
+            for (var i in attrs)
+                if (attrs[i]['@name'] == attr) return attrs[i]['$t'];
+        return '';
+    },
+
+    getUrl: function(attr) {
+        // default ``attr`` is 'alternate'
+        attr = attr || 'alternate';
+        var links = this._feed['link'];
+        for (var i in links)
+            if (links[i]['@rel'] == attr) return links[i]['@href'];
+        return '';
+    },
+
+    getId: function() {
+        return this.getUrl('self');
+    },
+
+    getTitle: function() {
+        return this.getAttr('title');
+    },
+
+    getContent: function() {
+        return this.getAttr('content');
+    },
+
+    getTotal: function() {
+        return parseInt(this.getAttr("opensearch:totalResults"));
+    },
+
+    getOffset: function() {
+        return parseInt(this.getAttr("opensearch:startIndex"));
+    },
+
+    getLimit: function() {
+        return parseInt(this.getAttr("opensearch:itemsPerPage"));
+    },
+
+    getIconUrl: function() {
+        return this.getUrl('icon');
+    },
+
+    getTime: function(attr) {
+        return $.parseDate(this.getAttr(attr));
+    },
+
+    getPublished: function() {
+        return this.getTime('published');
+    },
+
+    getUpdated: function() {
+        return this.getTime('updated');
+    }
+});
+
+/* Douban user class
  * @param           data            Well-formatted json feed
  * @attribute       id              用户ID，"http://api.douban.com/people/1000001"
  * @attribute       userName        用户名，"ahbei"
@@ -531,20 +621,38 @@ $.extend(DoubanNoteService.prototype, {
  * @attribute       iconUrl         头像，"http://otho.douban.com/icon/u1000001-14.jpg"
  * @method          createFromJson  由豆瓣返回的用户JSON，初始化用户数据
  */
-function DoubanUser(data) {
-    this.createFromJson(data);
-}
-$.extend(DoubanUser.prototype, {
-    createFromJson: function(json) {
-        this.id = getUserId(json);
-        this.userName = getAttr(json, 'db:uid');
-        this.screenName = getScreenName(json);
-        this.location = getAttr(json, 'db:location');
-        this.intro = getAttr(json, 'content');
-        this.url = getUrl(json);
-        this.iconUrl = getIconUrl(json);
-        this.blog = getUrl(json, 'homepage');
+var User = $.class(DoubanObject, {
+    createFromJson: function() {
+        this.id = this.getUserId();
+        this.userName = this.getUserName()
+        this.screenName = this.getScreenName();
+        this.location = this.getLocation();
+        this.intro = this.getContent();
+        this.url = this.getUrl();
+        this.iconUrl = this.getIconUrl();
+        this.blog = this.getBlog();
     },
+
+    /* JSON feed parsers */
+    getUserId: function() {
+        return this.getAttr('id') || this.getAttr('uri');
+    },
+
+    getUserName: function() {
+        return this.getAttr('db:uid');
+    },
+
+    getScreenName: function() {
+        return this.getTitle() || this.getAttr('name');
+    },
+
+    getLocation: function() {
+        return this.getAttr('db:location');
+    },
+
+    getBlog: function() {
+        return this.getUrl('homepage');
+    }
 });
 
 /* Douban user entries
@@ -566,7 +674,7 @@ $.extend(DoubanUserEntries.prototype, {
         this.limit = getLimit(json);
         this.entries = [];
         for (var i = 0, len = json.entry.length; i < len; i++) {
-            this.entries.push(new DoubanUser(json.entry[i]));
+            this.entries.push(new User(json.entry[i]));
         }
     },
 });
@@ -591,7 +699,7 @@ $.extend(DoubanNote.prototype, {
         this.id = getId(json);
         this.title = getTitle(json)
         if (typeof json.author != 'undefined')
-            this.author = new DoubanUser(json.author);
+            this.author = new User(json.author);
         this.summary = getAttr(json, 'summary');
         this.content = getAttr(json, 'content');
         this.published = getPublished(json);
@@ -616,7 +724,7 @@ function DoubanNoteEntries(data) {
 $.extend(DoubanNoteEntries.prototype, {
     createFromJson: function(json) {
         this.title = getTitle(json);
-        this.author = new DoubanUser(json.author);
+        this.author = new User(json.author);
         // this.total = getTotal(json);
         this.offset = getOffset(json);
         this.limit = getLimit(json);
@@ -626,7 +734,7 @@ $.extend(DoubanNoteEntries.prototype, {
         }
     },
 });
-/* OAuth client
+/* {{{ OAuth client
  */
 function OAuthClient(options) {
     /* Default options */
@@ -784,6 +892,7 @@ function Token(key, secret) {
     this.key = key || '';
     this.secret = secret || '';
 }
+// }}}
 
 /* Douban GData JSON feed parsers
  */

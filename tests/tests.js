@@ -1,5 +1,5 @@
 test("test misc", function() {
-    // class inheritance
+    // super class
     var Person = $.class({
         init: function(name, sex) {
             this.name = name;
@@ -12,6 +12,7 @@ test("test misc", function() {
             return this.sex;
         }
     });
+    // subclass inherited from ``Person``
     var Boy = $.class(Person, {
         init: function(name) {
             this.name = name;
@@ -180,7 +181,7 @@ test("test user api", function() {
 
     // get user's contacts
     var contacts = service.user.contacts('wyt', 2, 5);
-    equals(contacts.total, 110);
+    equals(contacts.total, 111);
     equals(contacts.entries.length, 5, "get user's contacts ok");
 
     // get current authenticated user
