@@ -500,7 +500,7 @@ $.extend(DoubanNoteService.prototype, {
         else if (typeof user == 'string') var url = GET_USERS_NOTE_URL.replace(/\{USERNAME\}/, user);
         var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
         var json = this.service.get(url, params);
-        return json ? new DoubanNoteEntries(json) : false;
+        return json ? new NoteEntries(json) : false;
     },
 
     add: function(title, content, isPublic, isReplyEnabled) {
@@ -577,6 +577,10 @@ var DoubanObject = $.class({
         return this.getAttr('title');
     },
 
+    getAuthor: function() {
+        return typeof this._feed.author == 'undefined' ? undefined : new User(this._feed.author);
+    },
+
     getSummary: function() {
         return this.getAttr('summary');
     },
@@ -610,15 +614,15 @@ var DoubanObjectEntries = $.class(DoubanObject, {
     },
 
     getTotal: function() {
-        return parseInt(this.getAttr("opensearch:totalResults"));
+        return parseInt(this.getAttr("opensearch:totalResults") || "0");
     },
 
     getOffset: function() {
-        return parseInt(this.getAttr("opensearch:startIndex"));
+        return parseInt(this.getAttr("opensearch:startIndex") || "0");
     },
 
     getLimit: function() {
-        return parseInt(this.getAttr("opensearch:itemsPerPage"));
+        return parseInt(this.getAttr("opensearch:itemsPerPage") || "0");
     },
 
 });
@@ -716,10 +720,6 @@ var Note = $.class(DoubanObject, {
         this.isReplyEnabled = this.getIsReplyEnabled();
     },
 
-    getAuthor: function() {
-        return typeof this._feed.author == 'undefined' ? undefined : new User(this._feed.author);
-    },
-
     getIsPublic: function() {
         return this.getAttr('privacy') == 'public' ? true: false;
     },
@@ -730,7 +730,7 @@ var Note = $.class(DoubanObject, {
 
 });
 
-/* Douban user entries
+/* Douban note entries
  * @param       data                Well-formatted json feed
  * @attribute   total
  * @attribute   offset
@@ -738,19 +738,16 @@ var Note = $.class(DoubanObject, {
  * @attribute   entries
  * @method      createFromJson
  */
-function DoubanNoteEntries(data) {
-    this.createFromJson(data);
-}
-$.extend(DoubanNoteEntries.prototype, {
-    createFromJson: function(json) {
-        this.title = getTitle(json);
-        this.author = new User(json.author);
-        // this.total = getTotal(json);
-        this.offset = getOffset(json);
-        this.limit = getLimit(json);
+var NoteEntries = $.class(DoubanObjectEntries, {
+    createFromJson: function() {
+        this.title = this.getTitle();
+        this.author = this.getAuthor();
+        this.total = this.getTotal();
+        this.offset = this.getOffset();
+        this.limit = this.getLimit();
         this.entries = [];
-        for (var i = 0, len = json.entry.length; i < len; i++) {
-            this.entries.push(new Note(json.entry[i]));
+        for (var i = 0, len = this._entries.length; i < len; i++) {
+            this.entries.push(new Note(this._entries[i]));
         }
     },
 });
@@ -915,82 +912,5 @@ function Token(key, secret) {
     this.secret = secret || '';
 }
 // }}}
-
-/* Douban GData JSON feed parsers
- */
-// Get attributes from json
-function getAttr(json, attr) {
-    if (typeof json[attr] != 'undefined') return json[attr]['$t'];
-    var attrs = json['db:attribute'];
-    if (typeof attrs != 'undefined') {
-        for (var i in attrs) {
-            if (attrs[i]['@name'] == attr) return attrs[i]['$t'];
-        }
-    }
-    return '';
-}
-
-function getUserId(json) {
-    return getAttr(json, 'id') || getAttr(json, 'uri');
-}
-
-function getScreenName(json) {
-    return getTitle(json) || getAttr(json, 'name');
-}
-
-// Get title
-function getTitle(json) {
-    return getAttr(json, 'title');
-}
-
-// Get total
-function getTotal(json) {
-    return parseInt(getAttr(json, "opensearch:totalResults"));
-}
-
-// Get offset
-function getOffset(json) {
-    return parseInt(getAttr(json, "opensearch:startIndex"));
-}
-
-// Get limit
-function getLimit(json) {
-    return parseInt(getAttr(json, "opensearch:itemsPerPage"));
-}
-
-// Get url from json links
-function getUrl(json, attr) {
-    attr = attr || 'alternate';
-    var links = json['link'];
-    for (var i in links) {
-        if (links[i]['@rel'] == attr) return links[i]['@href'];
-    }
-    return '';
-}
-
-// Get id from json
-function getId(json) {
-    return getUrl(json, 'self');
-}
-
-// Get icon url from json links
-function getIconUrl(json) {
-    return getUrl(json, 'icon');
-}
-
-// Get time
-function getTime(json, attr) {
-    return $.parseDate(getAttr(json, attr));
-}
-
-// Get published time
-function getPublished(json) {
-    return getTime(json, 'published');
-}
-
-// Get updated time
-function getUpdated(json) {
-    return getTime(json, 'updated');
-}
 
 })(jQuery);

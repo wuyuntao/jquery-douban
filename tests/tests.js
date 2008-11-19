@@ -228,7 +228,7 @@ test("test note api", function() {
 
     // get notes of user by user id
     var notes = service.note.getForUser('NullPointer', 4, 2);
-    // equals(notes.total, 8, "get notes of np total results ok");
+    equals(notes.total, 0, "douban does not return total number of notes");
     equals(notes.offset, 4, "get notes of np start index ok");
     equals(notes.limit, 2, "get notes of np max results ok");
     equals(notes.entries.length, 2, "get notes of np ok");
