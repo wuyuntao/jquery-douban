@@ -18,7 +18,7 @@ const PEOPLE_URL = API_HOST + '/people';
 // API BUG: 不加'/'的话，使用不能。http://www.douban.com/group/topic/4655057/ 
 const SEARCH_PEOPLE_URL = PEOPLE_URL + '/';
 const GET_PEOPLE_URL = PEOPLE_URL  + '/{USERNAME}';
-const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // hack: %40 => @
+const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
 const GET_FRIENDS_URL = GET_PEOPLE_URL + '/friends';
 const GET_CONTACTS_URL = GET_PEOPLE_URL + '/contacts';
 
@@ -28,6 +28,18 @@ const GET_USERS_NOTE_URL = GET_PEOPLE_URL + '/notes';
 const ADD_NOTE_URL = API_HOST + '/notes';
 const UPDATE_NOTE_URL = GET_NOTE_URL;
 const DELETE_NOTE_URL = GET_NOTE_URL;
+
+const BOOK_URL = API_HOST + '/book/subject';
+const GET_BOOK_URL = BOOK_URL + '/{ID}';
+const SEARCH_BOOK_URL = BOOK_URL + 's';
+
+const MOVIE_URL = API_HOST + '/movie/subject';
+const GET_MOVIE_URL = MOVIE_URL + '/{ID}';
+const SEARCH_MOVIE_URL = MOVIE_URL + 's';
+
+const MUSIC_URL = API_HOST + '/music/subject';
+const GET_MUSIC_URL = MUSIC_URL + '/{ID}';
+const SEARCH_MUSIC_URL = MUSIC_URL + 's';
 // }}}
 
 // {{{ jQuery Douban
@@ -362,8 +374,16 @@ var DoubanService = $.class({
         this._client = $.douban.client.factory({ apiKey: this.api.key,
                                                  apiSecret: this.api.secret,
                                                  type: this.options.httpType });
-        this.user = new UserService(this);
-        this.note = new NoteService(this);
+        var services = {
+            'user': UserService,
+            'note': NoteService,
+            'book': BookService,
+            'movie': MovieService,
+            'music': MusicService
+        }
+        for (var name in services) {
+            this[name] = new services[name](this);
+        }
     },
 
     login: function(accessToken) {
@@ -476,6 +496,17 @@ var DoubanService = $.class({
 var BaseService = $.class({
     init: function(service) {
         this._service = service;
+    },
+
+    /* Get URL from ID, API URL or object
+     * @returns url
+     * @param   obj Object or String
+     * @param   tmpl String
+     */
+    lazyUrl: function(obj, tmpl) {
+        if (typeof obj == 'object') return obj.id;
+        else if (obj.match(/^\d+$/)) return tmpl.replace(/\{ID\}/, obj);
+        else return obj;
     }
 });
 
@@ -566,6 +597,49 @@ var NoteService = $.class(BaseService, {
         return response == 'ok' ? true : false;
     }
 });
+
+// Base class of book, movie and music service
+var SubjectService = $.class(BaseService, {
+    get: function(subject, model, url) {
+        var url = this.lazyUrl(subject, url);
+        var json = this._service.get(url);
+        return new model(json);
+    },
+    search: function(query, offset, limit, model, url) {
+        var params = { 'q': query, 'start-index': offset || 0, 'max-results': limit || 50 };
+        var json = this._service.get(url, params);
+        return new model(json);
+    }
+});
+
+var BookService = $.class(SubjectService, {
+    get: function($super, book) {
+        return $super(book, Book, GET_BOOK_URL);
+    },
+    search: function($super, query, offset, limit) {
+        return $super(query, offset, limit, BookEntries, SEARCH_BOOK_URL);
+    }
+});
+
+var MovieService = $.class(SubjectService, {
+    get: function($super, movie) {
+        return $super(movie, Movie, GET_MOVIE_URL);
+    },
+    search: function($super, query, offset, limit) {
+        return $super(query, offset, limit, MovieEntries, SEARCH_MOVIE_URL);
+    }
+});
+
+var MusicService = $.class(SubjectService, {
+    get: function($super, music) {
+        return $super(music, Music, GET_MUSIC_URL);
+    },
+
+    search: function($super, query, offset, limit) {
+        return $super(query, offset, limit, MusicEntries, SEARCH_MUSIC_URL);
+    }
+});
+
 // }}}
 
 // {{{ Douban object classes like ``User`` and ``Note``
@@ -692,6 +766,13 @@ var DoubanObjectEntries = $.class(DoubanObject, {
 
 });
 
+var SearchEntries = $.class(DoubanObjectEntries, {
+    createFromJson: function($super, doubanObject) {
+        this.query = this.getTitle().replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
+        $super(doubanObject);
+    }
+});
+
 /* Douban user class
  * @param           data            Well-formatted json feed
  * @attribute       id              用户ID，"http://api.douban.com/people/1000001"
@@ -746,9 +827,8 @@ var User = $.class(DoubanObject, {
  * @attribute   entries
  * @method      createFromJson
  */
-var UserEntries = $.class(DoubanObjectEntries, {
+var UserEntries = $.class(SearchEntries, {
     createFromJson: function($super) {
-        this.query = this.getTitle().replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
         $super(User);
     }
 });
@@ -850,10 +930,12 @@ var Subject = $.class(DoubanObject, {
     },
 
     getRating: function() {
+        if (!this._feed['gd:rating']) return 0;
         return parseFloat(this._feed['gd:rating']['@average']);
     },
 
     getVotes: function() {
+        if (!this._feed['gd:rating']) return 0;
         return this._feed['gd:rating']['@numRaters'];
     }
 });
@@ -862,6 +944,8 @@ var Book = $.class(Subject, {
     createFromJson: function($super) {
         this.id = this.getId();
         this.title = this.getTitle();
+        this.aka = this.getAka();
+        this.subtitle = this.getSubtitle();
         this.authors = this.getAuthors();
         this.translators = this.getTranslators();
         this.isbn10 = this.getIsbn10();
@@ -869,6 +953,7 @@ var Book = $.class(Subject, {
         this.releaseDate = this.getReleaseDate();
         this.publisher = this.getPublisher();
         this.price = this.getPrice();
+        this.pages = this.getPages();
         this.binding = this.getBinding();
         this.authorIntro = this.getAuthorIntro();
         this.summary = this.getSummary();
@@ -878,6 +963,10 @@ var Book = $.class(Subject, {
         this.rating = this.getRating();
         this.votes = this.getVotes();
         $super();
+    },
+    
+    getSubtitle: function() {
+        return this.getAttr('subtitle');
     },
 
     getAuthors: function() {
@@ -896,6 +985,10 @@ var Book = $.class(Subject, {
         return this.getAttr('isbn13');
     },
 
+    getPages: function() {
+        return this.getAttr('pages');
+    },
+
     getPrice: function() {
         return this.getAttr('price');
     },
@@ -906,6 +999,12 @@ var Book = $.class(Subject, {
 
     getAuthorIntro: function() {
         return this.getAttr('author-intro');
+    }
+});
+
+var BookEntries = $.class(SearchEntries, {
+    createFromJson: function($super) {
+        $super(Book);
     }
 });
 
@@ -974,6 +1073,12 @@ var Movie = $.class(Subject, {
     }
 });
 
+var MovieEntries = $.class(SearchEntries, {
+    createFromJson: function($super) {
+        $super(Movie);
+    }
+});
+
 var Music = $.class(Subject, {
     createFromJson: function($super) {
         this.id = this.getId();
@@ -1020,6 +1125,12 @@ var Music = $.class(Subject, {
         return this.getAttr('version');
     }
 
+});
+
+var MusicEntries = $.class(SearchEntries, {
+    createFromJson: function($super) {
+        $super(Music);
+    }
 });
 
 /* A simple tag object */

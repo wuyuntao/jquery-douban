@@ -176,7 +176,7 @@ test("test user api", function() {
 
     // get user's friends
     var friends = service.user.friends('wyt', 7, 4);
-    equals(friends.total, 72);
+    ok(friends.total > 72, "get user's total friends ok");
     equals(friends.entries.length, 4, "get user's friends ok");
 
     // get user's contacts
@@ -232,14 +232,14 @@ test("test note api", function() {
     equals(notes.offset, 4, "get notes of np start index ok");
     equals(notes.limit, 2, "get notes of np max results ok");
     equals(notes.entries.length, 2, "get notes of np ok");
-    equals(notes.entries[0].id, "http://api.douban.com/note/20178647", "get note id ok");
+    ok(notes.entries[0].id.match(/http:\/\/api\.douban\.com\/note\/\d+/), "get note id ok");
     var user = notes.author;
     equals(user.screenName, "NullPointer", "get author of notes ok");
 
     // get notes by user object
     var notes2 = service.note.getForUser(user, 2, 1);
     // equals(notes2.total, 10, "get notes of wyt total results ok");
-    equals(notes2.entries[0].id, "http://api.douban.com/note/20573790", "get note id ok");
+    ok(notes2.entries[0].id.match(/http:\/\/api\.douban\.com\/note\/\d+/), "get note id ok");
 
     // publish a new note
     var note3 = service.note.add("功能多不如MM多", "没错，当时就是这样");
@@ -257,6 +257,67 @@ test("test note api", function() {
     service.note.delete(note4);
     var note5 = service.note.get(note4);
     ok(!note5, "note deleted");
+});
+
+test("test book api", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+
+    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
+
+    var book = service.book.get('1493316');
+    equals(book.id, 'http://api.douban.com/book/subject/1493316');
+    equals(book.title, '交互设计之路');
+    equals(book.aka[0], 'The Inmates Are Running the Asylum : Why High Tech Products Drive Us Crazy and How to Restore the Sanity');
+    
+    var result = service.book.search('mysql', 5, 2);
+    equals(result.total, 129, "search book total results ok");
+    equals(result.offset, 5, "search book start index ok");
+    equals(result.limit, 2, "search book max results ok");
+    equals(result.entries.length, 2, "search book ok");
+    equals(result.entries[0].id, "http://api.douban.com/book/subject/1924288", "get book id ok");
+    equals(result.entries[1].id, "http://api.douban.com/book/subject/1232101", "get book id ok");
+});
+
+test("test movie api", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+
+    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
+
+    var movie = service.movie.get('1789283');
+    equals(movie.id, 'http://api.douban.com/movie/subject/1789283');
+    equals(movie.title, 'Déjà Vu');
+    equals(movie.chineseTitle, '超时空效应');
+    equals(movie.aka.length, 6);
+    
+    var result = service.movie.search('lord', 9, 3);
+    equals(result.query, 'lord');
+    equals(result.total, 44, "search movie total results ok");
+    equals(result.offset, 9, "search movie start index ok");
+    equals(result.limit, 3, "search movie max results ok");
+    equals(result.entries.length, 3, "search movie ok");
+    equals(result.entries[0].id, "http://api.douban.com/movie/subject/1307508", "get movie id ok");
+    equals(result.entries[1].id, "http://api.douban.com/movie/subject/1485417", "get movie id ok");
+    equals(result.entries[2].id, "http://api.douban.com/movie/subject/1479800", "get movie id ok");
+});
+
+test("test music api", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+
+    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
+
+    var music = service.music.get('http://api.douban.com/music/subject/3040677');
+    equals(music.id, 'http://api.douban.com/music/subject/3040677');
+    equals(music.title, 'hello');
+    equals(music.aka.length, 0);
+    
+    var result = service.music.search('unplugged', 12, 3);
+    equals(result.total, 26, "search music total results ok");
+    equals(result.offset, 12, "search music start index ok");
+    equals(result.limit, 3, "search music max results ok");
+    equals(result.entries.length, 3, "search music ok");
 });
 
 module("Douban Object Testcases");
