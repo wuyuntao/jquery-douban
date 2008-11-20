@@ -1,3 +1,9 @@
+function createService() {
+    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
+    return service;
+}
+
 test("test misc", function() {
     // super class
     var Person = $.class({
@@ -320,6 +326,12 @@ test("test music api", function() {
     equals(result.entries.length, 3, "search music ok");
 });
 
+test("test review api", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+
+});
+
 module("Douban Object Testcases");
 
 test("test user object", function() {
@@ -424,4 +436,27 @@ test("test music object", function() {
     equals(music.votes, 149);
 });
 
+test("test review object", function() {
+    var json = {"updated":{"$t":"2007-06-16T14:21:06+08:00"},"author":{"link":[{"@rel":"self","@href":"http://api.douban.com/people/1615529"},{"@rel":"alternate","@href":"http://www.douban.com/people/1615529/"}],"uri":{"$t":"http://api.douban.com/people/1615529"},"name":{"$t":"唐五"}},"title":{"$t":"好书"},"db:subject":{"category":{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#book"},"author":[{"name":{"$t":"萧如瑟"}}],"title":{"$t":"九州·斛珠夫人"},"link":[{"@rel":"self","@href":"http://api.douban.com/book/subject/1452923"},{"@rel":"alternate","@href":"http://www.douban.com/subject/1452923/"},{"@rel":"image","@href":"http://otho.douban.com/spic/s1515387.jpg"}],"db:attribute":[{"$t":"780187921X","@name":"isbn10"},{"$t":"9787801879219","@name":"isbn13"},{"$t":"新世界出版社","@name":"publisher"},{"$t":"20.0","@name":"price"},{"$t":"萧如瑟","@name":"author"},{"$t":"2006-01","@name":"pubdate"}],"id":{"$t":"http://api.douban.com/book/subject/1452923"}},"summary":{"$t":"男人与男人之间的感情"},"link":[{"@rel":"self","@href":"http://api.douban.com/review/1168468"},{"@rel":"alternate","@href":"http://www.douban.com/review/1168468/"},{"@rel":"http://www.douban.com/2007#subject","@href":"http://api.douban.com/book/subject/1452923"}],"published":{"$t":"2007-06-16T14:21:06+08:00"},"id":{"$t":"http://api.douban.com/review/1168468"},"gd:rating":{"@min":1,"@value":"5","@max":5}};
+
+    var review = $.douban.review.factory(json);
+    var date1 = new Date(2007, 05, 16, 14, 21, 06);
+    var date2 = new Date(2007, 05, 16, 14, 21, 06);
+    equals(review.id, "http://api.douban.com/review/1168468", "get review id ok");
+    equals(review.title, "好书", "get review title ok");
+    equals(review.author.id, "http://api.douban.com/people/1615529", "get author id ok");
+    equals(review.author.screenName, "唐五", "get author name ok");
+    equals(review.summary, "男人与男人之间的感情", "get review summary ok");
+    equals(review.published.getTime(), date1.getTime(), "get review published time ok");
+    equals(review.updated.getTime(), date2.getTime(), "get review updated time ok");
+    equals(review.url, "http://www.douban.com/review/1168468/", "get review url ok");
+    equals(review.rating, 5);
+    equals(review.subject.id, "http://api.douban.com/book/subject/1452923");
+
+    // create xml
+    var xml = $.douban.review.createXml("111111", "标题", "内容", 3);
+    equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom"><db:subject xmlns:db="http://www.douban.com/xmlns/"><id>http://api.douban.com/review/111111</id></db:subject><content>内容</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="3" ></gd:rating><title>标题</title></entry>', "get xml ok");
+});
+
 // vim: foldmethod=indent
+

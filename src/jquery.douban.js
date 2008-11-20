@@ -24,7 +24,7 @@ const GET_CONTACTS_URL = GET_PEOPLE_URL + '/contacts';
 
 const NOTE_URL = API_HOST + '/note';
 const GET_NOTE_URL = NOTE_URL + '/{NOTEID}';
-const GET_USERS_NOTE_URL = GET_PEOPLE_URL + '/notes';
+const GET_USER_NOTE_URL = GET_PEOPLE_URL + '/notes';
 const ADD_NOTE_URL = API_HOST + '/notes';
 const UPDATE_NOTE_URL = GET_NOTE_URL;
 const DELETE_NOTE_URL = GET_NOTE_URL;
@@ -40,6 +40,12 @@ const SEARCH_MOVIE_URL = MOVIE_URL + 's';
 const MUSIC_URL = API_HOST + '/music/subject';
 const GET_MUSIC_URL = MUSIC_URL + '/{ID}';
 const SEARCH_MUSIC_URL = MUSIC_URL + 's';
+
+const GET_REVIEW_URL = API_HOST + '/review/{ID}';
+const GET_USERS_REVIEW_URL = GET_PEOPLE_URL + '/reviews';
+const GET_BOOK_REVIEW_URL = GET_BOOK_URL + '/reviews';
+const GET_MOVIE_REVIEW_URL = GET_MOVIE_URL + '/reviews';
+const GET_MUSIC_REVIEW_URL = GET_MUSIC_URL + '/reviews';
 // }}}
 
 // {{{ jQuery Douban
@@ -122,6 +128,15 @@ $.douban.note = {
     },
     createXml: function(title, content, isPublic, isReplyEnabled) {
         return Note.createXml(title, content, isPublic, isReplyEnabled);
+    }
+};
+
+$.douban.review = {
+    factory: function(data) {
+        return new Review(data);
+    },
+    createXml: function(id, title, content, rating) {
+        return Review.createXml(id, title, content, rating);
     }
 };
 
@@ -569,7 +584,7 @@ var NoteService = $.class(BaseService, {
 
     getForUser: function(user, offset, limit) {
         if (typeof user == 'object') var url = user.id + '/notes';
-        else if (typeof user == 'string') var url = GET_USERS_NOTE_URL.replace(/\{USERNAME\}/, user);
+        else if (typeof user == 'string') var url = GET_USER_NOTE_URL.replace(/\{USERNAME\}/, user);
         var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
         var json = this._service.get(url, params);
         return json ? new NoteEntries(json) : false;
@@ -640,6 +655,31 @@ var MusicService = $.class(SubjectService, {
     }
 });
 
+var ReviewService = $.class(BaseService, {
+    get: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    getForUser: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    getForSubject: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    add: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    update: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    delete: function(name) {
+        throw new Error("Not Implemented Yet");
+    }
+});
 // }}}
 
 // {{{ Douban object classes like ``User`` and ``Note``
@@ -939,6 +979,18 @@ var Subject = $.class(DoubanObject, {
         return this._feed['gd:rating']['@numRaters'];
     }
 });
+// Class method
+Subject.factory = function(json) {
+    if (typeof json == 'undefined') return json;
+    var category = json['category']['@term'];
+    if (category.match(/book$/)) {
+        return new Book(json);
+    } else if (category.match(/movie$/)) {
+        return new Movie(json);
+    } else if (category.match(/music$/)) {
+        return new Music(json);
+    }
+};
 
 var Book = $.class(Subject, {
     createFromJson: function($super) {
@@ -1124,7 +1176,6 @@ var Music = $.class(Subject, {
     getVersion: function() {
         return this.getAttr('version');
     }
-
 });
 
 var MusicEntries = $.class(SearchEntries, {
@@ -1132,6 +1183,54 @@ var MusicEntries = $.class(SearchEntries, {
         $super(Music);
     }
 });
+
+/* Douban Review API
+ * @method      get             获取评论信息
+ * @method      getForUser      特定用户的所有评论
+ * @method      getForSubject   特定书籍、电影、音乐的所有评论
+ * @method      add             发布新评论
+ * @method      update          修改评论
+ * @method      delete          删除评论
+     */
+var Review = $.class(DoubanObject, {
+    createFromJson: function() {
+        this.id = this.getId()
+        this.title = this.getTitle();
+        this.author = this.getAuthor();
+        this.subject = this.getSubject();
+        this.summary = this.getSummary();
+        this.published = this.getPublished();
+        this.updated = this.getUpdated();
+        this.url = this.getUrl();
+        this.rating = this.getRating();
+    },
+
+    getSubject: function() {
+        return Subject.factory(this._feed['db:subject']);
+    },
+
+    getRating: function() {
+        if (!this._feed['gd:rating']) return 0;
+        return parseInt(this._feed['gd:rating']['@value']);
+    }
+});
+// Class methods
+/* create POST or PUT xml
+* @param       title String
+* @param       content String
+* @param       isPublic Boolean
+* @param       isReplyEnabled Boolean
+*/
+Review.createXml = function(review, title, content, rating) {
+    if (typeof review == 'reviewect') var id = review.id;
+    else if (review.match(/^\d+$/)) var id = GET_REVIEW_URL.replace(/\{ID\}/, review);
+    else var id = review;
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom"><db:subject xmlns:db="http://www.douban.com/xmlns/"><id>{ID}</id></db:subject><content>{CONTENT}</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="{RATING}" ></gd:rating><title>{TITLE}</title></entry>';
+    return xml.replace(/\{ID\}/, id)
+              .replace(/\{TITLE\}/, title)
+              .replace(/\{CONTENT\}/, content)
+              .replace(/\{RATING\}/, rating);
+};
 
 /* A simple tag object */
 function Tag(name, count) {
