@@ -98,6 +98,12 @@ $.douban.movie = {
     }
 };
 
+$.douban.music = {
+    factory: function(data) {
+        return new Music(data);
+    }
+};
+
 $.douban.note = {
     factory: function(data) {
         return new Note(data);
@@ -831,8 +837,16 @@ var Subject = $.class(DoubanObject, {
         return this.getUrl('image');
     },
 
-    getPubdate: function() {
+    getAka: function() {
+        return this.getAttrs('aka');
+    },
+
+    getReleaseDate: function() {
         return this.getAttr('pubdate');
+    },
+
+    getPublisher: function() {
+        return this.getAttr('publisher');
     },
 
     getRating: function() {
@@ -852,9 +866,9 @@ var Book = $.class(Subject, {
         this.translators = this.getTranslators();
         this.isbn10 = this.getIsbn10();
         this.isbn13 = this.getIsbn13();
+        this.releaseDate = this.getReleaseDate();
         this.publisher = this.getPublisher();
         this.price = this.getPrice();
-        this.pubdate = this.getPubdate();
         this.binding = this.getBinding();
         this.authorIntro = this.getAuthorIntro();
         this.summary = this.getSummary();
@@ -882,10 +896,6 @@ var Book = $.class(Subject, {
         return this.getAttr('isbn13');
     },
 
-    getPublisher: function() {
-        return this.getAttr('publisher');
-    },
-
     getPrice: function() {
         return this.getAttr('price');
     },
@@ -909,6 +919,7 @@ var Movie = $.class(Subject, {
         this.writers = this.getWriters();
         this.cast = this.getCast()
         this.imdb = this.getImdb();
+        this.releaseDate = this.getReleaseDate();
         this.episode = this.getEpisode();
         this.language = this.getLanguage();
         this.country = this.getCountry();
@@ -928,10 +939,6 @@ var Movie = $.class(Subject, {
             if (attrs[i]['@name'] == 'aka' && attrs[i]['@lang'] == 'zh_CN')
                 return attrs[i]['$t'];
         return ''
-    },
-
-    getAka: function() {
-        return this.getAttrs('aka');
     },
 
     getDirectors: function() {
@@ -965,6 +972,54 @@ var Movie = $.class(Subject, {
     getWebsite: function() {
         return this.getAttr('website');
     }
+});
+
+var Music = $.class(Subject, {
+    createFromJson: function($super) {
+        this.id = this.getId();
+        this.title = this.getTitle();
+        this.aka = this.getAka();
+        this.artists = this.getArtists();
+        this.ean = this.getEan();
+        this.releaseDate = this.getReleaseDate();
+        this.publisher = this.getPublisher();
+        this.media = this.getMedia();
+        this.discs = this.getDiscs();
+        this.version = this.getVersion();
+        this.summary = this.getSummary();
+        this.tracks = this.getTracks();
+        this.url = this.getUrl();
+        this.iconUrl = this.getIconUrl();
+        this.tags = this.getTags();
+        this.rating = this.getRating();
+        this.votes = this.getVotes();
+        $super();
+    },
+
+    getArtists: function() {
+        return this.getAttrs('singer');
+    },
+
+    getEan: function() {
+        return this.getAttr('ean');
+    },
+
+    getTracks: function() {
+        return this.getAttr('track');
+    },
+
+    getMedia: function() {
+        return this.getAttr('media');
+    },
+
+    getDiscs: function() {
+        return this.getAttr('discs');
+    },
+
+    getVersion: function() {
+        return this.getAttr('version');
+    }
+
 });
 
 /* A simple tag object */

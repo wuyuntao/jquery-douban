@@ -312,7 +312,7 @@ test("test book object", function() {
     equals(book.publisher, "メディアワークス");
     equals(book.price, "JPY 5.99");
     equals(book.binding, "文庫");
-    equals(book.pubdate, "2004-04");
+    equals(book.releaseDate, "2004-04");
     equals(book.authorIntro, "");
     equals(book.url, "http://www.douban.com/subject/3137911/");
     equals(book.iconUrl, "http://otho.douban.com/spic/s3168047.jpg");
@@ -345,6 +345,22 @@ test("test movie object", function() {
     equals(movie.tags.length, 5);
     equals(movie.rating, 4.49);
     equals(movie.votes, 9988);
-
 });
+
+test("test music object", function() {
+    var json = {"category":{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#music"},"db:tag":[{"@count":57,"@name":"OST"},{"@count":50,"@name":"菅野よう子"},{"@count":23,"@name":"Macross"},{"@count":21,"@name":"Anime"},{"@count":18,"@name":"日本"}],"title":{"$t":"マクロスF O.S.T.2 『娘トラ。』"},"author":[{"name":{"$t":"シェリル・ノーム starrinng May'n"}},{"name":{"$t":"中島愛"}},{"name":{"$t":"菅野よう子"}}],"summary":{"$t":"简介"},"link":[{"@rel":"self","@href":"http://api.douban.com/music/subject/3204166"},{"@rel":"alternate","@href":"http://www.douban.com/subject/3204166/"},{"@rel":"image","@href":"http://otho.douban.com/spic/s3267369.jpg"}],"db:attribute":[{"$t":"1","@name":"discs"},{"$t":"4580226561722","@name":"ean"},{"$t":"01 Track","@name":"tracks"},{"$t":"2008-10-08","@name":"pubdate"},{"$t":"マクロスF O.S.T.2 『娘トラ。』","@name":"title"},{"$t":"シェリル・ノーム starrinng May'n","@name":"singer"},{"$t":"中島愛","@name":"singer"},{"$t":"菅野よう子","@name":"singer"},{"$t":"Soundtrack","@name":"version"},{"$t":"JVCエンタテインメント","@name":"publisher"},{"$t":"CD","@name":"media"},{"$t":"MACROSS F O.S.T.2 『NYAN TORA。』","@name":"aka"},{"$t":"超时空要塞F  O.S.T.2 『娘トラ。』","@name":"aka"}],"id":{"$t":"http://api.douban.com/music/subject/3204166"},"gd:rating":{"@min":1,"@numRaters":149,"@average":"4.56","@max":5}};
+    var music = $.douban.music.factory(json);
+    equals(music.id, "http://api.douban.com/music/subject/3204166");
+    equals(music.title, "マクロスF O.S.T.2 『娘トラ。』");
+    equals(music.aka.length, 2);
+    equals(music.artists[0], "シェリル・ノーム starrinng May'n");
+    equals(music.artists[1], "中島愛");
+    equals(music.artists[2], "菅野よう子");
+    equals(music.ean, "4580226561722");
+    equals(music.summary, "简介");
+    equals(music.tags.length, 5);
+    equals(music.rating, 4.56);
+    equals(music.votes, 149);
+});
+
 // vim: foldmethod=indent
