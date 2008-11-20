@@ -322,4 +322,29 @@ test("test book object", function() {
     equals(book.rating, 3.0);
     equals(book.votes, 2);
 });
+
+test("test movie object", function() {
+    var json = {"category":{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#movie"},"db:tag":[{"@count":3425,"@name":"爱情"},{"@count":1654,"@name":"美国"},{"@count":1168,"@name":"Sunrise"},{"@count":986,"@name":"经典"},{"@count":917,"@name":"RichardLinklater"}],"title":{"$t":"Before Sunrise"},"author":[{"name":{"$t":"Richard Linklater"}}],"summary":{"$t":"简介"},"link":[{"@rel":"self","@href":"http://api.douban.com/movie/subject/1296339"},{"@rel":"alternate","@href":"http://www.douban.com/subject/1296339/"},{"@rel":"image","@href":"http://otho.douban.com/spic/s1401102.jpg"}],"db:attribute":[{"$t":"Before Sunrise","@name":"title"},{"$t":"奥地利","@name":"country"},{"$t":"瑞士","@name":"country"},{"$t":"美国","@name":"country"},{"$t":"Kim Krizan","@name":"writer"},{"$t":"Richard Linklater","@name":"writer"},{"$t":"1995","@name":"pubdate"},{"$t":"Richard Linklater","@name":"director"},{"$t":"英语","@name":"language"},{"$t":"http://www.imdb.com/title/tt0112471/","@name":"imdb"},{"@lang":"zh_CN","$t":"爱在黎明破晓前","@name":"aka"},{"$t":"Ethan Hawke","@name":"cast"},{"$t":"Julie Delpy","@name":"cast"},{"$t":"日出之前","@name":"aka"},{"$t":"情留半天","@name":"aka"},{"$t":"爱在黎明破晓前","@name":"aka"}],"id":{"$t":"http://api.douban.com/movie/subject/1296339"},"gd:rating":{"@min":1,"@numRaters":9988,"@average":"4.49","@max":5}}
+    var movie = $.douban.movie.factory(json);
+    equals(movie.id, "http://api.douban.com/movie/subject/1296339");
+    equals(movie.title, "Before Sunrise");
+    // Aka ["爱在破晓前", "日出之前", "情留半天"];
+    equals(movie.aka.length, 3);
+    equals(movie.aka[0], "爱在破晓前");     // Chinese title
+    equals(movie.directors[0], "Richard Linklater");
+    equals(movie.writers[0], "Kim Krizan");
+    equals(movie.writers[1], "Richard Linklater"]);
+    equals(movie.cast[0], "Ethan Hawke");
+    equals(movie.cast[1], "Julie Delpy"]);
+    equals(movie.imdb, "http://www.imdb.com/title/tt0112471/");
+    equals(movie.language[0], "英语");
+    equals(movie.country.length, 3);
+    equals(movie.summary, "简介");
+    equals(movie.url, "http://www.douban.com/subject/1296339/");
+    equals(movie.iconUrl, "http://otho.douban.com/spic/s1401102.jpg");
+    equals(movie.tags.length, 5);
+    equals(movie.rating, 4.49);
+    equals(movie.votes, 9988);
+
+});
 // vim: foldmethod=indent
