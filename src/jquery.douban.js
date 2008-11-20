@@ -92,6 +92,12 @@ $.douban.book = {
     }
 };
 
+$.douban.movie = {
+    factory: function(data) {
+        return new Movie(data);
+    }
+};
+
 $.douban.note = {
     factory: function(data) {
         return new Note(data);
@@ -581,6 +587,7 @@ var DoubanObject = $.class({
 
     /* JSON feed parsers
      */
+    // Get the attribute which is first got
     getAttr: function (attr) {
         if (typeof this._feed[attr] != 'undefined') return this._feed[attr]['$t'];
         var attrs = this._feed['db:attribute'];
@@ -620,7 +627,7 @@ var DoubanObject = $.class({
     },
 
     getIconUrl: function() {
-        return this.getUrl('icon') || this.getUrl('image');
+        return this.getUrl('icon');
     },
 
     getTime: function(attr) {
@@ -811,15 +818,29 @@ var Subject = $.class(DoubanObject, {
     createFromJson: function() {
     },
 
-    getArtists: function(name) {
-        var artists = [], entries = this._feed[name] || [];
-        for (var i = 0, len = entries.length; i < len; i++)
-            artists.push(entries[i]['name']['$t']);
-        return artists;
+    // Returns a list of attributes
+    getAttrs: function(name) {
+        var attrs = [], feedAttributes = this._feed['db:attribute'];
+        for (var i = 0, len = feedAttributes.length; i < len; i++)
+            if (feedAttributes[i]['@name'] == name)
+                attrs.push(feedAttributes[i]['$t']);
+        return attrs;
+    },
+
+    getIconUrl: function() {
+        return this.getUrl('image');
     },
 
     getPubdate: function() {
         return this.getAttr('pubdate');
+    },
+
+    getRating: function() {
+        return parseFloat(this._feed['gd:rating']['@average']);
+    },
+
+    getVotes: function() {
+        return this._feed['gd:rating']['@numRaters'];
     }
 });
 
@@ -846,11 +867,11 @@ var Book = $.class(Subject, {
     },
 
     getAuthors: function() {
-        return this.getArtists('author');
+        return this.getAttrs('author');
     },
 
     getTranslators: function() {
-        return this.getArtists('translator');
+        return this.getAttrs('translator');
     },
 
     getIsbn10: function() {
@@ -875,14 +896,64 @@ var Book = $.class(Subject, {
 
     getAuthorIntro: function() {
         return this.getAttr('author-intro');
+    }
+});
+
+var Movie = $.class(Subject, {
+    createFromJson: function($super) {
+        this.id = this.getId();
+        this.title = this.getTitle();
+        this.chineseTitle = this.getChineseTitle();
+        this.aka = this.getAka();
+        this.directors = this.getDirectors();
+        this.writers = this.getWriters();
+        this.cast = this.getCast()
+        this.imdb = this.getImdb();
+        this.language = this.getLanguage();
+        this.country = this.getCountry();
+        this.summary = this.getSummary();
+        this.url = this.getUrl();
+        this.iconUrl = this.getIconUrl();
+        this.tags = this.getTags();
+        this.rating = this.getRating();
+        this.votes = this.getVotes();
+        $super();
     },
 
-    getRating: function() {
-        return parseFloat(this._feed['gd:rating']['@average']);
+    getChineseTitle: function() {
+        var attrs = this._feed['db:attribute'];
+        for (var i = 0, len = attrs.length; i < len; i++)
+            if (attrs[i]['@name'] == 'aka' && attrs[i]['@lang'] == 'zh_CN')
+                return attrs[i]['$t'];
+        return ''
     },
 
-    getVotes: function() {
-        return this._feed['gd:rating']['@numRaters'];
+    getAka: function() {
+        return this.getAttrs('aka');
+    },
+
+    getDirectors: function() {
+        return this.getAttrs('director');
+    },
+
+    getWriters: function() {
+        return this.getAttrs('writer');
+    },
+
+    getCast: function() {
+        return this.getAttrs('cast');
+    },
+
+    getImdb: function() {
+        return this.getAttr('imdb');
+    },
+
+    getLanguage: function() {
+        return this.getAttrs('language');
+    },
+
+    getCountry: function() {
+        return this.getAttrs('country');
     }
 });
 

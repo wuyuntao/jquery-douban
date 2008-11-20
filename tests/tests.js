@@ -328,14 +328,13 @@ test("test movie object", function() {
     var movie = $.douban.movie.factory(json);
     equals(movie.id, "http://api.douban.com/movie/subject/1296339");
     equals(movie.title, "Before Sunrise");
-    // Aka ["爱在破晓前", "日出之前", "情留半天"];
-    equals(movie.aka.length, 3);
-    equals(movie.aka[0], "爱在破晓前");     // Chinese title
+    equals(movie.chineseTitle, "爱在黎明破晓前");
+    equals(movie.aka.length, 4);
     equals(movie.directors[0], "Richard Linklater");
     equals(movie.writers[0], "Kim Krizan");
-    equals(movie.writers[1], "Richard Linklater"]);
+    equals(movie.writers[1], "Richard Linklater");
     equals(movie.cast[0], "Ethan Hawke");
-    equals(movie.cast[1], "Julie Delpy"]);
+    equals(movie.cast[1], "Julie Delpy");
     equals(movie.imdb, "http://www.imdb.com/title/tt0112471/");
     equals(movie.language[0], "英语");
     equals(movie.country.length, 3);
