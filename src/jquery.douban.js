@@ -655,6 +655,14 @@ var MusicService = $.class(SubjectService, {
     }
 });
 
+/* Douban Review API
+ * @method      get             获取评论信息
+ * @method      getForUser      特定用户的所有评论
+ * @method      getForSubject   特定书籍、电影、音乐的所有评论
+ * @method      add             发布新评论
+ * @method      update          修改评论
+ * @method      delete          删除评论
+     */
 var ReviewService = $.class(BaseService, {
     get: function(id) {
         throw new Error("Not Implemented Yet");
@@ -1184,14 +1192,6 @@ var MusicEntries = $.class(SearchEntries, {
     }
 });
 
-/* Douban Review API
- * @method      get             获取评论信息
- * @method      getForUser      特定用户的所有评论
- * @method      getForSubject   特定书籍、电影、音乐的所有评论
- * @method      add             发布新评论
- * @method      update          修改评论
- * @method      delete          删除评论
-     */
 var Review = $.class(DoubanObject, {
     createFromJson: function() {
         this.id = this.getId()
