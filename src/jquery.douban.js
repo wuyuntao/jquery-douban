@@ -909,11 +909,13 @@ var Movie = $.class(Subject, {
         this.writers = this.getWriters();
         this.cast = this.getCast()
         this.imdb = this.getImdb();
+        this.episode = this.getEpisode();
         this.language = this.getLanguage();
         this.country = this.getCountry();
         this.summary = this.getSummary();
         this.url = this.getUrl();
         this.iconUrl = this.getIconUrl();
+        this.website = this.getWebsite();
         this.tags = this.getTags();
         this.rating = this.getRating();
         this.votes = this.getVotes();
@@ -944,6 +946,10 @@ var Movie = $.class(Subject, {
         return this.getAttrs('cast');
     },
 
+    getEpisode: function() {
+        return this.getAttr('episode');
+    },
+
     getImdb: function() {
         return this.getAttr('imdb');
     },
@@ -954,6 +960,10 @@ var Movie = $.class(Subject, {
 
     getCountry: function() {
         return this.getAttrs('country');
+    },
+
+    getWebsite: function() {
+        return this.getAttr('website');
     }
 });
 

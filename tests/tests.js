@@ -336,6 +336,7 @@ test("test movie object", function() {
     equals(movie.cast[0], "Ethan Hawke");
     equals(movie.cast[1], "Julie Delpy");
     equals(movie.imdb, "http://www.imdb.com/title/tt0112471/");
+    equals(movie.episode, '');
     equals(movie.language[0], "英语");
     equals(movie.country.length, 3);
     equals(movie.summary, "简介");
