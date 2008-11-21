@@ -17,7 +17,7 @@ const API_HOST = 'http://api.douban.com';
 const PEOPLE_URL = API_HOST + '/people';
 // API BUG: 不加'/'的话，使用不能。http://www.douban.com/group/topic/4655057/ 
 const SEARCH_PEOPLE_URL = PEOPLE_URL + '/';
-const GET_PEOPLE_URL = PEOPLE_URL  + '/{USERNAME}';
+const GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}';
 const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
 const GET_FRIENDS_URL = GET_PEOPLE_URL + '/friends';
 const GET_CONTACTS_URL = GET_PEOPLE_URL + '/contacts';
@@ -372,7 +372,7 @@ $.extend({
 
 /* {{{ Douban service classes, like ``DoubanService`` and ``UserService``
 
-/* Douban client
+/* Douban service
  * @returns     null
  * @param       options Dict
  * @option      apiKey String
@@ -389,6 +389,7 @@ var DoubanService = $.class({
         };
         this.options = $.extend(defaults, options || {});;
         this.api = new Token(this.options.apiKey, this.options.apiSecret);
+
         this._http = $.douban.http.factory({ type: this.options.httpType });
         this._client = $.douban.client.factory({ apiKey: this.api.key,
                                                  apiSecret: this.api.secret,
@@ -511,7 +512,7 @@ var DoubanService = $.class({
     }
 });
 
-/* Base class of Douban API services
+/* Base class of all Douban API services
  */
 var BaseService = $.class({
     init: function(service) {
@@ -525,8 +526,73 @@ var BaseService = $.class({
      */
     lazyUrl: function(obj, tmpl) {
         if (typeof obj == 'object') return obj.id;
-        else if (obj.match(/^\d+$/)) return tmpl.replace(/\{ID\}/, obj);
+        else if (obj.match(/^\w+$/)) return tmpl.replace(/\{ID\}/, obj);
         else return obj;
+    },
+
+    /* Get URL of subject
+     * returns  url
+     * @param   subject Object or String
+     */
+    lazySubject: function(subject) {
+        if (typeof subject == 'object') return subject.id;
+        else return subject;
+    },
+
+    /* Get new object from given object or url
+     * @returns     new object, Object or undefined
+     * @param       object, object id or object api url, Object or String
+     * @param       model, Constructor
+     * @param       templateUrl, String
+     */
+    _get: function(object, model, templateUrl) {
+        var url = this.lazyUrl(object, templateUrl);
+        var json = this._service.get(url);
+        return json ? new model(json) : undefined;
+    },
+
+    /* Get object entries from given object
+     * @returns     new object entries, Object or undefined
+     * @param       object, object id or object api url, Object or String
+     * @param       model, Constructor
+     * @param       templateUrl, String
+     * @param       suffix, String
+     * @param       offset, Integer
+     * @param       limit, Integer
+     */
+    _getForObject: function(object, model, templateUrl, suffix, offset, limit) {
+        var url = this.lazyUrl(object, templateUrl) + suffix;
+        var params = { 'start-index': (offset || 0) + 1, 'max-results': limit || 50 };
+        var json = this._service.get(url, params);
+        return json ? new model(json) : undefined;
+    },
+
+    /* Search object from given query
+     * @returns     new object entries, Object or undefined
+     * @param       url, String
+     * @param       model, Constructor
+     * @param       query, String
+     * @param       offset, Integer
+     * @param       limit, Integer
+     */
+    _search: function(url, model, query, offset, limit) {
+        var params = { 'q': query,
+                       'start-index': (offset || 0) + 1,
+                       'max-results': limit || 50 };
+        var json = this._service.get(url, params);
+        return json ? new model(json) : undefined;
+    },
+
+    add: function() {
+        throw new Error("Not Implemented Yet");
+    },
+
+    update: function() {
+        throw new Error("Not Implemented Yet");
+    },
+
+    delete: function() {
+        throw new Error("Not Implemented Yet");
     }
 });
 
@@ -538,37 +604,24 @@ var BaseService = $.class({
  * @method      contact         获取用户关注的人
  */
 var UserService = $.class(BaseService, {
-    get: function(name) {
-        var url = GET_PEOPLE_URL.replace(/\{USERNAME\}/, name);
-        var json = this._service.get(url);
-        return json ? new User(json) : false;
+    get: function(user) {
+        return this._get(user, User, GET_PEOPLE_URL);
     },
 
     search: function(query, offset, limit) {
-        var url = SEARCH_PEOPLE_URL;
-        var params = { 'q': query, 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
-        var json = this._service.get(url, params);
-        return json ? new UserEntries(json) : false;
+        return this._search(SEARCH_PEOPLE_URL, UserEntries, query, offset, limit);
     },
 
     current: function() {
-        var url = GET_CURRENT_URL;
-        var json = this._service.get(url);
-        return json ? new User(json) : false;
+        return this._get(GET_CURRENT_URL, User);
     },
 
     friends: function(user, offset, limit) {
-        var url = GET_FRIENDS_URL.replace(/\{USERNAME\}/, user);
-        var params = { 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
-        var json = this._service.get(url, params);
-        return json ? new UserEntries(json) : false;
+        return this._getForObject(user, UserEntries, GET_PEOPLE_URL, '/friends', offset, limit);
     },
 
     contacts: function(user, offset, limit) {
-        var url = GET_CONTACTS_URL.replace(/\{USERNAME\}/, user);
-        var params = { 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
-        var json = this._service.get(url, params);
-        return json ? new UserEntries(json) : false;
+        return this._getForObject(user, UserEntries, GET_PEOPLE_URL, '/contacts', offset, limit);
     }
 });
 

@@ -23,11 +23,36 @@ test("test misc", function() {
         init: function(name) {
             this.name = name;
             this.sex = 'male';
+        },
+        getA: function() {
+            return 'A';
         }
     });
+    // subject inherited from ``Person``
+    var Girl = $.class(Person, {
+        init: function(name) {
+            this.name = name;
+            this.sex = 'female';
+        },
+        getB: function() {
+            return 'B';
+        }
+    });
+        
+    var Biosex = $.class(Boy, Girl, {
+        init: function(name) {
+            this.name = name;
+            this.sex = 'biosex';
+        }
+    });
+
     var mike = new Boy('mike');
     equals(mike.getName(), 'mike');
     equals(mike.getSex(), 'male');
+    var nancy = new Biosex('nancy');
+    equals(nancy.getSex(), 'biosex');
+    equals(nancy.getA(), 'A');
+    equals(nancy.getB(), 'B');
 });
 
 module("Basic Testcases");
