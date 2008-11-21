@@ -399,7 +399,7 @@ test("test note object", function() {
     equals(note2.url, undefined);
 
     // create xml
-    var xml = $.douban.note.createXml("标题", "内容", true, false);
+    var xml = $.douban.note.createXml({ title: "标题", content: "内容", isPublic: true, isReplyEnabled: false });
     equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>标题</title><content>内容</content><db:attribute name="privacy">public</db:attribute><db:attribute name="can_reply">no</db:attribute></entry>', "get xml ok");
 });
 

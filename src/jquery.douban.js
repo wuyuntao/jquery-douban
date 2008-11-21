@@ -539,7 +539,7 @@ var BaseService = $.class({
 
     /* Get new object from given object or url
      * @returns     new object, Object or undefined
-     * @param       object, object id or object api url, Object or String
+     * @param       object, Object or String
      * @param       model, Constructor
      * @param       templateUrl, String
      */
@@ -551,7 +551,7 @@ var BaseService = $.class({
 
     /* Get object entries from given object
      * @returns     new object entries, Object or undefined
-     * @param       object, object id or object api url, Object or String
+     * @param       object, Object or String
      * @param       model, Constructor
      * @param       templateUrl, String
      * @param       suffix, String
@@ -581,25 +581,48 @@ var BaseService = $.class({
         return this._response(json, model);
     },
 
+    /* Add object 
+     * @returns     object created, Object or undefined
+     * @param       url, String
+     * @param       model, Constructor
+     * @param       data, Dict or XML String
+     */
     _add: function(url, model, data) {
-        data = model.createXml(data);
+        if (typeof data == 'object') data = model.createXml(data);
         var json = this._service.post(url, data);
         return this._response(json, model);
     },
 
+    /* Update object 
+     * @returns     object updated, Object or undefined
+     * @param       object, Object or String
+     * @param       model, Constructor
+     * @param       templateUrl, String
+     * @param       data, Dict or XML String
+     */
     _update: function(object, model, templateUrl, data) {
         var url = this.lazyUrl(object, templateUrl);
-        data = model.createXml(data);
+        if (typeof data == 'object') data = model.createXml(data);
         var json = this._service.put(url, data);
         return this._response(json, model);
     },
 
+    /* Delete object
+     * @returns     if object is deleted, Boolean
+     * @param       object, Object or String
+     * @param       templateUrl, String
+     */
     _delete: function(object, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
         var response = this._service.delete(url);
         return response == 'ok' ? true : false;
     },
 
+    /* Get response or undefined
+     * @returns     new object or undefined
+     * @param       json, Object
+     * @param       model, Contructor
+     */
     _response: function(json, model) {
         return json ? new model(json) : undefined;
     }
