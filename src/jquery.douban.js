@@ -688,43 +688,41 @@ var NoteService = $.class(BaseService, {
 
 // Base class of book, movie and music service
 var SubjectService = $.class(BaseService, {
-    get: function(subject, model, url) {
-        var url = this.lazyUrl(subject, url);
-        var json = this._service.get(url);
-        return new model(json);
+    get: function(subject) {
+        return this._get(subject, this._model, this._getSubjectUrl);
     },
-    search: function(query, offset, limit, model, url) {
-        var params = { 'q': query, 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
-        var json = this._service.get(url, params);
-        return new model(json);
+    search: function(query, offset, limit) {
+        return this._search(this._searchSubjectUrl, this._modelEntries, query, offset, limit);
     }
 });
 
 var BookService = $.class(SubjectService, {
-    get: function($super, book) {
-        return $super(book, Book, GET_BOOK_URL);
-    },
-    search: function($super, query, offset, limit) {
-        return $super(query, offset, limit, BookEntries, SEARCH_BOOK_URL);
+    init: function($super, service) {
+        this._model = Book;
+        this._modelEntries = BookEntries;
+        this._getSubjectUrl = GET_BOOK_URL;
+        this._searchSubjectUrl = SEARCH_BOOK_URL;
+        $super(service);
     }
 });
 
 var MovieService = $.class(SubjectService, {
-    get: function($super, movie) {
-        return $super(movie, Movie, GET_MOVIE_URL);
-    },
-    search: function($super, query, offset, limit) {
-        return $super(query, offset, limit, MovieEntries, SEARCH_MOVIE_URL);
+    init: function($super, service) {
+        this._model = Movie;
+        this._modelEntries = MovieEntries;
+        this._getSubjectUrl = GET_MOVIE_URL;
+        this._searchSubjectUrl = SEARCH_MOVIE_URL;
+        $super(service);
     }
 });
 
 var MusicService = $.class(SubjectService, {
-    get: function($super, music) {
-        return $super(music, Music, GET_MUSIC_URL);
-    },
-
-    search: function($super, query, offset, limit) {
-        return $super(query, offset, limit, MusicEntries, SEARCH_MUSIC_URL);
+    init: function($super, service) {
+        this._model = Music;
+        this._modelEntries = MusicEntries;
+        this._getSubjectUrl = GET_MUSIC_URL;
+        this._searchSubjectUrl = SEARCH_MUSIC_URL;
+        $super(service);
     }
 });
 
