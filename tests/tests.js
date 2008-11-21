@@ -187,7 +187,7 @@ test("test user api", function() {
 
     // get user's contacts
     var contacts = service.user.contacts('wyt', 2, 5);
-    equals(contacts.total, 111);
+    ok(contacts.total > 111);
     equals(contacts.entries.length, 5, "get user's contacts ok");
 
     // get current authenticated user
@@ -201,9 +201,9 @@ test("test user api", function() {
     equals(result.offset, 6, "search people start index ok");
     equals(result.limit, 3, "search people max results ok");
     equals(result.entries.length, 3, "search people ok");
-    equals(result.entries[0].id, "http://api.douban.com/people/1282010", "get user id ok");
-    equals(result.entries[1].id, "http://api.douban.com/people/1110946", "get user id ok");
-    equals(result.entries[2].id, "http://api.douban.com/people/1652131", "get user id ok");
+    equals(result.entries[0].id, "http://api.douban.com/people/1110946", "get user id ok");
+    equals(result.entries[1].id, "http://api.douban.com/people/1652131", "get user id ok");
+    equals(result.entries[2].id, "http://api.douban.com/people/1280023", "get user id ok");
 });
 
 test("test note api", function() {
@@ -281,7 +281,7 @@ test("test book api", function() {
     equals(result.offset, 5, "search book start index ok");
     equals(result.limit, 2, "search book max results ok");
     equals(result.entries.length, 2, "search book ok");
-    equals(result.entries[0].id, "http://api.douban.com/book/subject/1924288", "get book id ok");
+    equals(result.entries[0].id, "http://api.douban.com/book/subject/1909003", "get book id ok");
     equals(result.entries[1].id, "http://api.douban.com/book/subject/1232101", "get book id ok");
 });
 
@@ -303,9 +303,9 @@ test("test movie api", function() {
     equals(result.offset, 9, "search movie start index ok");
     equals(result.limit, 3, "search movie max results ok");
     equals(result.entries.length, 3, "search movie ok");
-    equals(result.entries[0].id, "http://api.douban.com/movie/subject/1307508", "get movie id ok");
-    equals(result.entries[1].id, "http://api.douban.com/movie/subject/1485417", "get movie id ok");
-    equals(result.entries[2].id, "http://api.douban.com/movie/subject/1479800", "get movie id ok");
+    equals(result.entries[0].id, "http://api.douban.com/movie/subject/1485417", "get movie id ok");
+    equals(result.entries[1].id, "http://api.douban.com/movie/subject/1479800", "get movie id ok");
+    equals(result.entries[2].id, "http://api.douban.com/movie/subject/1306388", "get movie id ok");
 });
 
 test("test music api", function() {
@@ -330,6 +330,45 @@ test("test review api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
+    // get review
+    var review = service.review.get('1523679');
+    equals(review.title, '第二季第二话');
+    equals(review.author.screenName, '真月居深红魅玉大圣天');
+    equals(review.rating, 5);
+
+    // get review for user
+    var reviews = service.review.getForUser(review.author, 3, 3);
+    equals(reviews.total, 5);
+    equals(reviews.offset, 3);
+    equals(reviews.limit, 3);
+    equals(reviews.entries.length, 2);
+
+    // get review for subject
+    var reviews2 = service.review.getForSubject(review.subject);
+    equals(reviews2.total, 6);
+    equals(reviews2.offset, 0);
+    equals(reviews2.limit, 50);
+    equals(reviews2.entries.length, 6);
+
+    // add
+    var review2 = service.review.add('http://api.douban.com/music/subject/3288632', "测试", "评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。", 5);
+    equals(review2.title, "测试");
+    equals(review2.content, "评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。");
+    equals(review2.author.screenName, 'ilovest');
+    equals(review2.rating, 5);
+    
+    // update
+    var review3 = service.review.update(review2, "测试更新", "更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。", 4);
+    equals(review3.title, "测试更新");
+    equals(review3.content, "更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。");
+    equals(review3.author.screenName, 'ilovest');
+    equals(review3.rating, 4);
+
+    // delete
+    service.review.delete(review2);
+    var review4 = service.review.get(review2);
+    console.debug(review4);
+    ok(!review4.id);
 });
 
 module("Douban Object Testcases");
@@ -340,11 +379,20 @@ test("test user object", function() {
     equals(user.id, "http://api.douban.com/people/2139418", "get user id ok");
     equals(user.userName, "whoami", "get user name ok");
     equals(user.screenName, "我是谁", "get screen name ok");
-    equals(user.location, "", "get user location ok");
-    equals(user.blog, "", "get user blog ok");
-    equals(user.intro, "", "get user introduction ok");
+    equals(user.location, undefined, "get user location ok");
+    equals(user.blog, undefined, "get user blog ok");
+    equals(user.intro, '', "get user introduction ok");
     equals(user.url, "http://www.douban.com/people/whoami/", "get user homepage ok");
     equals(user.iconUrl, "http://otho.douban.com/icon/u2139418-1.jpg", "get user icon url ok");
+
+    var user2 = $.douban.user.factory();
+    equals(user2.id, undefined);
+    equals(user2.userName, undefined);
+    equals(user2.location, undefined);
+    equals(user2.blog, undefined);
+    equals(user2.intro, undefined);
+    equals(user2.url, undefined);
+    equals(user2.iconUrl, undefined);
 });
 
 test("test note object", function() {
@@ -364,6 +412,14 @@ test("test note object", function() {
     equals(note.url, "http://www.douban.com/note/10671354/", "get note url ok");
     equals(note.isPublic, true, "check if note is public ok");
     equals(note.isReplyEnabled, true, "check if is able to reply ok");
+
+    var note2 = $.douban.note.factory();
+    equals(note2.id, undefined);
+    equals(note2.noteName, undefined);
+    equals(note2.location, undefined);
+    equals(note2.blog, undefined);
+    equals(note2.intro, undefined);
+    equals(note2.url, undefined);
 
     // create xml
     var xml = $.douban.note.createXml("标题", "内容", true, false);
@@ -386,7 +442,7 @@ test("test book object", function() {
     equals(book.price, "JPY 5.99");
     equals(book.binding, "文庫");
     equals(book.releaseDate, "2004-04");
-    equals(book.authorIntro, "");
+    equals(book.authorIntro, undefined);
     equals(book.url, "http://www.douban.com/subject/3137911/");
     equals(book.iconUrl, "http://otho.douban.com/spic/s3168047.jpg");
     equals(book.tags.length, 2);
@@ -409,7 +465,7 @@ test("test movie object", function() {
     equals(movie.cast[0], "Ethan Hawke");
     equals(movie.cast[1], "Julie Delpy");
     equals(movie.imdb, "http://www.imdb.com/title/tt0112471/");
-    equals(movie.episode, '');
+    equals(movie.episode, undefined);
     equals(movie.language[0], "英语");
     equals(movie.country.length, 3);
     equals(movie.summary, "简介");
@@ -452,6 +508,9 @@ test("test review object", function() {
     equals(review.url, "http://www.douban.com/review/1168468/", "get review url ok");
     equals(review.rating, 5);
     equals(review.subject.id, "http://api.douban.com/book/subject/1452923");
+
+    var review2 = $.douban.review.factory();
+    equals(review2.id, undefined);
 
     // create xml
     var xml = $.douban.review.createXml("111111", "标题", "内容", 3);

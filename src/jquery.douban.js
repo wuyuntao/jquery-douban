@@ -41,11 +41,15 @@ const MUSIC_URL = API_HOST + '/music/subject';
 const GET_MUSIC_URL = MUSIC_URL + '/{ID}';
 const SEARCH_MUSIC_URL = MUSIC_URL + 's';
 
+const REVIEW_URL = API_HOST + '/review';
 const GET_REVIEW_URL = API_HOST + '/review/{ID}';
 const GET_USERS_REVIEW_URL = GET_PEOPLE_URL + '/reviews';
 const GET_BOOK_REVIEW_URL = GET_BOOK_URL + '/reviews';
 const GET_MOVIE_REVIEW_URL = GET_MOVIE_URL + '/reviews';
 const GET_MUSIC_REVIEW_URL = GET_MUSIC_URL + '/reviews';
+const ADD_REVIEW_URL = REVIEW_URL + 's';
+const UPDATE_REVIEW_URL = GET_REVIEW_URL;
+const DELETE_REVIEW_URL = GET_REVIEW_URL;
 // }}}
 
 // {{{ jQuery Douban
@@ -394,7 +398,8 @@ var DoubanService = $.class({
             'note': NoteService,
             'book': BookService,
             'movie': MovieService,
-            'music': MusicService
+            'music': MusicService,
+            'review': ReviewService,
         }
         for (var name in services) {
             this[name] = new services[name](this);
@@ -541,7 +546,7 @@ var UserService = $.class(BaseService, {
 
     search: function(query, offset, limit) {
         var url = SEARCH_PEOPLE_URL;
-        var params = { 'q': query, 'start-index': offset || 0, 'max-results': limit || 50 };
+        var params = { 'q': query, 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
         var json = this._service.get(url, params);
         return json ? new UserEntries(json) : false;
     },
@@ -554,14 +559,14 @@ var UserService = $.class(BaseService, {
 
     friends: function(user, offset, limit) {
         var url = GET_FRIENDS_URL.replace(/\{USERNAME\}/, user);
-        var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
+        var params = { 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
         var json = this._service.get(url, params);
         return json ? new UserEntries(json) : false;
     },
 
     contacts: function(user, offset, limit) {
         var url = GET_CONTACTS_URL.replace(/\{USERNAME\}/, user);
-        var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
+        var params = { 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
         var json = this._service.get(url, params);
         return json ? new UserEntries(json) : false;
     }
@@ -585,7 +590,7 @@ var NoteService = $.class(BaseService, {
     getForUser: function(user, offset, limit) {
         if (typeof user == 'object') var url = user.id + '/notes';
         else if (typeof user == 'string') var url = GET_USER_NOTE_URL.replace(/\{USERNAME\}/, user);
-        var params = { 'start-index': offset || 0, 'max-results': limit || 50 };
+        var params = { 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
         var json = this._service.get(url, params);
         return json ? new NoteEntries(json) : false;
     },
@@ -621,7 +626,7 @@ var SubjectService = $.class(BaseService, {
         return new model(json);
     },
     search: function(query, offset, limit, model, url) {
-        var params = { 'q': query, 'start-index': offset || 0, 'max-results': limit || 50 };
+        var params = { 'q': query, 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
         var json = this._service.get(url, params);
         return new model(json);
     }
@@ -664,28 +669,45 @@ var MusicService = $.class(SubjectService, {
  * @method      delete          删除评论
      */
 var ReviewService = $.class(BaseService, {
-    get: function(id) {
-        throw new Error("Not Implemented Yet");
+    get: function(review) {
+        var url = this.lazyUrl(review, GET_REVIEW_URL);
+        var json = this._service.get(url);
+        return new Review(json);
     },
 
-    getForUser: function(id) {
-        throw new Error("Not Implemented Yet");
+    getForUser: function(user, offset, limit) {
+        var url = this.lazyUrl(user, GET_PEOPLE_URL)+ '/reviews';
+        var params = { 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
+        var json = this._service.get(url, params);
+        return new AuthorReviewEntries(json);
     },
 
-    getForSubject: function(id) {
-        throw new Error("Not Implemented Yet");
+    getForSubject: function(subject, offset, limit) {
+        var url = this.lazyUrl(subject) + '/reviews';
+        var params = { 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
+        var json = this._service.get(url, params);
+        return new SubjectReviewEntries(json);
     },
 
-    add: function(id) {
-        throw new Error("Not Implemented Yet");
+    add: function(subject, title, content, rating) {
+        var subject = this.lazyUrl(subject);
+        var url = ADD_REVIEW_URL;
+        var data = Review.createXml(subject, title, content, rating);
+        var json = this._service.post(url, data);
+        return new Review(json);
     },
 
-    update: function(id) {
-        throw new Error("Not Implemented Yet");
+    update: function(review, title, content, rating) {
+        var url = this.lazyUrl(review, UPDATE_REVIEW_URL);
+        var data = Review.createXml(url, title, content, rating);
+        var json = this._service.put(url, data);
+        return new Review(json);
     },
 
-    delete: function(name) {
-        throw new Error("Not Implemented Yet");
+    delete: function(review) {
+        var url = this.lazyUrl(review, DELETE_REVIEW_URL);
+        var response = this._service.delete(url);
+        return response == 'ok' ? true : false;
     }
 });
 // }}}
@@ -717,21 +739,21 @@ var DoubanObject = $.class({
      */
     // Get the attribute which is first got
     getAttr: function (attr) {
-        if (typeof this._feed[attr] != 'undefined') return this._feed[attr]['$t'];
+        if (!this._feed) return;
+        if (this._feed[attr]) return this._feed[attr]['$t'];
         var attrs = this._feed['db:attribute'];
-        if (typeof attrs != 'undefined')
+        if (attrs)
             for (var i in attrs)
                 if (attrs[i]['@name'] == attr) return attrs[i]['$t'];
-        return '';
     },
 
     getUrl: function(attr) {
+        if (!this._feed) return;
         // default ``attr`` is 'alternate'
         attr = attr || 'alternate';
         var links = this._feed['link'];
         for (var i in links)
             if (links[i]['@rel'] == attr) return links[i]['@href'];
-        return '';
     },
 
     getId: function() {
@@ -743,7 +765,7 @@ var DoubanObject = $.class({
     },
 
     getAuthor: function() {
-        return typeof this._feed.author == 'undefined' ? undefined : new User(this._feed.author);
+        if (this._feed && this._feed.author) return new User(this._feed.author);
     },
 
     getSummary: function() {
@@ -759,7 +781,8 @@ var DoubanObject = $.class({
     },
 
     getTime: function(attr) {
-        return $.parseDate(this.getAttr(attr));
+        var time = this.getAttr(attr);
+        return time ? $.parseDate(time) : undefined;
     },
 
     getPublished: function() {
@@ -770,8 +793,15 @@ var DoubanObject = $.class({
         return this.getTime('updated');
     },
 
+    getRating: function() {
+        if (!this._feed || !this._feed['gd:rating']) return;
+        return parseFloat(this._feed['gd:rating']['@average'] || 
+                          this._feed['gd:rating']['@value']);
+    },
+
     getTags: function() {
-        var tags = [], entries = this._feed['db:tag'] || [];
+        if (!this._feed || !this._feed['db:tag']) return;
+        var tags = [], entries = this._feed['db:tag'];
         for (var i = 0, len = entries.length; i < len; i++)
             tags.push(new Tag(entries[i]['@name'], entries[i]['@count']));
         return tags;
@@ -805,13 +835,28 @@ var DoubanObjectEntries = $.class(DoubanObject, {
     },
 
     getOffset: function() {
-        return parseInt(this.getAttr("opensearch:startIndex") || "0");
+        return parseInt(this.getAttr("opensearch:startIndex") || "1") - 1;
     },
 
     getLimit: function() {
         return parseInt(this.getAttr("opensearch:itemsPerPage") || "0");
     }
 
+});
+
+var AuthorEntries = $.class(DoubanObjectEntries, {
+    createFromJson: function($super, doubanObject) {
+        this.title = this.getTitle();
+        this.author = this.getAuthor();
+        $super(doubanObject);
+    }
+});
+
+var SubjectEntries = $.class(DoubanObjectEntries, {
+    createFromJson: function($super, doubanObject) {
+        this.title = this.getTitle();
+        $super(doubanObject);
+    }
 });
 
 var SearchEntries = $.class(DoubanObjectEntries, {
@@ -940,10 +985,8 @@ Note.createXml = function(title, content, isPublic, isReplyEnabled) {
  * @attribute   entries
  * @method      createFromJson
  */
-var NoteEntries = $.class(DoubanObjectEntries, {
+var NoteEntries = $.class(AuthorEntries, {
     createFromJson: function($super) {
-        this.title = this.getTitle();
-        this.author = this.getAuthor();
         $super(Note);
     }
 });
@@ -954,6 +997,7 @@ var Subject = $.class(DoubanObject, {
 
     // Returns a list of attributes
     getAttrs: function(name) {
+        if (!this._feed || !this._feed['db:attribute']) return;
         var attrs = [], feedAttributes = this._feed['db:attribute'];
         for (var i = 0, len = feedAttributes.length; i < len; i++)
             if (feedAttributes[i]['@name'] == name)
@@ -977,13 +1021,8 @@ var Subject = $.class(DoubanObject, {
         return this.getAttr('publisher');
     },
 
-    getRating: function() {
-        if (!this._feed['gd:rating']) return 0;
-        return parseFloat(this._feed['gd:rating']['@average']);
-    },
-
     getVotes: function() {
-        if (!this._feed['gd:rating']) return 0;
+        if (!this._feed || !this._feed['gd:rating']) return;
         return this._feed['gd:rating']['@numRaters'];
     }
 });
@@ -1093,11 +1132,11 @@ var Movie = $.class(Subject, {
     },
 
     getChineseTitle: function() {
+        if (!this._feed || !this._feed['db:attribute']) return;
         var attrs = this._feed['db:attribute'];
         for (var i = 0, len = attrs.length; i < len; i++)
             if (attrs[i]['@name'] == 'aka' && attrs[i]['@lang'] == 'zh_CN')
                 return attrs[i]['$t'];
-        return ''
     },
 
     getDirectors: function() {
@@ -1199,6 +1238,7 @@ var Review = $.class(DoubanObject, {
         this.author = this.getAuthor();
         this.subject = this.getSubject();
         this.summary = this.getSummary();
+        this.content = this.getContent();
         this.published = this.getPublished();
         this.updated = this.getUpdated();
         this.url = this.getUrl();
@@ -1206,12 +1246,8 @@ var Review = $.class(DoubanObject, {
     },
 
     getSubject: function() {
+        if (!this._feed || !this._feed['db:subject']) return;
         return Subject.factory(this._feed['db:subject']);
-    },
-
-    getRating: function() {
-        if (!this._feed['gd:rating']) return 0;
-        return parseInt(this._feed['gd:rating']['@value']);
     }
 });
 // Class methods
@@ -1231,6 +1267,18 @@ Review.createXml = function(review, title, content, rating) {
               .replace(/\{CONTENT\}/, content)
               .replace(/\{RATING\}/, rating);
 };
+
+var AuthorReviewEntries = $.class(AuthorEntries, {
+    createFromJson: function($super) {
+        $super(Review);
+    }
+});
+
+var SubjectReviewEntries = $.class(SubjectEntries, {
+    createFromJson: function($super) {
+        $super(Review);
+    }
+});
 
 /* A simple tag object */
 function Tag(name, count) {
@@ -1285,7 +1333,7 @@ $.extend(OAuthClient.prototype, {
             requestToken = this.requestToken;
         }
         var params = $.param({ oauth_token: requestToken.key,
-                               oauth_callback: callbackUrl });
+                               oauth_callback: encodeURIComponent(callbackUrl) });
         this.authorizationUrl = AUTHORIZATION_URL + '?' + params;
         return this.authorizationUrl
     },
