@@ -558,7 +558,7 @@ var BaseService = $.class({
      * @param       offset, Integer
      * @param       limit, Integer
      */
-    _getForObject: function(object, model, templateUrl, suffix, offset, limit) {
+    _getForObject: function(object, offset, limit, model, templateUrl, suffix) {
         var url = this.lazyUrl(object, templateUrl) + suffix;
         var params = { 'start-index': (offset || 0) + 1, 'max-results': limit || 50 };
         var json = this._service.get(url, params);
@@ -573,7 +573,7 @@ var BaseService = $.class({
      * @param       offset, Integer
      * @param       limit, Integer
      */
-    _search: function(url, model, query, offset, limit) {
+    _search: function(query, offset, limit, url, model) {
         var params = { 'q': query,
                        'start-index': (offset || 0) + 1,
                        'max-results': limit || 50 };
@@ -587,8 +587,9 @@ var BaseService = $.class({
      * @param       model, Constructor
      * @param       data, Dict or XML String
      */
-    _add: function(url, model, data) {
+    _add: function(data, url, model) {
         if (typeof data == 'object') data = model.createXml(data);
+        if (model == Review) console.debug(data, url, model);
         var json = this._service.post(url, data);
         return this._response(json, model);
     },
@@ -600,7 +601,7 @@ var BaseService = $.class({
      * @param       templateUrl, String
      * @param       data, Dict or XML String
      */
-    _update: function(object, model, templateUrl, data) {
+    _update: function(object, data, model, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
         if (typeof data == 'object') data = model.createXml(data);
         var json = this._service.put(url, data);
@@ -641,7 +642,7 @@ var UserService = $.class(BaseService, {
     },
 
     search: function(query, offset, limit) {
-        return this._search(SEARCH_PEOPLE_URL, UserEntries, query, offset, limit);
+        return this._search(query, offset, limit, SEARCH_PEOPLE_URL, UserEntries);
     },
 
     current: function() {
@@ -649,11 +650,11 @@ var UserService = $.class(BaseService, {
     },
 
     friends: function(user, offset, limit) {
-        return this._getForObject(user, UserEntries, GET_PEOPLE_URL, '/friends', offset, limit);
+        return this._getForObject(user, offset, limit, UserEntries, GET_PEOPLE_URL, '/friends');
     },
 
     contacts: function(user, offset, limit) {
-        return this._getForObject(user, UserEntries, GET_PEOPLE_URL, '/contacts', offset, limit);
+        return this._getForObject(user, offset, limit, UserEntries, GET_PEOPLE_URL, '/contacts');
     }
 });
 
@@ -670,15 +671,15 @@ var NoteService = $.class(BaseService, {
     },
 
     getForUser: function(user, offset, limit) {
-        return this._getForObject(user, NoteEntries, GET_PEOPLE_URL, '/notes', offset, limit);
+        return this._getForObject(user, offset, limit, NoteEntries, GET_PEOPLE_URL, '/notes');
     },
 
     add: function(data) {
-        return this._add(ADD_NOTE_URL, Note, data);
+        return this._add(data, ADD_NOTE_URL, Note);
     },
 
     update: function(note, data) {
-        return this._update(note, Note, UPDATE_NOTE_URL, data);
+        return this._update(note, data, Note, UPDATE_NOTE_URL);
     },
 
     delete: function(note) {
@@ -692,10 +693,14 @@ var SubjectService = $.class(BaseService, {
         return this._get(subject, this._model, this._getSubjectUrl);
     },
     search: function(query, offset, limit) {
-        return this._search(this._searchSubjectUrl, this._modelEntries, query, offset, limit);
+        return this._search(query, offset, limit, this._searchSubjectUrl, this._modelEntries);
     }
 });
 
+/* Douban Book API Service
+ * @method      get         获取书籍信息
+ * @method      search      搜索书籍
+ */
 var BookService = $.class(SubjectService, {
     init: function($super, service) {
         this._model = Book;
@@ -706,6 +711,10 @@ var BookService = $.class(SubjectService, {
     }
 });
 
+/* Douban Movie API Service
+ * @method      get         获取电影信息
+ * @method      search      搜索电影
+ */
 var MovieService = $.class(SubjectService, {
     init: function($super, service) {
         this._model = Movie;
@@ -716,6 +725,10 @@ var MovieService = $.class(SubjectService, {
     }
 });
 
+/* Douban Music API Service
+ * @method      get         获取音乐信息
+ * @method      search      搜索音乐
+ */
 var MusicService = $.class(SubjectService, {
     init: function($super, service) {
         this._model = Music;
@@ -736,44 +749,28 @@ var MusicService = $.class(SubjectService, {
      */
 var ReviewService = $.class(BaseService, {
     get: function(review) {
-        var url = this.lazyUrl(review, GET_REVIEW_URL);
-        var json = this._service.get(url);
-        return new Review(json);
+        return this._get(review, Review, GET_REVIEW_URL);
     },
 
     getForUser: function(user, offset, limit) {
-        var url = this.lazyUrl(user, GET_PEOPLE_URL)+ '/reviews';
-        var params = { 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
-        var json = this._service.get(url, params);
-        return new AuthorReviewEntries(json);
+        return this._getForObject(user, offset,limit, ReviewForUserEntries, GET_PEOPLE_URL, '/reviews');
     },
 
     getForSubject: function(subject, offset, limit) {
-        var url = this.lazyUrl(subject) + '/reviews';
-        var params = { 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
-        var json = this._service.get(url, params);
-        return new SubjectReviewEntries(json);
+        // ``subject`` can be object or api url, but not id only
+        return this._getForObject(subject, offset, limit, ReviewForSubjectEntries, '', '/reviews');
     },
 
-    add: function(subject, title, content, rating) {
-        var subject = this.lazyUrl(subject);
-        var url = ADD_REVIEW_URL;
-        var data = Review.createXml(subject, title, content, rating);
-        var json = this._service.post(url, data);
-        return new Review(json);
+    add: function(data) {
+        return this._add(data, ADD_REVIEW_URL, Review);
     },
 
-    update: function(review, title, content, rating) {
-        var url = this.lazyUrl(review, UPDATE_REVIEW_URL);
-        var data = Review.createXml(url, title, content, rating);
-        var json = this._service.put(url, data);
-        return new Review(json);
+    update: function(review, data) {
+        return this._update(review, data, Review, UPDATE_REVIEW_URL);
     },
 
     delete: function(review) {
-        var url = this.lazyUrl(review, DELETE_REVIEW_URL);
-        var response = this._service.delete(url);
-        return response == 'ok' ? true : false;
+        return this._delete(review, DELETE_REVIEW_URL);
     }
 });
 // }}}
@@ -1028,19 +1025,20 @@ var Note = $.class(DoubanObject, {
 });
 // Class methods
 /* create POST or PUT xml
-* @param       title String
-* @param       content String
-* @param       isPublic Boolean
-* @param       isReplyEnabled Boolean
-*/
+ * @param       data, Object
+ * @data        title String
+ * @data        content String
+ * @data        isPublic Boolean (optional)
+ * @data        isReplyEnabled Boolean (optional)
+ */
 Note.createXml = function(data) {
+    data = $.extend({ title: '', content: '', isPublic: true, isReplyEnabled: true },
+                    data || {});
     var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>{TITLE}</title><content>{CONTENT}</content><db:attribute name="privacy">{IS_PUBLIC}</db:attribute><db:attribute name="can_reply">{IS_REPLY_ENABLED}</db:attribute></entry>';
-    data.isPublic = data.isPublic ? 'public' : 'private';
-    data.isReplyEnabled = data.isReplyEnabled ? 'yes' : 'no';
     return xml.replace(/\{TITLE\}/, data.title)
               .replace(/\{CONTENT\}/, data.content)
-              .replace(/\{IS_PUBLIC\}/, data.isPublic)
-              .replace(/\{IS_REPLY_ENABLED\}/, data.isReplyEnabled);
+              .replace(/\{IS_PUBLIC\}/, data.isPublic ? 'public' : 'private')
+              .replace(/\{IS_REPLY_ENABLED\}/, data.isReplyEnabled ? 'yes' : 'no');
 };
 
 /* Douban note entries
@@ -1318,29 +1316,32 @@ var Review = $.class(DoubanObject, {
 });
 // Class methods
 /* create POST or PUT xml
-* @param       title String
-* @param       content String
-* @param       isPublic Boolean
-* @param       isReplyEnabled Boolean
-*/
-Review.createXml = function(review, title, content, rating) {
-    if (typeof review == 'reviewect') var id = review.id;
-    else if (review.match(/^\d+$/)) var id = GET_REVIEW_URL.replace(/\{ID\}/, review);
-    else var id = review;
+ * @param       data, Object
+ * @data        review, Object or String
+ * @data        title, String
+ * @data        content, String
+ * @data        rating, Integer
+ */
+Review.createXml = function(data) {
+    data = $.extend({ subject: '', title: '', content: '', rating: 3 },
+                    data || {});
+    if (typeof data.subject == 'object') var id = data.subject.id;
+    else if (data.subject.match(/^\d+$/)) var id = GET_REVIEW_URL.replace(/\{ID\}/, data.subject);
+    else var id = data.subject;
     var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom"><db:subject xmlns:db="http://www.douban.com/xmlns/"><id>{ID}</id></db:subject><content>{CONTENT}</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="{RATING}" ></gd:rating><title>{TITLE}</title></entry>';
     return xml.replace(/\{ID\}/, id)
-              .replace(/\{TITLE\}/, title)
-              .replace(/\{CONTENT\}/, content)
-              .replace(/\{RATING\}/, rating);
+              .replace(/\{TITLE\}/, data.title)
+              .replace(/\{CONTENT\}/, data.content)
+              .replace(/\{RATING\}/, data.rating);
 };
 
-var AuthorReviewEntries = $.class(AuthorEntries, {
+var ReviewForUserEntries = $.class(AuthorEntries, {
     createFromJson: function($super) {
         $super(Review);
     }
 });
 
-var SubjectReviewEntries = $.class(SubjectEntries, {
+var ReviewForSubjectEntries = $.class(SubjectEntries, {
     createFromJson: function($super) {
         $super(Review);
     }
