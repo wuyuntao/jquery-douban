@@ -19,11 +19,9 @@ const PEOPLE_URL = API_HOST + '/people';
 const SEARCH_PEOPLE_URL = PEOPLE_URL + '/';
 const GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}';
 const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
-const GET_FRIENDS_URL = GET_PEOPLE_URL + '/friends';
-const GET_CONTACTS_URL = GET_PEOPLE_URL + '/contacts';
 
 const NOTE_URL = API_HOST + '/note';
-const GET_NOTE_URL = NOTE_URL + '/{NOTEID}';
+const GET_NOTE_URL = NOTE_URL + '/{ID}';
 const GET_USER_NOTE_URL = GET_PEOPLE_URL + '/notes';
 const ADD_NOTE_URL = API_HOST + '/notes';
 const UPDATE_NOTE_URL = GET_NOTE_URL;
@@ -548,7 +546,7 @@ var BaseService = $.class({
     _get: function(object, model, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
         var json = this._service.get(url);
-        return json ? new model(json) : undefined;
+        return this._response(json, model);
     },
 
     /* Get object entries from given object
@@ -564,7 +562,7 @@ var BaseService = $.class({
         var url = this.lazyUrl(object, templateUrl) + suffix;
         var params = { 'start-index': (offset || 0) + 1, 'max-results': limit || 50 };
         var json = this._service.get(url, params);
-        return json ? new model(json) : undefined;
+        return this._response(json, model);
     },
 
     /* Search object from given query
@@ -580,19 +578,30 @@ var BaseService = $.class({
                        'start-index': (offset || 0) + 1,
                        'max-results': limit || 50 };
         var json = this._service.get(url, params);
+        return this._response(json, model);
+    },
+
+    _add: function(url, model, data) {
+        data = model.createXml(data);
+        var json = this._service.post(url, data);
+        return this._response(json, model);
+    },
+
+    _update: function(object, model, templateUrl, data) {
+        var url = this.lazyUrl(object, templateUrl);
+        data = model.createXml(data);
+        var json = this._service.put(url, data);
+        return this._response(json, model);
+    },
+
+    _delete: function(object, templateUrl) {
+        var url = this.lazyUrl(object, templateUrl);
+        var response = this._service.delete(url);
+        return response == 'ok' ? true : false;
+    },
+
+    _response: function(json, model) {
         return json ? new model(json) : undefined;
-    },
-
-    add: function() {
-        throw new Error("Not Implemented Yet");
-    },
-
-    update: function() {
-        throw new Error("Not Implemented Yet");
-    },
-
-    delete: function() {
-        throw new Error("Not Implemented Yet");
     }
 });
 
@@ -634,40 +643,23 @@ var UserService = $.class(BaseService, {
  */
 var NoteService = $.class(BaseService, {
     get: function(note) {
-        if (typeof note == 'object') var url = note.id;
-        else var url = GET_NOTE_URL.replace(/\{NOTEID\}/, note);
-        var json = this._service.get(url);
-        return json ? new Note(json) : false;
+        return this._get(note, Note, GET_NOTE_URL);
     },
 
     getForUser: function(user, offset, limit) {
-        if (typeof user == 'object') var url = user.id + '/notes';
-        else if (typeof user == 'string') var url = GET_USER_NOTE_URL.replace(/\{USERNAME\}/, user);
-        var params = { 'start-index': offset + 1 || 1, 'max-results': limit || 50 };
-        var json = this._service.get(url, params);
-        return json ? new NoteEntries(json) : false;
+        return this._getForObject(user, NoteEntries, GET_PEOPLE_URL, '/notes', offset, limit);
     },
 
-    add: function(title, content, isPublic, isReplyEnabled) {
-        var url = ADD_NOTE_URL;
-        var data = Note.createXml(title, content, isPublic, isReplyEnabled);
-        var json = this._service.post(url, data);
-        return json ? new Note(json) : false;
+    add: function(data) {
+        return this._add(ADD_NOTE_URL, Note, data);
     },
 
-    update: function(note, title, content, isPublic, isReplyEnabled) {
-        if (typeof note == 'object') var url = note.id;
-        else if (note.match(/\d+/)) var url = UPDATE_NOTE_URL.replace(/\{NOTEID\}/, note);
-        var data = Note.createXml(title, content, isPublic, isReplyEnabled);
-        var json = this._service.put(url, data);
-        return json ? new Note(json) : false;
+    update: function(note, data) {
+        return this._update(note, Note, UPDATE_NOTE_URL, data);
     },
 
     delete: function(note) {
-        if (typeof note == 'object') var url = note.id;
-        else if (note.match(/\d+/)) var url = UPDATE_NOTE_URL.replace(/\{NOTEID\}/, note);
-        var response = this._service.delete(url);
-        return response == 'ok' ? true : false;
+        return this._delete(note, DELETE_NOTE_URL);
     }
 });
 
@@ -1020,14 +1012,14 @@ var Note = $.class(DoubanObject, {
 * @param       isPublic Boolean
 * @param       isReplyEnabled Boolean
 */
-Note.createXml = function(title, content, isPublic, isReplyEnabled) {
-    isPublic = isPublic ? 'public' : 'private';
-    isReplyEnabled = isReplyEnabled ? 'yes' : 'no';
+Note.createXml = function(data) {
     var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>{TITLE}</title><content>{CONTENT}</content><db:attribute name="privacy">{IS_PUBLIC}</db:attribute><db:attribute name="can_reply">{IS_REPLY_ENABLED}</db:attribute></entry>';
-    return xml.replace(/\{TITLE\}/, title)
-              .replace(/\{CONTENT\}/, content)
-              .replace(/\{IS_PUBLIC\}/, isPublic)
-              .replace(/\{IS_REPLY_ENABLED\}/, isReplyEnabled);
+    data.isPublic = data.isPublic ? 'public' : 'private';
+    data.isReplyEnabled = data.isReplyEnabled ? 'yes' : 'no';
+    return xml.replace(/\{TITLE\}/, data.title)
+              .replace(/\{CONTENT\}/, data.content)
+              .replace(/\{IS_PUBLIC\}/, data.isPublic)
+              .replace(/\{IS_REPLY_ENABLED\}/, data.isReplyEnabled);
 };
 
 /* Douban note entries

@@ -5,54 +5,6 @@ function createService() {
 }
 
 test("test misc", function() {
-    // super class
-    var Person = $.class({
-        init: function(name, sex) {
-            this.name = name;
-            this.sex = sex;
-        },
-        getName: function() {
-            return this.name;
-        },
-        getSex: function() {
-            return this.sex;
-        }
-    });
-    // subclass inherited from ``Person``
-    var Boy = $.class(Person, {
-        init: function(name) {
-            this.name = name;
-            this.sex = 'male';
-        },
-        getA: function() {
-            return 'A';
-        }
-    });
-    // subject inherited from ``Person``
-    var Girl = $.class(Person, {
-        init: function(name) {
-            this.name = name;
-            this.sex = 'female';
-        },
-        getB: function() {
-            return 'B';
-        }
-    });
-        
-    var Biosex = $.class(Boy, Girl, {
-        init: function(name) {
-            this.name = name;
-            this.sex = 'biosex';
-        }
-    });
-
-    var mike = new Boy('mike');
-    equals(mike.getName(), 'mike');
-    equals(mike.getSex(), 'male');
-    var nancy = new Biosex('nancy');
-    equals(nancy.getSex(), 'biosex');
-    equals(nancy.getA(), 'A');
-    equals(nancy.getB(), 'B');
 });
 
 module("Basic Testcases");
@@ -273,13 +225,13 @@ test("test note api", function() {
     ok(notes2.entries[0].id.match(/http:\/\/api\.douban\.com\/note\/\d+/), "get note id ok");
 
     // publish a new note
-    var note3 = service.note.add("功能多不如MM多", "没错，当时就是这样");
+    var note3 = service.note.add({ title: "功能多不如MM多", content: "没错，当时就是这样"});
     ok(note3.id.match(/http:\/\/api\.douban\.com\/note\/\d+/), "get id of note ok");
     equals(note3.title, '功能多不如MM多', "get title of note ok");
     equals(note3.content, '没错，当时就是这样', "get title of note ok");
 
     // update the note
-    var note4 = service.note.update(note3, "功能多不如DD多", "错了，当时不是这样的");
+    var note4 = service.note.update(note3, { title: "功能多不如DD多", content: "错了，当时不是这样的" });
     equals(note4.id, note3.id, "get id of note ok");
     equals(note4.title, '功能多不如DD多', "get title of note ok");
     equals(note4.content, '错了，当时不是这样的', "get title of note ok");
