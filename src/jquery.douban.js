@@ -520,11 +520,11 @@ var BaseService = $.class({
     /* Get URL from ID, API URL or object
      * @returns url
      * @param   obj Object or String
-     * @param   tmpl String
+     * @param   tmpl String (optional);
      */
     lazyUrl: function(obj, tmpl) {
         if (typeof obj == 'object') return obj.id;
-        else if (obj.match(/^\w+$/)) return tmpl.replace(/\{ID\}/, obj);
+        else if (obj.match(/^\w+$/) && tmpl) return tmpl.replace(/\{ID\}/, obj);
         else return obj;
     },
 
@@ -739,7 +739,7 @@ var MusicService = $.class(SubjectService, {
     }
 });
 
-/* Douban Review API
+/* Douban Review API Service
  * @method      get             获取评论信息
  * @method      getForUser      特定用户的所有评论
  * @method      getForSubject   特定书籍、电影、音乐的所有评论
@@ -758,7 +758,7 @@ var ReviewService = $.class(BaseService, {
 
     getForSubject: function(subject, offset, limit) {
         // ``subject`` can be object or api url, but not id only
-        return this._getForObject(subject, offset, limit, ReviewForSubjectEntries, '', '/reviews');
+        return this._getForObject(subject, offset, limit, ReviewForSubjectEntries, null, '/reviews');
     },
 
     add: function(data) {
@@ -773,6 +773,157 @@ var ReviewService = $.class(BaseService, {
         return this._delete(review, DELETE_REVIEW_URL);
     }
 });
+
+/* Douban Collection API Service
+ * @method      get             获取收藏信息
+ * @method      getUser         获取用户收藏信息
+ * @method      add             添加收藏
+ * @method      update          更新收藏信息
+ * @method      delete          删除收藏
+ */
+var CollectionService = $.class(BaseService, {
+    get: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    getForUser: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    add: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    update: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    delete: function(name) {
+        throw new Error("Not Implemented Yet");
+    }
+});
+
+/* Douban Miniblog API Service
+ * @method      getUser         获取用户广播
+ * @method      getContact      获取用户友邻广播
+ * @method      add             添加广播
+ * @method      delete          删除广播
+ */
+var MiniblogService = $.class(BaseService, {
+    getForUser: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    getForContacts: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    add: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    delete: function(name) {
+        throw new Error("Not Implemented Yet");
+    }
+});
+
+/* Douban Event API Service
+ * @method      get             获取活动
+ * @method      getUser         获取用户的所有活动
+ * @method      getCity         获取城市的所有活动
+ * @method      search          搜索活动
+ * @method      join            参加活动
+ * @method      add             创建新活动
+ * @method      update          更新活动
+ * @method      delete          删除活动
+ */
+var EventService = $.class(BaseService, {
+    get: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    getForUser: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    getForCity: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    search: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    join: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    add: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    update: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    delete: function(name) {
+        throw new Error("Not Implemented Yet");
+    }
+});
+
+/* Douban Recommendation API Service
+ * @method      get             获取推荐
+ * @method      getUser         获取用户的所有推荐
+ * @method      add             发表新推荐
+ * @method      delete          删除推荐
+ * @method      getReply        获取推荐回复
+ * @method      addReply        发表新回复
+ * @method      deleteReply     删除回复
+ */
+var RecommendationService = $.class(BaseService, {
+    get: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    getForUser: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    add: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    delete: function(name) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    addReply: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    updateReply: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    deleteReply: function(name) {
+        throw new Error("Not Implemented Yet");
+    }
+});
+
+/* Douban Tag API Service
+ * @method      getForSubject      某个书籍、电影、音乐中标记最多的标签
+ * @method      getForUser         用户对书籍、电影、音乐标记的所有标签
+*/
+var TagService = $.class(BaseService, {
+    getForSubject: function(id) {
+        throw new Error("Not Implemented Yet");
+    },
+
+    getForUser: function(name) {
+        throw new Error("Not Implemented Yet");
+    }
+});
+
 // }}}
 
 // {{{ Douban object classes like ``User`` and ``Note``
