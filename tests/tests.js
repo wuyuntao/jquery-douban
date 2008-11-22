@@ -339,7 +339,7 @@ test("test review api", function() {
     equals(review3.rating, 4);
 
     // delete
-    var response = service.review.delete(note2);
+    var response = service.review.delete(review2);
     ok(response, "review deleted");
 });
 

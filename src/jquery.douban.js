@@ -483,6 +483,29 @@ var CommonService = $.class(BaseService, {
     }
 });
 
+/* Template class of Douban subject services providing same methods
+ * like ``get`` and ``search``.
+ * Following attributes should be defined in the ``init`` function
+ * of the subclass.
+ * @attribute   _model
+ * @attribute   _modelEntry
+ * @attribute   _getSubjectUrl
+ * @attribute   _searchSubjectUrl
+ *
+ * Following methods are provided.
+ * @method      get
+ * @method      search
+ */
+var SubjectService = $.class(BaseService, {
+    get: function(subject) {
+        return this._get(subject, this._model, this._getSubjectUrl);
+    },
+
+    search: function(query, offset, limit) {
+        return this._search(query, offset, limit, this._searchSubjectUrl, this._modelEntry);
+    }
+});
+
 /* Douban User API Service
  * @method      get             获取用户信息
  * @method      search          获取当前授权用户信息
@@ -496,7 +519,7 @@ var UserService = $.class(BaseService, {
     },
 
     search: function(query, offset, limit) {
-        return this._search(query, offset, limit, SEARCH_PEOPLE_URL, UserEntries);
+        return this._search(query, offset, limit, SEARCH_PEOPLE_URL, UserEntry);
     },
 
     current: function() {
@@ -504,11 +527,11 @@ var UserService = $.class(BaseService, {
     },
 
     friends: function(user, offset, limit) {
-        return this._getForObject(user, offset, limit, UserEntries, GET_PEOPLE_URL, '/friends');
+        return this._getForObject(user, offset, limit, UserEntry, GET_PEOPLE_URL, '/friends');
     },
 
     contacts: function(user, offset, limit) {
-        return this._getForObject(user, offset, limit, UserEntries, GET_PEOPLE_URL, '/contacts');
+        return this._getForObject(user, offset, limit, UserEntry, GET_PEOPLE_URL, '/contacts');
     }
 });
 
@@ -522,21 +545,11 @@ var UserService = $.class(BaseService, {
 var NoteService = $.class(CommonService, {
     init: function($super, service) {
         this._model = Note;
-        this._modelEntry = NoteEntries;
+        this._modelEntry = NoteEntry;
         this._getObjectUrl = GET_NOTE_URL;
         this._addObjectUrl = ADD_NOTE_URL;
         this._suffix = '/notes';
         $super(service);
-    }
-});
-
-// Base class of book, movie and music service
-var SubjectService = $.class(BaseService, {
-    get: function(subject) {
-        return this._get(subject, this._model, this._getSubjectUrl);
-    },
-    search: function(query, offset, limit) {
-        return this._search(query, offset, limit, this._searchSubjectUrl, this._modelEntries);
     }
 });
 
@@ -547,7 +560,7 @@ var SubjectService = $.class(BaseService, {
 var BookService = $.class(SubjectService, {
     init: function($super, service) {
         this._model = Book;
-        this._modelEntries = BookEntries;
+        this._modelEntry = BookEntry;
         this._getSubjectUrl = GET_BOOK_URL;
         this._searchSubjectUrl = SEARCH_BOOK_URL;
         $super(service);
@@ -561,7 +574,7 @@ var BookService = $.class(SubjectService, {
 var MovieService = $.class(SubjectService, {
     init: function($super, service) {
         this._model = Movie;
-        this._modelEntries = MovieEntries;
+        this._modelEntry = MovieEntry;
         this._getSubjectUrl = GET_MOVIE_URL;
         this._searchSubjectUrl = SEARCH_MOVIE_URL;
         $super(service);
@@ -575,7 +588,7 @@ var MovieService = $.class(SubjectService, {
 var MusicService = $.class(SubjectService, {
     init: function($super, service) {
         this._model = Music;
-        this._modelEntries = MusicEntries;
+        this._modelEntry = MusicEntry;
         this._getSubjectUrl = GET_MUSIC_URL;
         this._searchSubjectUrl = SEARCH_MUSIC_URL;
         $super(service);
@@ -589,31 +602,20 @@ var MusicService = $.class(SubjectService, {
  * @method      add             发布新评论
  * @method      update          修改评论
  * @method      delete          删除评论
-     */
-var ReviewService = $.class(BaseService, {
-    get: function(review) {
-        return this._get(review, Review, GET_REVIEW_URL);
-    },
-
-    getForUser: function(user, offset, limit) {
-        return this._getForObject(user, offset,limit, ReviewForUserEntries, GET_PEOPLE_URL, '/reviews');
+ */
+var ReviewService = $.class(CommonService, {
+    init: function($super, service) {
+        this._model = Review;
+        this._modelEntry = ReviewForUserEntry;
+        this._getObjectUrl = GET_REVIEW_URL;
+        this._addObjectUrl = ADD_REVIEW_URL;
+        this._suffix = '/reviews';
+        $super(service);
     },
 
     getForSubject: function(subject, offset, limit) {
-        // ``subject`` can be object or api url, but not id only
-        return this._getForObject(subject, offset, limit, ReviewForSubjectEntries, null, '/reviews');
-    },
-
-    add: function(data) {
-        return this._add(data, ADD_REVIEW_URL, Review);
-    },
-
-    update: function(review, data) {
-        return this._update(review, data, Review, UPDATE_REVIEW_URL);
-    },
-
-    delete: function(review) {
-        return this._delete(review, DELETE_REVIEW_URL);
+        subject = this.lazySubject(subject);
+        return this._getForObject(subject, offset, limit, ReviewForSubjectEntry, null, '/reviews');
     }
 });
 
@@ -630,7 +632,7 @@ var CollectionService = $.class(BaseService, {
     },
 
     getForUser: function(user, offset, limit, type) {
-        return this._getForObject(user, offset, limit, CollectionEntries, GET_PEOPLE_URL, '/collection', { 'cat': type });
+        return this._getForObject(user, offset, limit, CollectionEntry, GET_PEOPLE_URL, '/collection', { 'cat': type });
     },
 
     add: function(data) {
@@ -654,11 +656,11 @@ var CollectionService = $.class(BaseService, {
  */
 var MiniblogService = $.class(BaseService, {
     getForUser: function(user, offset, limit) {
-        return this._getForObject(user, offset, limit, MiniblogEntries, GET_PEOPLE_URL, '/miniblog');
+        return this._getForObject(user, offset, limit, MiniblogEntry, GET_PEOPLE_URL, '/miniblog');
     },
 
     getForContacts: function(user, offset, limit) {
-        return this._getForObject(user, offset, limit, MiniblogEntries, GET_PEOPLE_URL, '/miniblog/contacts');
+        return this._getForObject(user, offset, limit, MiniblogEntry, GET_PEOPLE_URL, '/miniblog/contacts');
     },
 
     add: function(data) {
@@ -870,7 +872,7 @@ var DoubanObject = $.class({
     }
 });
 
-var DoubanObjectEntries = $.class(DoubanObject, {
+var DoubanObjectEntry = $.class(DoubanObject, {
     init: function(feed) {
         this._feed = feed;
         this._entries = feed.entry;
@@ -905,7 +907,7 @@ var DoubanObjectEntries = $.class(DoubanObject, {
 
 });
 
-var AuthorEntries = $.class(DoubanObjectEntries, {
+var AuthorEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
         this.title = this.getTitle();
         this.author = this.getAuthor();
@@ -913,14 +915,14 @@ var AuthorEntries = $.class(DoubanObjectEntries, {
     }
 });
 
-var SubjectEntries = $.class(DoubanObjectEntries, {
+var SubjectEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
         this.title = this.getTitle();
         $super(doubanObject);
     }
 });
 
-var SearchEntries = $.class(DoubanObjectEntries, {
+var SearchEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
         this.query = this.getTitle().replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
         $super(doubanObject);
@@ -981,7 +983,7 @@ var User = $.class(DoubanObject, {
  * @attribute   entries
  * @method      createFromJson
  */
-var UserEntries = $.class(SearchEntries, {
+var UserEntry = $.class(SearchEntry, {
     createFromJson: function($super) {
         $super(User);
     }
@@ -1048,7 +1050,7 @@ Note.createXml = function(data) {
  * @attribute   entries
  * @method      createFromJson
  */
-var NoteEntries = $.class(AuthorEntries, {
+var NoteEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Note);
     }
@@ -1164,7 +1166,7 @@ var Book = $.class(Subject, {
     }
 });
 
-var BookEntries = $.class(SearchEntries, {
+var BookEntry = $.class(SearchEntry, {
     createFromJson: function($super) {
         $super(Book);
     }
@@ -1235,7 +1237,7 @@ var Movie = $.class(Subject, {
     }
 });
 
-var MovieEntries = $.class(SearchEntries, {
+var MovieEntry = $.class(SearchEntry, {
     createFromJson: function($super) {
         $super(Movie);
     }
@@ -1288,7 +1290,7 @@ var Music = $.class(Subject, {
     }
 });
 
-var MusicEntries = $.class(SearchEntries, {
+var MusicEntry = $.class(SearchEntry, {
     createFromJson: function($super) {
         $super(Music);
     }
@@ -1328,13 +1330,13 @@ Review.createXml = function(data) {
               .replace(/\{RATING\}/, data.rating);
 };
 
-var ReviewForUserEntries = $.class(AuthorEntries, {
+var ReviewForUserEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Review);
     }
 });
 
-var ReviewForSubjectEntries = $.class(SubjectEntries, {
+var ReviewForSubjectEntry = $.class(SubjectEntry, {
     createFromJson: function($super) {
         $super(Review);
     }
@@ -1385,7 +1387,7 @@ Collection.createXml = function(data) {
               .replace(/\{IS_PRIVATE\}/, data.isPrivate ? 'private' : 'public');
 };
 
-var CollectionEntries = $.class(AuthorEntries, {
+var CollectionEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Collection);
     }
@@ -1412,7 +1414,7 @@ Miniblog.createXml = function(data) {
     return xml.replace(/\{CONTENT\}/, data.content);
 };
 
-var MiniblogEntries = $.class(AuthorEntries, {
+var MiniblogEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Collection);
     }
