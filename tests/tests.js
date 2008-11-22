@@ -1,5 +1,5 @@
 function createService() {
-    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban('service', { apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
     return service;
 }
@@ -66,7 +66,7 @@ test("test jquery http methods", function() {
 module("OAuth Client Testcases");
 
 test("test factory method", function() {
-    var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
+    var client = $.douban('client', { apiKey: '1', apiSecret: '2' });
     equals(client.api.key, '1', "api key expected to be 1");
     equals(client.api.secret, '2', "api secret expected to be 2");
     equals(client._http.name, 'jquery', "http type expected to be \"jquery\"");
@@ -75,14 +75,14 @@ test("test factory method", function() {
 test("test authorization step 1: get request token", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var client = $.douban.client.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var client = $.douban('client', { apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     var requestToken = client.getRequestToken();
     equals(requestToken.key.length, 32, "check the length of request key ( \"" + requestToken.key + "\" )");
     equals(requestToken.secret.length, 16, "check the length of request secret ( \"" + requestToken.secret + "\" )");
 });
 
 test("test authorization step 2: get authorization url", function() {
-    var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
+    var client = $.douban('client', { apiKey: '1', apiSecret: '2' });
     var callback = 'mycallback';
     // Set request token manually
     client.requestToken = { key: '3', secret: '4' };
@@ -97,7 +97,7 @@ test("test authorization step 2: get authorization url", function() {
 test("test authorization step 3: get access token ", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var client = $.douban.client.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var client = $.douban('client', { apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     client.requestToken = { key: 'ad6a4a13fb9b1ce7083ede3bf2d156b5',
                             secret: '6fb16ea234a309fd' };
     var accessToken = client.getAccessToken();
@@ -108,7 +108,7 @@ test("test authorization step 3: get access token ", function() {
 });
 
 test("test programmatic login", function() {
-    var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
+    var client = $.douban('client', { apiKey: '1', apiSecret: '2' });
     var accessToken = { key: '6fcf833aff0589883f6e89b0fd109c98', secret: 'b692646c5d1929ab' };
     var login = client.login(accessToken);
     ok(login, "login successful");
@@ -116,7 +116,7 @@ test("test programmatic login", function() {
 });
 
 test("test auth headers", function() {
-    var client = $.douban.client.factory({ apiKey: '1', apiSecret: '2' });
+    var client = $.douban('client', { apiKey: '1', apiSecret: '2' });
     var headers = client.getAuthHeaders('http://api.douban.com/people/1000001', 'GET', { 'alt': 'json' });
     ok(headers, "get headers ( \"" + headers + "\" )");
 });
@@ -124,7 +124,7 @@ test("test auth headers", function() {
 module("Douban Service Testcases");
 
 test("test factory method", function() {
-    var service = $.douban.service.factory({ apiKey: '1', apiSecret: '2' });
+    var service = $.douban('service', { apiKey: '1', apiSecret: '2' });
     equals(service.api.key, '1', "api key expected to be 1");
     equals(service.api.secret, '2', "api secret expected to be 2");
     equals(service._http.name, 'jquery', "http type expected to be \"jquery\"");
@@ -134,7 +134,7 @@ test("test factory method", function() {
 test("test client login", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     var accessToken = { key: '6fcf833aff0583884f6e89b0fd109c98', secret: 'b623646c5d1929ab' };
     var login = service.login(accessToken);
     ok(login, "login successful");
@@ -143,7 +143,7 @@ test("test client login", function() {
 test("test user api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
 
     // get user profile
@@ -245,7 +245,7 @@ test("test note api", function() {
 test("test book api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
 
     var book = service.book.get('1493316');
@@ -254,7 +254,7 @@ test("test book api", function() {
     equals(book.aka[0], 'The Inmates Are Running the Asylum : Why High Tech Products Drive Us Crazy and How to Restore the Sanity');
     
     var result = service.book.search('mysql', 5, 2);
-    equals(result.total, 129, "search book total results ok");
+    ok(result.total >= 130, "search book total results ok");
     equals(result.offset, 5, "search book start index ok");
     equals(result.limit, 2, "search book max results ok");
     equals(result.entries.length, 2, "search book ok");
@@ -265,7 +265,7 @@ test("test book api", function() {
 test("test movie api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
 
     var movie = service.movie.get('1789283');
@@ -288,7 +288,7 @@ test("test movie api", function() {
 test("test music api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var service = $.douban.service.factory({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
 
     var music = service.music.get('http://api.douban.com/music/subject/3040677');
@@ -352,7 +352,7 @@ module("Douban Object Testcases");
 
 test("test user object", function() {
     var json = {"content":{"$t":""},"db:uid":{"$t":"whoami"},"link":[{"@rel":"self","@href":"http://api.douban.com/people/2139418"},{"@rel":"alternate","@href":"http://www.douban.com/people/whoami/"},{"@rel":"icon","@href":"http://otho.douban.com/icon/u2139418-1.jpg"}],"id":{"$t":"http://api.douban.com/people/2139418"},"title":{"$t":"我是谁"}};
-    var user = $.douban.user.factory(json);
+    var user = $.douban('user', json);
     equals(user.id, "http://api.douban.com/people/2139418", "get user id ok");
     equals(user.userName, "whoami", "get user name ok");
     equals(user.screenName, "我是谁", "get screen name ok");
@@ -362,7 +362,7 @@ test("test user object", function() {
     equals(user.url, "http://www.douban.com/people/whoami/", "get user homepage ok");
     equals(user.iconUrl, "http://otho.douban.com/icon/u2139418-1.jpg", "get user icon url ok");
 
-    var user2 = $.douban.user.factory();
+    var user2 = $.douban('user');
     equals(user2.id, undefined);
     equals(user2.userName, undefined);
     equals(user2.location, undefined);
@@ -375,7 +375,7 @@ test("test user object", function() {
 test("test note object", function() {
     var json = {"updated":{"$t":"2008-04-30T10:48:04+08:00"},"author":{"link":[{"@rel":"self","@href":"http://api.douban.com/people/1139389"},{"@rel":"alternate","@href":"http://www.douban.com/people/wyt/"},{"@rel":"icon","@href":"http://otho.douban.com/icon/u1139389-21.jpg"}],"uri":{"$t":"http://api.douban.com/people/1139389"},"name":{"$t":"wu yuntao"}},"title":{"$t":"纪念一下"},"summary":{"$t":"这是摘要"},"content":{"$t":"这是全文"},"link":[{"@rel":"self","@href":"http://api.douban.com/note/10671354"},{"@rel":"alternate","@href":"http://www.douban.com/note/10671354/"}],"published":{"$t":"2008-04-29T10:38:04+08:00"},"db:attribute":[{"$t":"public","@name":"privacy"},{"$t":"yes","@name":"can_reply"}],"id":{"$t":"http://api.douban.com/note/10671354"}};
 
-    var note = $.douban.note.factory(json);
+    var note = $.douban('note', json);
     var date1 = new Date(2008, 03, 29, 10, 38, 04);
     var date2 = new Date(2008, 03, 30, 10, 48, 04);
     equals(note.id, "http://api.douban.com/note/10671354", "get note id ok");
@@ -390,7 +390,7 @@ test("test note object", function() {
     equals(note.isPublic, true, "check if note is public ok");
     equals(note.isReplyEnabled, true, "check if is able to reply ok");
 
-    var note2 = $.douban.note.factory();
+    var note2 = $.douban('note');
     equals(note2.id, undefined);
     equals(note2.noteName, undefined);
     equals(note2.location, undefined);
@@ -399,14 +399,14 @@ test("test note object", function() {
     equals(note2.url, undefined);
 
     // create xml
-    var xml = $.douban.note.createXml({ title: "标题", content: "内容", isPublic: true, isReplyEnabled: false });
+    var xml = $.douban.createXml('note', { title: "标题", content: "内容", isPublic: true, isReplyEnabled: false });
     equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>标题</title><content>内容</content><db:attribute name="privacy">public</db:attribute><db:attribute name="can_reply">no</db:attribute></entry>', "get xml ok");
 });
 
 test("test book object", function() {
     var json = {"category":{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#book"},"db:tag":[{"@count":1,"@name":"日本"},{"@count":1,"@name":"轻小说"}],"title":{"$t":"とある魔術の禁書目録(インデックス) (電撃文庫)"},"author":[{"name":{"$t":"鎌池 和馬"}},{"name":{"$t":"灰村 キヨタカ"}}],"summary":{"$t":"登場!"},"link":[{"@rel":"self","@href":"http://api.douban.com/book/subject/3137911"},{"@rel":"alternate","@href":"http://www.douban.com/subject/3137911/"},{"@rel":"image","@href":"http://otho.douban.com/spic/s3168047.jpg"}],"db:attribute":[{"$t":"484022658X","@name":"isbn10"},{"$t":"9784840226585","@name":"isbn13"},{"$t":"とある魔術の禁書目録(インデックス) (電撃文庫)","@name":"title"},{"$t":"297","@name":"pages"},{"$t":"鎌池 和馬","@name":"author"},{"$t":"灰村 キヨタカ","@name":"author"},{"$t":"JPY 5.99","@name":"price"},{"$t":"メディアワークス","@name":"publisher"},{"$t":"文庫","@name":"binding"},{"$t":"2004-04","@name":"pubdate"}],"id":{"$t":"http://api.douban.com/book/subject/3137911"},"gd:rating":{"@min":1,"@numRaters":2,"@average":"3.00","@max":5}};
 
-    var book = $.douban.book.factory(json);
+    var book = $.douban('book', json);
     equals(book.id, "http://api.douban.com/book/subject/3137911");
     equals(book.title, "とある魔術の禁書目録(インデックス) (電撃文庫)");
     equals(book.authors.length, 2);
@@ -431,7 +431,7 @@ test("test book object", function() {
 
 test("test movie object", function() {
     var json = {"category":{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#movie"},"db:tag":[{"@count":3425,"@name":"爱情"},{"@count":1654,"@name":"美国"},{"@count":1168,"@name":"Sunrise"},{"@count":986,"@name":"经典"},{"@count":917,"@name":"RichardLinklater"}],"title":{"$t":"Before Sunrise"},"author":[{"name":{"$t":"Richard Linklater"}}],"summary":{"$t":"简介"},"link":[{"@rel":"self","@href":"http://api.douban.com/movie/subject/1296339"},{"@rel":"alternate","@href":"http://www.douban.com/subject/1296339/"},{"@rel":"image","@href":"http://otho.douban.com/spic/s1401102.jpg"}],"db:attribute":[{"$t":"Before Sunrise","@name":"title"},{"$t":"奥地利","@name":"country"},{"$t":"瑞士","@name":"country"},{"$t":"美国","@name":"country"},{"$t":"Kim Krizan","@name":"writer"},{"$t":"Richard Linklater","@name":"writer"},{"$t":"1995","@name":"pubdate"},{"$t":"Richard Linklater","@name":"director"},{"$t":"英语","@name":"language"},{"$t":"http://www.imdb.com/title/tt0112471/","@name":"imdb"},{"@lang":"zh_CN","$t":"爱在黎明破晓前","@name":"aka"},{"$t":"Ethan Hawke","@name":"cast"},{"$t":"Julie Delpy","@name":"cast"},{"$t":"日出之前","@name":"aka"},{"$t":"情留半天","@name":"aka"},{"$t":"爱在黎明破晓前","@name":"aka"}],"id":{"$t":"http://api.douban.com/movie/subject/1296339"},"gd:rating":{"@min":1,"@numRaters":9988,"@average":"4.49","@max":5}}
-    var movie = $.douban.movie.factory(json);
+    var movie = $.douban('movie', json);
     equals(movie.id, "http://api.douban.com/movie/subject/1296339");
     equals(movie.title, "Before Sunrise");
     equals(movie.chineseTitle, "爱在黎明破晓前");
@@ -455,7 +455,7 @@ test("test movie object", function() {
 
 test("test music object", function() {
     var json = {"category":{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#music"},"db:tag":[{"@count":57,"@name":"OST"},{"@count":50,"@name":"菅野よう子"},{"@count":23,"@name":"Macross"},{"@count":21,"@name":"Anime"},{"@count":18,"@name":"日本"}],"title":{"$t":"マクロスF O.S.T.2 『娘トラ。』"},"author":[{"name":{"$t":"シェリル・ノーム starrinng May'n"}},{"name":{"$t":"中島愛"}},{"name":{"$t":"菅野よう子"}}],"summary":{"$t":"简介"},"link":[{"@rel":"self","@href":"http://api.douban.com/music/subject/3204166"},{"@rel":"alternate","@href":"http://www.douban.com/subject/3204166/"},{"@rel":"image","@href":"http://otho.douban.com/spic/s3267369.jpg"}],"db:attribute":[{"$t":"1","@name":"discs"},{"$t":"4580226561722","@name":"ean"},{"$t":"01 Track","@name":"tracks"},{"$t":"2008-10-08","@name":"pubdate"},{"$t":"マクロスF O.S.T.2 『娘トラ。』","@name":"title"},{"$t":"シェリル・ノーム starrinng May'n","@name":"singer"},{"$t":"中島愛","@name":"singer"},{"$t":"菅野よう子","@name":"singer"},{"$t":"Soundtrack","@name":"version"},{"$t":"JVCエンタテインメント","@name":"publisher"},{"$t":"CD","@name":"media"},{"$t":"MACROSS F O.S.T.2 『NYAN TORA。』","@name":"aka"},{"$t":"超时空要塞F  O.S.T.2 『娘トラ。』","@name":"aka"}],"id":{"$t":"http://api.douban.com/music/subject/3204166"},"gd:rating":{"@min":1,"@numRaters":149,"@average":"4.56","@max":5}};
-    var music = $.douban.music.factory(json);
+    var music = $.douban('music', json);
     equals(music.id, "http://api.douban.com/music/subject/3204166");
     equals(music.title, "マクロスF O.S.T.2 『娘トラ。』");
     equals(music.aka.length, 2);
@@ -472,7 +472,7 @@ test("test music object", function() {
 test("test review object", function() {
     var json = {"updated":{"$t":"2007-06-16T14:21:06+08:00"},"author":{"link":[{"@rel":"self","@href":"http://api.douban.com/people/1615529"},{"@rel":"alternate","@href":"http://www.douban.com/people/1615529/"}],"uri":{"$t":"http://api.douban.com/people/1615529"},"name":{"$t":"唐五"}},"title":{"$t":"好书"},"db:subject":{"category":{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#book"},"author":[{"name":{"$t":"萧如瑟"}}],"title":{"$t":"九州·斛珠夫人"},"link":[{"@rel":"self","@href":"http://api.douban.com/book/subject/1452923"},{"@rel":"alternate","@href":"http://www.douban.com/subject/1452923/"},{"@rel":"image","@href":"http://otho.douban.com/spic/s1515387.jpg"}],"db:attribute":[{"$t":"780187921X","@name":"isbn10"},{"$t":"9787801879219","@name":"isbn13"},{"$t":"新世界出版社","@name":"publisher"},{"$t":"20.0","@name":"price"},{"$t":"萧如瑟","@name":"author"},{"$t":"2006-01","@name":"pubdate"}],"id":{"$t":"http://api.douban.com/book/subject/1452923"}},"summary":{"$t":"男人与男人之间的感情"},"link":[{"@rel":"self","@href":"http://api.douban.com/review/1168468"},{"@rel":"alternate","@href":"http://www.douban.com/review/1168468/"},{"@rel":"http://www.douban.com/2007#subject","@href":"http://api.douban.com/book/subject/1452923"}],"published":{"$t":"2007-06-16T14:21:06+08:00"},"id":{"$t":"http://api.douban.com/review/1168468"},"gd:rating":{"@min":1,"@value":"5","@max":5}};
 
-    var review = $.douban.review.factory(json);
+    var review = $.douban('review', json);
     var date1 = new Date(2007, 05, 16, 14, 21, 06);
     var date2 = new Date(2007, 05, 16, 14, 21, 06);
     equals(review.id, "http://api.douban.com/review/1168468", "get review id ok");
@@ -486,12 +486,12 @@ test("test review object", function() {
     equals(review.rating, 5);
     equals(review.subject.id, "http://api.douban.com/book/subject/1452923");
 
-    var review2 = $.douban.review.factory();
+    var review2 = $.douban('review');
     equals(review2.id, undefined);
 
     // create xml
-    var xml = $.douban.review.createXml({ subject: "111111", title: "标题", content: "内容", rating: 3 });
-    equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom"><db:subject xmlns:db="http://www.douban.com/xmlns/"><id>http://api.douban.com/review/111111</id></db:subject><content>内容</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="3" ></gd:rating><title>标题</title></entry>', "get xml ok");
+    var xml = $.douban.createXml('review', { subject: "http://api.douban.com/book/subject/1452923", title: "标题", content: "内容", rating: 3 });
+    equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom"><db:subject xmlns:db="http://www.douban.com/xmlns/"><id>http://api.douban.com/book/subject/1452923</id></db:subject><content>内容</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="3" ></gd:rating><title>标题</title></entry>', "get xml ok");
 });
 
 // vim: foldmethod=indent

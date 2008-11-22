@@ -40,219 +40,28 @@ const GET_MUSIC_URL = MUSIC_URL + '/{ID}';
 const SEARCH_MUSIC_URL = MUSIC_URL + 's';
 
 const REVIEW_URL = API_HOST + '/review';
-const GET_REVIEW_URL = API_HOST + '/review/{ID}';
-const GET_USERS_REVIEW_URL = GET_PEOPLE_URL + '/reviews';
+const GET_REVIEW_URL = REVIEW_URL + '/{ID}';
+const GET_USER_REVIEW_URL = GET_PEOPLE_URL + '/reviews';
 const GET_BOOK_REVIEW_URL = GET_BOOK_URL + '/reviews';
 const GET_MOVIE_REVIEW_URL = GET_MOVIE_URL + '/reviews';
 const GET_MUSIC_REVIEW_URL = GET_MUSIC_URL + '/reviews';
 const ADD_REVIEW_URL = REVIEW_URL + 's';
 const UPDATE_REVIEW_URL = GET_REVIEW_URL;
 const DELETE_REVIEW_URL = GET_REVIEW_URL;
-// }}}
 
-// {{{ jQuery Douban
-/* Factory method of jQuery Douban
- * @returns     Douban service object
- * @param       options Dict
- * @usage
- * var service = $.douban({ apiKey: 'blahblah', apiSecret: 'blahblah' });
- * service.login(accessKey, accessSecret);
- * if (service.isAuthenticated()) {
- *     var id = service.miniblog.add("发送一条广播");
- * }
- */
-$.douban = function(factory, options) {
-    if (typeof factory != 'string') {
-        options = factory;
-        factory = 'service';
-    }
-    if (typeof $.douban[factory] != 'undefined') {
-        return $.douban[factory].factory(options);
-    } else {
-        return false;
-    }
-};
+const COLLECTION_URL = API_HOST + '/collection';
+const GET_COLLECTION_URL = COLLECTION_URL + '/{ID}';
+const GET_USER_COLLECTION_URL = GET_PEOPLE_URL + '/collections';
+const ADD_COLLECTION_URL = COLLECTION_URL;
+const UPDATE_COLLECTION_URL = GET_COLLECTION_URL;
+const DELETE_COLLECTION_URL = GET_COLLECTION_URL;
 
-/* Factory method of Douban Service
- * @returns     Douban service object
- * @param       options Dict
- * @usage
- * var service = $.douban.service.factory({ apiKey: 'blah', apiSecret: 'blah' });
- * var id = service.miniblog.add("发送广播");
- * service.miniblog.delete(id);
- */
-$.douban.service = {
-    factory: function(options) {
-        return new DoubanService(options);
-    }
-};
-
-/* Factory method of OAuth Client
- * @returns     OAuth client object
- * @param       options Dict
- * @usage
- * var apiToken = { apiKey: 'blah', apiSecret: 'blah' };
- * var client = $.douban.client.factory({ apiToken: apiToken })
- * var requestToken = client.getRequestToken();
- * var url = client.getAuthorizationUrl(requestToken);
- * var accessToken = client.getAccessToken(requestToken);
- * var login = client.login(accessToken);
- */
-$.douban.client = {
-    factory: function(options) {
-        return new OAuthClient(options);
-    }
-};
-
-/* Factory method of Douban objects
- */
-$.douban.book = {
-    factory: function(data) {
-        return new Book(data);
-    }
-};
-
-$.douban.movie = {
-    factory: function(data) {
-        return new Movie(data);
-    }
-};
-
-$.douban.music = {
-    factory: function(data) {
-        return new Music(data);
-    }
-};
-
-$.douban.note = {
-    factory: function(data) {
-        return new Note(data);
-    },
-    createXml: function(title, content, isPublic, isReplyEnabled) {
-        return Note.createXml(title, content, isPublic, isReplyEnabled);
-    }
-};
-
-$.douban.review = {
-    factory: function(data) {
-        return new Review(data);
-    },
-    createXml: function(id, title, content, rating) {
-        return Review.createXml(id, title, content, rating);
-    }
-};
-
-$.douban.user = {
-    factory: function(data) {
-        return new User(data);
-    }
-};
-
-/* Factory method of HTTP request handlers
- * @usage
- * // Register new request handler
- * $.douban.http.register('air', AirHttpRequestHandler });
- * // Use Gears HTTP Request API as handler
- * $.douban.http.setActive('gears');
- * // Get some url
- * var json = $.douban.http({ url: url, params: params });
- * // Unregister request handler
- * $.douban.http.unregister('air');
- *
- */
-$.douban.http = function(options) {
-    return $.douban.http.activeHandler(options);
-};
-
-/* Create HTTP request handler by the given type
- * including 'jquery', 'greasemonkey' and 'gears'
- * In addition, you can register other handlers either
- * by passing arguments ``httpType`` and ``httpHandler`` to the factory
- * method
- */
-$.douban.http.factory = function(options) {
-    /* Default options */
-    var defaults = {
-        type: 'jquery',
-        handler: null
-    },
-    options = $.extend(defaults, options || {});
-    if (typeof $.douban.http.handlers[options.type] == 'undefined') {
-        // Register and set active the new handler
-        if ($.isFunction(options.handler)) {
-            $.douban.http.register(options.type, options.handler);
-        } else {
-            throw new Error("Invalid HTTP request handler");
-        }
-    }
-    return $.douban.http.handlers[options.type];
-};
-
-/* Setup HTTP settings */
-$.douban.http.setup = function(options) {
-    $.douban.http.settings = $.extend($.douban.http.settings, options || {});
-};
-
-/* Default settings
- */
-$.douban.http.settings = {
-    url: location.href,
-    type: 'GET',
-    params: null,
-    data: null,
-    headers: null,
-    contentType: 'application/atom+xml',
-    dataType: 'json',
-    processData: true
-};
-
-/* Default handler is jquery
- */
-$.douban.http.activeHandler = jqueryHandler;
-
-/* A dict of HTTP request name and its constructor,
- */
-$.douban.http.handlers = {
-    jquery: jqueryHandler,
-    greasemonkey: greasemonkeyHandler,
-    gears: gearsHandler
-};
-
-$.douban.http.setActive = function(name) {
-    $.douban.http.activeHandler = $.douban.http.handlers[name];
-}
-
-/* Register new HTTP request handler to ``handlers``
- */
-$.douban.http.register = function(name, handler) {
-    if ($.isFunction(handler)) {
-        $.douban.http.handlers[name] = constructor;
-    }
-};
-
-/* Unregister an existed HTTP request handler
- */
-$.douban.http.unregister = function(name) {
-    $.douban.http.handlers[name] = undefined;
-};
-
-/* Built-in HTTP request handlers: 'jquery', 'greasemonkey' and 'gears'
- */
-function jqueryHandler(options) {
-    // options = $.extend($.douban.http.settings, options);
-    return $.ajax(options);
-}
-jqueryHandler.name = 'jquery';
-
-function greasemonkeyHandler(options) {
-    throw new Error("Not Implemented Yet");
-}
-greasemonkeyHandler.name = 'greasemonkey';
-
-function gearsHandler(options) {
-    throw new Error("Not Implemented Yet");
-}
-gearsHandler.name = 'gears';
+const MINIBLOG_URL = API_HOST + '/miniblog';
+const GET_MINIBLOG_URL = MINIBLOG_URL + '/{ID}';
+const GET_USER_MINIBLOG_URL = GET_PEOPLE_URL + '/miniblog';
+const GET_CONTACTS_MINIBLOG_URL = GET_PEOPLE_URL + '/miniblog/contacts';
+const ADD_MINIBLOG_URL = MINIBLOG_URL + '/saying';
+const DELETE_MINIBLOG_URL = GET_MINIBLOG_URL;
 // }}}
 
 /* {{{ Some utilities
@@ -389,9 +198,9 @@ var DoubanService = $.class({
         this.api = new Token(this.options.apiKey, this.options.apiSecret);
 
         this._http = $.douban.http.factory({ type: this.options.httpType });
-        this._client = $.douban.client.factory({ apiKey: this.api.key,
-                                                 apiSecret: this.api.secret,
-                                                 type: this.options.httpType });
+        this._client = $.douban('client', { apiKey: this.api.key,
+                                            apiSecret: this.api.secret,
+                                            type: this.options.httpType });
         var services = {
             'user': UserService,
             'note': NoteService,
@@ -990,6 +799,11 @@ var DoubanObject = $.class({
         return this.getAttr('content');
     },
 
+    getSubject: function() {
+        if (!this._feed || !this._feed['db:subject']) return;
+        return Subject.factory(this._feed['db:subject']);
+    },
+
     getIconUrl: function() {
         return this.getUrl('icon');
     },
@@ -1458,11 +1272,6 @@ var Review = $.class(DoubanObject, {
         this.updated = this.getUpdated();
         this.url = this.getUrl();
         this.rating = this.getRating();
-    },
-
-    getSubject: function() {
-        if (!this._feed || !this._feed['db:subject']) return;
-        return Subject.factory(this._feed['db:subject']);
     }
 });
 // Class methods
@@ -1477,7 +1286,6 @@ Review.createXml = function(data) {
     data = $.extend({ subject: '', title: '', content: '', rating: 3 },
                     data || {});
     if (typeof data.subject == 'object') var id = data.subject.id;
-    else if (data.subject.match(/^\d+$/)) var id = GET_REVIEW_URL.replace(/\{ID\}/, data.subject);
     else var id = data.subject;
     var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom"><db:subject xmlns:db="http://www.douban.com/xmlns/"><id>{ID}</id></db:subject><content>{CONTENT}</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="{RATING}" ></gd:rating><title>{TITLE}</title></entry>';
     return xml.replace(/\{ID\}/, id)
@@ -1498,6 +1306,52 @@ var ReviewForSubjectEntries = $.class(SubjectEntries, {
     }
 });
 
+var Collection = $.class(DoubanObject, {
+    createFromJson: function() {
+        this.id = this.getId();
+        this.title = this.getTitle();
+        this.owner = this.getAuthor();
+        this.updated = this.getUpdated();
+        this.subject = this.getSubject();
+        this.status = this.getStatus();
+        this.tags = this.getTags();
+        this.rating = this.getRating();
+    },
+
+    getStatus: function() {
+        return this.attr('status');
+    }
+});
+// Class methods
+/* create POST or PUT xml
+ * @param       data, Object
+ * @data        subject, Object or String
+ * @data        status, String
+ * @data        content, String
+ * @data        rating, Integer or String
+ * @data        tags, List
+ * @data        isPrivate, Boolean
+ */
+Collection.createXml = function(data) {
+    data = $.extend({ subject: '', status: '', content: '', rating: 3,
+                      tags: [], isPrivate: false },
+                    data || {});
+    if (typeof data.subject == 'object') var id = data.subject.id;
+    else if (data.subject.match(/^\d+$/)) var id = GET_REVIEW_URL.replace(/\{ID\}/, data.subject);
+    else var id = data.subject;
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom"><db:subject xmlns:db="http://www.douban.com/xmlns/"><id>{ID}</id></db:subject><db:status>{STATUS}</db:status>{TAGS}<content>{CONTENT}</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="{RATING}" ></gd:rating><db:attribute name="privacy">{IS_PRIVATE}</db:attribute></entry>';
+    var tag = '<db:tags>{TAG}</db:tags>';
+    for (var i = 0, tags = '', len = data.tags.length; i < len; i++) {
+        tags += tag.replace(/\{TAG\}/, data.tags[i]);
+    }
+    return xml.replace(/\{ID\}/, id)
+              .replace(/\{status\}/, data.status)
+              .replace(/\{CONTENT\}/, data.content)
+              .replace(/\{RATING\}/, data.rating)
+              .replace(/\{TAGS\}/, data.tags)
+              .replace(/\{IS_PRIVATE\}/, data.isPrivate ? 'private' : 'public');
+};
+
 /* A simple tag object */
 function Tag(name, count) {
     this.name = name;
@@ -1506,6 +1360,13 @@ function Tag(name, count) {
 // }}}
 
 /* {{{ OAuth client
+ * @usage
+ * var apiToken = { apiKey: 'blah', apiSecret: 'blah' };
+ * var client = $.douban('client', { apiKey: 'blah', apiSecret: 'blah' });
+ * var requestToken = client.getRequestToken();
+ * var url = client.getAuthorizationUrl(requestToken);
+ * var accessToken = client.getAccessToken(requestToken);
+ * var login = client.login(accessToken);
  */
 function OAuthClient(options) {
     /* Default options */
@@ -1663,6 +1524,156 @@ function Token(key, secret) {
     this.key = key || '';
     this.secret = secret || '';
 }
+// }}}
+
+// {{{ jQuery Douban
+/* Model dict for factory method
+ */
+var factoryDict = {
+    'service': DoubanService,
+    'client': OAuthClient,
+    'book': Book,
+    'movie': Movie,
+    'music': Music,
+    'note': Note,
+    'user': User,
+    'review': Review,
+};
+
+/* Factory method of jQuery Douban
+ * @returns     Douban objects
+ * @param       factory, String
+ * @param       options, Object
+ * @usage
+ * var service = $.douban({ apiKey: 'blahblah', apiSecret: 'blahblah' });
+ * service.login(accessKey, accessSecret);
+ * if (service.isAuthenticated()) {
+ *     var id = service.miniblog.add("发送一条广播");
+ * }
+ */
+$.douban = function(factory, options) {
+    if (typeof factory != 'string') {
+        options = factory;
+        factory = 'service';
+    }
+    if (factory == 'http')
+        return $.douban.http.factory(options);
+    return new factoryDict[factory](options);
+};
+/* Create XML by given factory
+ * @returns     XML String
+ * @param       factory, String
+ * @param       data, Object
+ */
+$.douban.createXml = function(factory, data) {
+    return factoryDict[factory].createXml(data);
+};
+
+/* Factory method of HTTP request handlers
+ * @usage
+ * // Register new request handler
+ * $.douban.http.register('air', AirHttpRequestHandler });
+ * // Use Gears HTTP Request API as handler
+ * $.douban.http.setActive('gears');
+ * // Get some url
+ * var json = $.douban.http({ url: url, params: params });
+ * // Unregister request handler
+ * $.douban.http.unregister('air');
+ *
+ */
+$.douban.http = function(options) {
+    return $.douban.http.activeHandler(options);
+};
+
+/* Create HTTP request handler by the given type
+ * including 'jquery', 'greasemonkey' and 'gears'
+ * In addition, you can register other handlers either
+ * by passing arguments ``httpType`` and ``httpHandler`` to the factory
+ * method
+ */
+$.douban.http.factory = function(options) {
+    /* Default options */
+    var defaults = {
+        type: 'jquery',
+        handler: null
+    },
+    options = $.extend(defaults, options || {});
+    if (typeof $.douban.http.handlers[options.type] == 'undefined') {
+        // Register and set active the new handler
+        if ($.isFunction(options.handler)) {
+            $.douban.http.register(options.type, options.handler);
+        } else {
+            throw new Error("Invalid HTTP request handler");
+        }
+    }
+    return $.douban.http.handlers[options.type];
+};
+
+/* Setup HTTP settings */
+$.douban.http.setup = function(options) {
+    $.douban.http.settings = $.extend($.douban.http.settings, options || {});
+};
+
+/* Default settings
+ */
+$.douban.http.settings = {
+    url: location.href,
+    type: 'GET',
+    params: null,
+    data: null,
+    headers: null,
+    contentType: 'application/atom+xml',
+    dataType: 'json',
+    processData: true
+};
+
+/* Default handler is jquery
+ */
+$.douban.http.activeHandler = jqueryHandler;
+
+/* A dict of HTTP request name and its constructor,
+ */
+$.douban.http.handlers = {
+    jquery: jqueryHandler,
+    greasemonkey: greasemonkeyHandler,
+    gears: gearsHandler
+};
+
+$.douban.http.setActive = function(name) {
+    $.douban.http.activeHandler = $.douban.http.handlers[name];
+}
+
+/* Register new HTTP request handler to ``handlers``
+ */
+$.douban.http.register = function(name, handler) {
+    if ($.isFunction(handler)) {
+        $.douban.http.handlers[name] = constructor;
+    }
+};
+
+/* Unregister an existed HTTP request handler
+ */
+$.douban.http.unregister = function(name) {
+    $.douban.http.handlers[name] = undefined;
+};
+
+/* Built-in HTTP request handlers: 'jquery', 'greasemonkey' and 'gears'
+ */
+function jqueryHandler(options) {
+    // options = $.extend($.douban.http.settings, options);
+    return $.ajax(options);
+}
+jqueryHandler.name = 'jquery';
+
+function greasemonkeyHandler(options) {
+    throw new Error("Not Implemented Yet");
+}
+greasemonkeyHandler.name = 'greasemonkey';
+
+function gearsHandler(options) {
+    throw new Error("Not Implemented Yet");
+}
+gearsHandler.name = 'gears';
 // }}}
 
 })(jQuery);
