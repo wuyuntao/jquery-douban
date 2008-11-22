@@ -185,9 +185,7 @@ test("test user api", function() {
 
 test("test note api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
-
-    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
-    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
+    var service = createService();
 
     // get note by id
     var note = service.note.get('21700087');
@@ -347,6 +345,56 @@ test("test review api", function() {
     ok(!review4, "review deleted");
 });
 
+test("test collection api", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+
+    // get collection by id
+    var collection = service.collection.get('21701587');
+    var date = new Date(2007, 09, 09, 23, 03, 42);
+    equals(collection.id, "http://api.douban.com/collection/21701587", "get collection id ok");
+    equals(collection.title, "青年|Andy 读过 东方快车谋杀案", "get collection title ok");
+    equals(collection.owner.id, "http://api.douban.com/people/1309094", "get owner id ok");
+    equals(collection.owner.screenName, "青年|Andy", "get owner name ok");
+    equals(collection.subject.id, "http://api.douban.com/book/subject/1731370");
+    equals(collection.subject.title, "东方快车谋杀案");
+    equals(collection.updated.getTime(), date.getTime(), "get collection updated time ok");
+
+    // get collections of user by user id
+    var collections = service.collection.getForUser('NullPointer', 4, 2);
+    ok(collections.total >= 908, "get total collections ok"); 
+    equals(collections.offset, 4, "get collections of np start index ok");
+    equals(collections.limit, 2, "get collections of np max results ok");
+    equals(collections.entries.length, 2, "get collections of np ok");
+    ok(collections.entries[0].id.match(/http:\/\/api\.douban\.com\/collection\/\d+/), "get collection id ok");
+    // Not author but owner or user
+    var user = collections.author;
+    equals(user.screenName, "NullPointer", "get author of collections ok");
+
+    // get book collection
+    var collections2 = service.collection.getForUser('wyt', 4, 2, 'book');
+    ok(collections2.total >= 494);
+    ok(collections2.entries[0].id.match(/http:\/\/api\.douban\.com\/collection\/\d+/), "get collection id ok");
+
+    // publish a new collection
+    var collection3 = service.collection.add({ subject: collection.subject, content: "没错，当时就是这样", tags: ['东方', '谋杀', '小说'], status: 'read' });
+    ok(collection3.id.match(/http:\/\/api\.douban\.com\/collection\/\d+/), "get id of collection ok");
+    equals(collection3.title, 'ilovest 读过 东方快车谋杀案', "get title of collection ok");
+    equals(collection3.content, '没错，当时就是这样');
+    equals(collection3.tags.length, 3, "get length of tags ok");
+
+    // update the collection
+    var collection4 = service.collection.update(collection3, { status: 'wish', content: "错了，当时不是这样的" });
+    ok(collection4.id.match(/http:\/\/api\.douban\.com\/collection\/\d+/), "get id of collection ok");
+    equals(collection4.title, "ilovest 想读 东方快车谋杀案", "get title of collection ok");
+    equals(collection4.content, '错了，当时不是这样的', "get content of collection ok");
+
+    // delete the collection
+    service.collection.delete(collection4);
+    var collection5 = service.collection.get(collection4);
+    ok(!collection5, "collection deleted");
+});
+
 module("Douban Object Testcases");
 
 test("test user object", function() {
@@ -504,6 +552,7 @@ test("test collection object", function() {
     equals(collection.tags.length, 0);
 
     var xml = $.douban.createXml('collection', { subject: '条目', status: '状态', content: '评价', rating: 5, tags: ['标签一', '标签二', '标签三'], isPrivate: true });
-    equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom"><db:subject xmlns:db="http://www.douban.com/xmlns/"><id>条目</id></db:subject><db:status>状态</db:status><db:tags>标签一</db:tags><db:tags>标签二</db:tags><db:tags>标签三</db:tags><content>评价</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="5" ></gd:rating><db:attribute name="privacy">private</db:attribute></entry>');
+    equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><db:subject><id>条目</id></db:subject><db:status>状态</db:status><db:tag name="标签一"></db:tag><db:tag name="标签二"></db:tag><db:tag name="标签三"></db:tag><content>评价</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="5" ></gd:rating><db:attribute name="privacy">private</db:attribute></entry>');
 });
+
 // vim: foldmethod=indent

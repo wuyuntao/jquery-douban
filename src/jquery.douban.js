@@ -155,7 +155,7 @@ $.extend({
         var re = /^(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})/;
         var date = str.match(re);
         for (var i = 1, len = date.length; i < len; i++) {
-            date[i] = parseInt(date[i]);
+            date[i] = parseInt(date[i], 10);
             if (i == 2) date[i] -= 1;
         }
         return new Date(date[1], date[2], date[3], date[4], date[5], date[6]);
@@ -208,6 +208,7 @@ var DoubanService = $.class({
             'movie': MovieService,
             'music': MusicService,
             'review': ReviewService,
+            'collection': CollectionService,
         }
         for (var name in services) {
             this[name] = new services[name](this);
@@ -367,9 +368,9 @@ var BaseService = $.class({
      * @param       offset, Integer
      * @param       limit, Integer
      */
-    _getForObject: function(object, offset, limit, model, templateUrl, suffix) {
+    _getForObject: function(object, offset, limit, model, templateUrl, suffix, extraParams) {
         var url = this.lazyUrl(object, templateUrl) + suffix;
-        var params = { 'start-index': (offset || 0) + 1, 'max-results': limit || 50 };
+        var params = $.extend({ 'start-index': (offset || 0) + 1, 'max-results': limit || 50 }, extraParams);
         var json = this._service.get(url, params);
         return this._response(json, model);
     },
@@ -584,30 +585,30 @@ var ReviewService = $.class(BaseService, {
 
 /* Douban Collection API Service
  * @method      get             获取收藏信息
- * @method      getUser         获取用户收藏信息
+ * @method      getForUser         获取用户收藏信息
  * @method      add             添加收藏
  * @method      update          更新收藏信息
  * @method      delete          删除收藏
  */
 var CollectionService = $.class(BaseService, {
-    get: function(id) {
-        throw new Error("Not Implemented Yet");
+    get: function(collection) {
+        return this._get(collection, Collection, GET_COLLECTION_URL);
     },
 
-    getForUser: function(id) {
-        throw new Error("Not Implemented Yet");
+    getForUser: function(user, offset, limit, type) {
+        return this._getForObject(user, offset, limit, CollectionEntries, GET_PEOPLE_URL, '/collection', { 'cat': type });
     },
 
-    add: function(id) {
-        throw new Error("Not Implemented Yet");
+    add: function(data) {
+        return this._add(data, ADD_COLLECTION_URL, Collection);
     },
 
-    update: function(id) {
-        throw new Error("Not Implemented Yet");
+    update: function(collection, data) {
+        return this._update(collection, data, Collection, UPDATE_COLLECTION_URL);
     },
 
-    delete: function(name) {
-        throw new Error("Not Implemented Yet");
+    delete: function(collection) {
+        return this._delete(collection, DELETE_COLLECTION_URL);
     }
 });
 
@@ -795,6 +796,7 @@ var DoubanObject = $.class({
     },
 
     getContent: function() {
+        if (this.getAttr('id') == 'http://api.douban.com/collection/74038377') console.debug(this._feed('content'));
         return this.getAttr('content');
     },
 
@@ -1309,6 +1311,7 @@ var Collection = $.class(DoubanObject, {
         this.id = this.getId();
         this.title = this.getTitle();
         this.owner = this.getAuthor();
+        this.content = this.getSummary();
         this.updated = this.getUpdated();
         this.subject = this.getSubject();
         this.status = this.getStatus();
@@ -1335,11 +1338,10 @@ Collection.createXml = function(data) {
                       tags: [], isPrivate: false },
                     data || {});
     if (typeof data.subject == 'object') var id = data.subject.id;
-    else if (data.subject.match(/^\d+$/)) var id = GET_REVIEW_URL.replace(/\{ID\}/, data.subject);
     else var id = data.subject;
-    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom"><db:subject xmlns:db="http://www.douban.com/xmlns/"><id>{ID}</id></db:subject><db:status>{STATUS}</db:status>{TAGS}<content>{CONTENT}</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="{RATING}" ></gd:rating><db:attribute name="privacy">{IS_PRIVATE}</db:attribute></entry>';
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><db:subject><id>{ID}</id></db:subject><db:status>{STATUS}</db:status>{TAGS}<content>{CONTENT}</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="{RATING}" ></gd:rating><db:attribute name="privacy">{IS_PRIVATE}</db:attribute></entry>';
     for (var i = 0, tags = '', len = data.tags.length; i < len; i++) {
-        tags += '<db:tags>' + data.tags[i] + '</db:tags>';
+        tags += '<db:tag name="' + data.tags[i] + '"></db:tag>';
     }
     return xml.replace(/\{ID\}/, id)
               .replace(/\{STATUS\}/, data.status)
@@ -1348,6 +1350,12 @@ Collection.createXml = function(data) {
               .replace(/\{TAGS\}/, tags)
               .replace(/\{IS_PRIVATE\}/, data.isPrivate ? 'private' : 'public');
 };
+
+var CollectionEntries = $.class(AuthorEntries, {
+    createFromJson: function($super) {
+        $super(Collection);
+    }
+});
 
 /* A simple tag object */
 function Tag(name, count) {
