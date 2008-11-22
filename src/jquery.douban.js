@@ -321,7 +321,7 @@ var DoubanService = $.class({
     }
 });
 
-/* Base class of all Douban API services
+/* Base class of Douban API services provides basic access methods
  */
 var BaseService = $.class({
     init: function(service) {
@@ -371,7 +371,9 @@ var BaseService = $.class({
      */
     _getForObject: function(object, offset, limit, model, templateUrl, suffix, extraParams) {
         var url = this.lazyUrl(object, templateUrl) + suffix;
-        var params = $.extend({ 'start-index': (offset || 0) + 1, 'max-results': limit || 50 }, extraParams);
+        var params = $.extend({ 'start-index': (offset || 0) + 1,
+                                'max-results': limit || 50 },
+                              extraParams || {});
         var json = this._service.get(url, params);
         return this._response(json, model);
     },
@@ -440,6 +442,47 @@ var BaseService = $.class({
     }
 });
 
+/* Template class of Douban services providing mostly used methods
+ * like ``get``, ``getForUser``, ``add``, ``update`` and ``delete``.
+ * These methods could be redefined or undefined in subclasses.
+ * Following attributes should be defined in the ``init`` function
+ * of the subclass.
+ * @attribute   _model
+ * @attribute   _modelEntry
+ * @attribute   _suffix
+ * @attribute   _getObjectUrl
+ * @attribute   _addObjectUrl
+ * 
+ * Following methods are provided. If any one is not needed, undefine
+ * them in the ``init`` function.
+ * @method      get
+ * @method      getForUser
+ * @method      add
+ * @method      update
+ * @method      delete
+ */
+var CommonService = $.class(BaseService, {
+    get: function(object) {
+        return this._get(object, this._model, this._getObjectUrl);
+    },
+
+    getForUser: function(user, offset, limit, extraParams) {
+        return this._getForObject(user, offset, limit, this._modelEntry, GET_PEOPLE_URL, this._suffix, extraParams);
+    },
+
+    add: function(data) {
+        return this._add(data, this._addObjectUrl, this._model);
+    },
+
+    update: function(object, data) {
+        return this._update(object, data, this._model, this._getObjectUrl);
+    },
+
+    delete: function(object) {
+        return this._delete(object, this._getObjectUrl);
+    }
+});
+
 /* Douban User API Service
  * @method      get             获取用户信息
  * @method      search          获取当前授权用户信息
@@ -476,25 +519,14 @@ var UserService = $.class(BaseService, {
  * @method      update          更新日记
  * @method      delete          删除日记
  */
-var NoteService = $.class(BaseService, {
-    get: function(note) {
-        return this._get(note, Note, GET_NOTE_URL);
-    },
-
-    getForUser: function(user, offset, limit) {
-        return this._getForObject(user, offset, limit, NoteEntries, GET_PEOPLE_URL, '/notes');
-    },
-
-    add: function(data) {
-        return this._add(data, ADD_NOTE_URL, Note);
-    },
-
-    update: function(note, data) {
-        return this._update(note, data, Note, UPDATE_NOTE_URL);
-    },
-
-    delete: function(note) {
-        return this._delete(note, DELETE_NOTE_URL);
+var NoteService = $.class(CommonService, {
+    init: function($super, service) {
+        this._model = Note;
+        this._modelEntry = NoteEntries;
+        this._getObjectUrl = GET_NOTE_URL;
+        this._addObjectUrl = ADD_NOTE_URL;
+        this._suffix = '/notes';
+        $super(service);
     }
 });
 
