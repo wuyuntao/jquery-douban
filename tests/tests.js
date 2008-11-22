@@ -259,6 +259,8 @@ test("test book api", function() {
     equals(result.entries[1].id, "http://api.douban.com/book/subject/1232101", "get book id ok");
 });
 
+/* Because all sujects are inherited from same class,
+ * it's ok to test only one of them
 test("test movie api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
@@ -299,55 +301,65 @@ test("test music api", function() {
     equals(result.limit, 3, "search music max results ok");
     equals(result.entries.length, 3, "search music ok");
 });
+ */
 
+/* Only ``getForSubject`` should be tested
+ */
 test("test review api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
-    // get review
+    /* get review
     var review = service.review.get('1523679');
     equals(review.title, '第二季第二话');
     equals(review.author.screenName, '真月居深红魅玉大圣天');
     equals(review.rating, 5);
+     */
 
-    // get review for user
+    /* get review for user
     var reviews = service.review.getForUser(review.author, 3, 3);
     equals(reviews.total, 5);
     equals(reviews.offset, 3);
     equals(reviews.limit, 3);
     equals(reviews.entries.length, 2);
+     */
 
     // get review for subject
-    var reviews2 = service.review.getForSubject(review.subject);
+    var reviews2 = service.review.getForSubject('http://api.douban.com/movie/subject/3199462');
     equals(reviews2.total, 6);
     equals(reviews2.offset, 0);
     equals(reviews2.limit, 50);
     equals(reviews2.entries.length, 6);
 
-    // add
+    /* add
     var review2 = service.review.add({ subject: 'http://api.douban.com/music/subject/3288632', title: "测试", content: "评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。", rating: 5 });
     equals(review2.title, "测试");
     equals(review2.content, "评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。");
     equals(review2.author.screenName, 'ilovest');
     equals(review2.rating, 5);
+     */
     
-    // update
+    /* update
     var review3 = service.review.update(review2, { title: "测试更新", content: "更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。", rating: 4 });
     equals(review3.title, "测试更新");
     equals(review3.content, "更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。更新后评论的内容不会太短了吧，可恶的测试啊。");
     equals(review3.author.screenName, 'ilovest');
     equals(review3.rating, 4);
+     */
 
-    // delete
+    /* delete
     var response = service.review.delete(review2);
     ok(response, "review deleted");
+     */
 });
 
+/* Only ``getForUser`` should be tested
+ */
 test("test collection api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
-    // get collection by id
+    /* get collection by id
     var collection = service.collection.get('21701587');
     var date = new Date(2007, 09, 09, 23, 03, 42);
     equals(collection.id, "http://api.douban.com/collection/21701587", "get collection id ok");
@@ -357,8 +369,10 @@ test("test collection api", function() {
     equals(collection.subject.id, "http://api.douban.com/book/subject/1731370");
     equals(collection.subject.title, "东方快车谋杀案");
     equals(collection.updated.getTime(), date.getTime(), "get collection updated time ok");
+     */
 
-    // get collections of user by user id
+    /* get collections of user by user id
+     */
     var collections = service.collection.getForUser('NullPointer', 4, 2);
     ok(collections.total >= 908, "get total collections ok"); 
     equals(collections.offset, 4, "get collections of np start index ok");
@@ -369,50 +383,60 @@ test("test collection api", function() {
     var user = collections.author;
     equals(user.screenName, "NullPointer", "get author of collections ok");
 
-    // get book collection
+    /* get book collection
+     */
     var collections2 = service.collection.getForUser('wyt', 4, 2, 'book');
     ok(collections2.total >= 494);
     ok(collections2.entries[0].id.match(/http:\/\/api\.douban\.com\/collection\/\d+/), "get collection id ok");
 
-    // publish a new collection
+    /* add a new collection
     var collection3 = service.collection.add({ subject: collection.subject, content: "没错，当时就是这样", tags: ['东方', '谋杀', '小说'], status: 'read' });
     ok(collection3.id.match(/http:\/\/api\.douban\.com\/collection\/\d+/), "get id of collection ok");
     equals(collection3.title, 'ilovest 读过 东方快车谋杀案', "get title of collection ok");
     equals(collection3.content, '没错，当时就是这样');
     equals(collection3.tags.length, 3, "get length of tags ok");
+     */
 
-    // update the collection
+    /* update the collection
     var collection4 = service.collection.update(collection3, { status: 'wish', content: "错了，当时不是这样的" });
     ok(collection4.id.match(/http:\/\/api\.douban\.com\/collection\/\d+/), "get id of collection ok");
     equals(collection4.title, "ilovest 想读 东方快车谋杀案", "get title of collection ok");
     equals(collection4.content, '错了，当时不是这样的', "get content of collection ok");
+     */
 
-    // delete the collection
+    /* delete the collection
     var response = service.collection.delete(collection4);
     ok(response , "collection deleted");
+     */
 });
 
+/* Only ``getForContacts`` should be tested
+ */
 test("test miniblog api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
-    // get miniblog for user
+    /* get miniblog for user
     miniblogs = service.miniblog.getForUser('wyt', 10, 10);
     equals(miniblogs.offset, 10);
     ok(miniblogs.entries[9].id.match(/http:\/\/api\.douban\.com\/miniblog\/\d+/), "get miniblog id");
+     */
 
-    // get miniblog for contacts
+    /* get miniblog for contacts
+     */
     miniblogs2 = service.miniblog.getForContacts('iloveshutuo', 9, 9);
     equals(miniblogs2.limit, 9);
     ok(miniblogs2.entries[5].id.match(/http:\/\/api\.douban\.com\/miniblog\/\d+/), "get miniblog id");
 
-    // add miniblog
+    /* add miniblog
     miniblog = service.miniblog.add({ content: '真是的，这是什么啊' });
     equals(miniblog.content, '真是的，这是什么啊');
+     */
 
-    // delete miniblog
+    /* delete miniblog
     var response = service.miniblog.delete(miniblog);
     ok(response, "miniblog deleted");
+     */
 });
 
 module("Douban Object Testcases");
