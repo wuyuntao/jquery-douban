@@ -240,37 +240,23 @@ var DoubanService = $.class({
     },
 
     post: function(url, data, callback) {
-        var json = null;
-        var params = this.setParams();
-        var setHeaders = this.setHeaders(url, 'POST', params);
-        var url = url + '?' + $.param(params);
-        this._http({ async: false,
-                     url: url,
-                     data: data,
-                     dataType: 'json',
-                     type: 'POST',
-                     contentType: 'application/atom+xml',
-                     processData: false,
-                     beforeSend: setHeaders,
-                     success: onSuccess });
-        return json;
-
-        function onSuccess(data) {
-            json = data;
-            if ($.isFunction(callback)) callback(data);
-        }
+        return this._sendData(url, data, callback, 'POST')
     },
 
     put: function(url, data, callback) {
+        return this._sendData(url, data, callback, 'PUT')
+    },
+
+    _sendData: function(url, data, callback, type) {
         var json = null;
         var params = this.setParams();
-        var setHeaders = this.setHeaders(url, 'PUT', params);
+        var setHeaders = this.setHeaders(url, type, params);
         var url = url + '?' + $.param(params);
         this._http({ async: false,
                      url: url,
                      data: data,
                      dataType: 'json',
-                     type: 'PUT',
+                     type: type,
                      contentType: 'application/atom+xml',
                      processData: false,
                      beforeSend: setHeaders,
@@ -626,25 +612,18 @@ var ReviewService = $.class(CommonService, {
  * @method      update          更新收藏信息
  * @method      delete          删除收藏
  */
-var CollectionService = $.class(BaseService, {
-    get: function(collection) {
-        return this._get(collection, Collection, GET_COLLECTION_URL);
+var CollectionService = $.class(CommonService, {
+    init: function($super, service) {
+        this._model = Collection;
+        this._modelEntry = CollectionEntry;
+        this._getObjectUrl = GET_COLLECTION_URL;
+        this._addObjectUrl = ADD_COLLECTION_URL;
+        this._suffix = '/collection';
+        $super(service);
     },
 
     getForUser: function(user, offset, limit, type) {
         return this._getForObject(user, offset, limit, CollectionEntry, GET_PEOPLE_URL, '/collection', { 'cat': type });
-    },
-
-    add: function(data) {
-        return this._add(data, ADD_COLLECTION_URL, Collection);
-    },
-
-    update: function(collection, data) {
-        return this._update(collection, data, Collection, UPDATE_COLLECTION_URL);
-    },
-
-    delete: function(collection) {
-        return this._delete(collection, DELETE_COLLECTION_URL);
     }
 });
 
@@ -654,45 +633,46 @@ var CollectionService = $.class(BaseService, {
  * @method      add                 添加广播
  * @method      delete              删除广播
  */
-var MiniblogService = $.class(BaseService, {
-    getForUser: function(user, offset, limit) {
-        return this._getForObject(user, offset, limit, MiniblogEntry, GET_PEOPLE_URL, '/miniblog');
+var MiniblogService = $.class(CommonService, {
+    init: function($super, service) {
+        this._model = Miniblog;
+        this._modelEntry = MiniblogEntry;
+        this._getObjectUrl = GET_MINIBLOG_URL;
+        this._addObjectUrl = ADD_MINIBLOG_URL;
+        this._suffix = '/miniblog';
+        // Mask ``get`` and ``update`` method
+        this.get = undefined;
+        this.udpate = undefined;
+        $super(service);
     },
 
     getForContacts: function(user, offset, limit) {
-        return this._getForObject(user, offset, limit, MiniblogEntry, GET_PEOPLE_URL, '/miniblog/contacts');
-    },
-
-    add: function(data) {
-        return this._add(data, ADD_MINIBLOG_URL, Miniblog);
-    },
-
-    delete: function(miniblog) {
-        return this._delete(miniblog, DELETE_MINIBLOG_URL);
+        return this._getForObject(user, offset, limit, this._modelEntry, GET_PEOPLE_URL, '/miniblog/contacts');
     }
 });
 
 /* Douban Event API Service
  * @method      get             获取活动
- * @method      getUser         获取用户的所有活动
- * @method      getCity         获取城市的所有活动
+ * @method      getForUser      获取用户的所有活动
+ * @method      getForCity      获取城市的所有活动
  * @method      search          搜索活动
  * @method      join            参加活动
  * @method      add             创建新活动
  * @method      update          更新活动
  * @method      delete          删除活动
  */
-var EventService = $.class(BaseService, {
-    get: function(id) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    getForUser: function(id) {
-        throw new Error("Not Implemented Yet");
+var EventService = $.class(CommonService, {
+    init: function($super, service) {
+        this._model = Event;
+        this._modelEntry = EventEntry;
+        this._getObjectUrl = GET_EVENT_URL;
+        this._addObjectUrl = ADD_EVENT_URL;
+        this._suffix = '/events';
+        $super(service);
     },
 
     getForCity: function(id) {
-        throw new Error("Not Implemented Yet");
+        return this._getForObject(user, offset, limit, this._modelEntry, GET_PEOPLE_URL, '/miniblog/contacts');
     },
 
     search: function(id) {
@@ -701,31 +681,19 @@ var EventService = $.class(BaseService, {
 
     join: function(id) {
         throw new Error("Not Implemented Yet");
-    },
-
-    add: function(id) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    update: function(id) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    delete: function(name) {
-        throw new Error("Not Implemented Yet");
     }
 });
 
 /* Douban Recommendation API Service
  * @method      get             获取推荐
- * @method      getUser         获取用户的所有推荐
+ * @method      getForUser      获取用户的所有推荐
  * @method      add             发表新推荐
  * @method      delete          删除推荐
  * @method      getReply        获取推荐回复
  * @method      addReply        发表新回复
  * @method      deleteReply     删除回复
  */
-var RecommendationService = $.class(BaseService, {
+var RecommendationService = $.class(CommonService, {
     get: function(id) {
         throw new Error("Not Implemented Yet");
     },
