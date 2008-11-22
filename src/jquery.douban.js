@@ -780,7 +780,7 @@ var DoubanObject = $.class({
     },
 
     getId: function() {
-        return this.getUrl('self');
+        return this.getAttr('id') || this.getUrl('self');
     },
 
     getTitle: function() {
@@ -997,7 +997,8 @@ var Note = $.class(DoubanObject, {
  * @data        isReplyEnabled Boolean (optional)
  */
 Note.createXml = function(data) {
-    data = $.extend({ title: '', content: '', isPublic: true, isReplyEnabled: true },
+    data = $.extend({ title: '', content: '', isPublic: true,
+                      isReplyEnabled: true },
                     data || {});
     var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>{TITLE}</title><content>{CONTENT}</content><db:attribute name="privacy">{IS_PUBLIC}</db:attribute><db:attribute name="can_reply">{IS_REPLY_ENABLED}</db:attribute></entry>';
     return xml.replace(/\{TITLE\}/, data.title)
@@ -1357,6 +1358,33 @@ var CollectionEntries = $.class(AuthorEntries, {
     }
 });
 
+var Miniblog = $.class(DoubanObject, {
+    createFromJson: function() {
+        this.id = this.getId();
+        this.title = this.getTitle()
+        this.content = this.getContent();
+        this.published = this.getPublished();
+        this.category = this.getCategory();
+        this.iconUrl = this.getIconUrl();
+    },
+
+    getCategory: function() {
+        if (!this._feed || !this._feed['category']) return;
+        return this._feed['category'][0]['@term'].match(/\.(\w+)$/)[1];
+    }
+});
+Miniblog.createXml = function(data) {
+    data = $.extend({ content: '' }, data || {});
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><content>{CONTENT}</content></entry>';
+    return xml.replace(/\{CONTENT\}/, data.content);
+};
+
+var MiniblogEntries = $.class(AuthorEntries, {
+    createFromJson: function($super) {
+        $super(Collection);
+    }
+});
+
 /* A simple tag object */
 function Tag(name, count) {
     this.name = name;
@@ -1544,6 +1572,7 @@ var factoryDict = {
     'note': Note,
     'review': Review,
     'collection': Collection,
+    'miniblog': Miniblog,
 };
 
 /* Factory method of jQuery Douban
