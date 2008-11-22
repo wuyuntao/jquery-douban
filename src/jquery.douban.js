@@ -22,10 +22,7 @@ const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
 
 const NOTE_URL = API_HOST + '/note';
 const GET_NOTE_URL = NOTE_URL + '/{ID}';
-const GET_USER_NOTE_URL = GET_PEOPLE_URL + '/notes';
 const ADD_NOTE_URL = API_HOST + '/notes';
-const UPDATE_NOTE_URL = GET_NOTE_URL;
-const DELETE_NOTE_URL = GET_NOTE_URL;
 
 const BOOK_URL = API_HOST + '/book/subject';
 const GET_BOOK_URL = BOOK_URL + '/{ID}';
@@ -41,27 +38,15 @@ const SEARCH_MUSIC_URL = MUSIC_URL + 's';
 
 const REVIEW_URL = API_HOST + '/review';
 const GET_REVIEW_URL = REVIEW_URL + '/{ID}';
-const GET_USER_REVIEW_URL = GET_PEOPLE_URL + '/reviews';
-const GET_BOOK_REVIEW_URL = GET_BOOK_URL + '/reviews';
-const GET_MOVIE_REVIEW_URL = GET_MOVIE_URL + '/reviews';
-const GET_MUSIC_REVIEW_URL = GET_MUSIC_URL + '/reviews';
 const ADD_REVIEW_URL = REVIEW_URL + 's';
-const UPDATE_REVIEW_URL = GET_REVIEW_URL;
-const DELETE_REVIEW_URL = GET_REVIEW_URL;
 
 const COLLECTION_URL = API_HOST + '/collection';
 const GET_COLLECTION_URL = COLLECTION_URL + '/{ID}';
-const GET_USER_COLLECTION_URL = GET_PEOPLE_URL + '/collections';
 const ADD_COLLECTION_URL = COLLECTION_URL;
-const UPDATE_COLLECTION_URL = GET_COLLECTION_URL;
-const DELETE_COLLECTION_URL = GET_COLLECTION_URL;
 
 const MINIBLOG_URL = API_HOST + '/miniblog';
 const GET_MINIBLOG_URL = MINIBLOG_URL + '/{ID}';
-const GET_USER_MINIBLOG_URL = GET_PEOPLE_URL + '/miniblog';
-const GET_CONTACTS_MINIBLOG_URL = GET_PEOPLE_URL + '/miniblog/contacts';
 const ADD_MINIBLOG_URL = MINIBLOG_URL + '/saying';
-const DELETE_MINIBLOG_URL = GET_MINIBLOG_URL;
 // }}}
 
 /* {{{ Some utilities
