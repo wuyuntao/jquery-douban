@@ -235,9 +235,8 @@ test("test note api", function() {
     equals(note4.content, '错了，当时不是这样的', "get title of note ok");
 
     // delete the note
-    service.note.delete(note4);
-    var note5 = service.note.get(note4);
-    ok(!note5, "note deleted");
+    var response = service.note.delete(note4);
+    ok(response, "note deleted");
 });
 
 test("test book api", function() {
@@ -340,9 +339,8 @@ test("test review api", function() {
     equals(review3.rating, 4);
 
     // delete
-    service.review.delete(review2);
-    var review4 = service.review.get(review2);
-    ok(!review4, "review deleted");
+    var response = service.review.delete(note2);
+    ok(response, "review deleted");
 });
 
 test("test collection api", function() {
@@ -390,9 +388,31 @@ test("test collection api", function() {
     equals(collection4.content, '错了，当时不是这样的', "get content of collection ok");
 
     // delete the collection
-    service.collection.delete(collection4);
-    var collection5 = service.collection.get(collection4);
-    ok(!collection5, "collection deleted");
+    var response = service.collection.delete(collection4);
+    ok(response , "collection deleted");
+});
+
+test("test miniblog api", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+
+    // get miniblog for user
+    miniblogs = service.miniblog.getForUser('wyt', 10, 10);
+    equals(miniblogs.offset, 10);
+    ok(miniblogs.entries[9].id.match(/http:\/\/api\.douban\.com\/miniblog\/\d+/), "get miniblog id");
+
+    // get miniblog for contacts
+    miniblogs2 = service.miniblog.getForContacts('iloveshutuo', 9, 9);
+    equals(miniblogs2.limit, 9);
+    ok(miniblogs2.entries[5].id.match(/http:\/\/api\.douban\.com\/miniblog\/\d+/), "get miniblog id");
+
+    // add miniblog
+    miniblog = service.miniblog.add({ content: '真是的，这是什么啊' });
+    equals(miniblog.content, '真是的，这是什么啊');
+
+    // delete miniblog
+    var response = service.miniblog.delete(miniblog);
+    ok(response, "miniblog deleted");
 });
 
 module("Douban Object Testcases");

@@ -209,6 +209,7 @@ var DoubanService = $.class({
             'music': MusicService,
             'review': ReviewService,
             'collection': CollectionService,
+            'miniblog': MiniblogService,
         }
         for (var name in services) {
             this[name] = new services[name](this);
@@ -425,7 +426,8 @@ var BaseService = $.class({
     _delete: function(object, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
         var response = this._service.delete(url);
-        return response == 'ok' ? true : false;
+        console.debug(response);
+        return response == 'OK' ? true : false;
     },
 
     /* Get response or undefined
@@ -585,7 +587,7 @@ var ReviewService = $.class(BaseService, {
 
 /* Douban Collection API Service
  * @method      get             获取收藏信息
- * @method      getForUser         获取用户收藏信息
+ * @method      getForUser      获取用户收藏信息
  * @method      add             添加收藏
  * @method      update          更新收藏信息
  * @method      delete          删除收藏
@@ -613,26 +615,26 @@ var CollectionService = $.class(BaseService, {
 });
 
 /* Douban Miniblog API Service
- * @method      getUser         获取用户广播
- * @method      getContact      获取用户友邻广播
- * @method      add             添加广播
- * @method      delete          删除广播
+ * @method      getForUser          获取用户广播
+ * @method      getForContact       获取用户友邻广播
+ * @method      add                 添加广播
+ * @method      delete              删除广播
  */
 var MiniblogService = $.class(BaseService, {
-    getForUser: function(id) {
-        throw new Error("Not Implemented Yet");
+    getForUser: function(user, offset, limit) {
+        return this._getForObject(user, offset, limit, MiniblogEntries, GET_PEOPLE_URL, '/miniblog');
     },
 
-    getForContacts: function(id) {
-        throw new Error("Not Implemented Yet");
+    getForContacts: function(user, offset, limit) {
+        return this._getForObject(user, offset, limit, MiniblogEntries, GET_PEOPLE_URL, '/miniblog/contacts');
     },
 
-    add: function(id) {
-        throw new Error("Not Implemented Yet");
+    add: function(data) {
+        return this._add(data, ADD_MINIBLOG_URL, Miniblog);
     },
 
-    delete: function(name) {
-        throw new Error("Not Implemented Yet");
+    delete: function(miniblog) {
+        return this._delete(miniblog, DELETE_MINIBLOG_URL);
     }
 });
 
@@ -796,7 +798,6 @@ var DoubanObject = $.class({
     },
 
     getContent: function() {
-        if (this.getAttr('id') == 'http://api.douban.com/collection/74038377') console.debug(this._feed('content'));
         return this.getAttr('content');
     },
 
