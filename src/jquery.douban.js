@@ -398,7 +398,6 @@ var BaseService = $.class({
      */
     _add: function(data, url, model) {
         if (typeof data == 'object') data = model.createXml(data);
-        if (model == Review) console.debug(data, url, model);
         var json = this._service.post(url, data);
         return this._response(json, model);
     },
@@ -828,13 +827,12 @@ var DoubanObject = $.class({
     },
 
     getTags: function() {
-        if (!this._feed || !this._feed['db:tag']) return;
+        if (!this._feed || !this._feed['db:tag']) return [];
         var tags = [], entries = this._feed['db:tag'];
         for (var i = 0, len = entries.length; i < len; i++)
             tags.push(new Tag(entries[i]['@name'], entries[i]['@count']));
         return tags;
     }
-
 });
 
 var DoubanObjectEntries = $.class(DoubanObject, {
@@ -1319,7 +1317,7 @@ var Collection = $.class(DoubanObject, {
     },
 
     getStatus: function() {
-        return this.attr('status');
+        return this.getAttr('db:status');
     }
 });
 // Class methods
@@ -1340,15 +1338,14 @@ Collection.createXml = function(data) {
     else if (data.subject.match(/^\d+$/)) var id = GET_REVIEW_URL.replace(/\{ID\}/, data.subject);
     else var id = data.subject;
     var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom"><db:subject xmlns:db="http://www.douban.com/xmlns/"><id>{ID}</id></db:subject><db:status>{STATUS}</db:status>{TAGS}<content>{CONTENT}</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="{RATING}" ></gd:rating><db:attribute name="privacy">{IS_PRIVATE}</db:attribute></entry>';
-    var tag = '<db:tags>{TAG}</db:tags>';
     for (var i = 0, tags = '', len = data.tags.length; i < len; i++) {
-        tags += tag.replace(/\{TAG\}/, data.tags[i]);
+        tags += '<db:tags>' + data.tags[i] + '</db:tags>';
     }
     return xml.replace(/\{ID\}/, id)
-              .replace(/\{status\}/, data.status)
+              .replace(/\{STATUS\}/, data.status)
               .replace(/\{CONTENT\}/, data.content)
               .replace(/\{RATING\}/, data.rating)
-              .replace(/\{TAGS\}/, data.tags)
+              .replace(/\{TAGS\}/, tags)
               .replace(/\{IS_PRIVATE\}/, data.isPrivate ? 'private' : 'public');
 };
 
@@ -1535,9 +1532,10 @@ var factoryDict = {
     'book': Book,
     'movie': Movie,
     'music': Music,
-    'note': Note,
     'user': User,
+    'note': Note,
     'review': Review,
+    'collection': Collection,
 };
 
 /* Factory method of jQuery Douban
