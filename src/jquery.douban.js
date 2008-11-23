@@ -764,12 +764,20 @@ var DoubanObject = $.class({
                 return this.getUrl('image') || this.getUrl('icon');
             case 'published':
                 return this.getPublished();
+            case 'rating':
+                return this.getRating();
+            case 'releaseDate':
+                return this.getAttr('pubdate');
+            case 'tags':
+                return this.getTags();
             case 'title':
                 return this.getAttr('title');
             case 'updated':
                 return this.getUpdated();
             case 'url':
                 return this.getUrl();
+            case 'votes':
+                return this.getVotes();
             default:
                 return this.getAttr(attr);
         }
@@ -1025,9 +1033,6 @@ var NoteEntry = $.class(AuthorEntry, {
 });
 
 var Subject = $.class(DoubanObject, {
-    createFromJson: function() {
-    },
-
     // Returns a list of attributes
     getAttrs: function(name) {
         if (!this._feed || !this._feed['db:attribute']) return;
@@ -1074,49 +1079,25 @@ Subject.factory = function(json) {
 
 var Book = $.class(Subject, {
     createFromJson: function($super) {
-        this.id = this.getId();
-        this.title = this.getTitle();
-        this.aka = this.getAka();
-        this.subtitle = this.getSubtitle();
-        this.authors = this.getAuthors();
-        this.translators = this.getTranslators();
-        this.isbn10 = this.getIsbn10();
-        this.isbn13 = this.getIsbn13();
-        this.releaseDate = this.getReleaseDate();
-        this.publisher = this.getPublisher();
-        this.price = this.getPrice();
-        this.pages = this.getPages();
-        this.binding = this.getBinding();
-        this.authorIntro = this.getAuthorIntro();
-        this.summary = this.getSummary();
-        this.url = this.getUrl();
-        this.iconUrl = this.getIconUrl();
-        this.tags = this.getTags();
-        this.rating = this.getRating();
-        this.votes = this.getVotes();
+        this.all = ['id', 'title', 'aka', 'subtitle', 'authors', 'translators', 'isbn10', 'isbn13', 'releaseDate', 'published', 'publisher', 'price', 'pages', 'binding', 'authorIntro', 'summary', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
         $super();
     },
+
+    getAttribute: function($super, attr) {
+        switch (attr) {
+            case 'aka':
+                return this.getAttrs('aka');
+            case 'authors':
+                return this.getAttrs('author');
+            case 'translators':
+                return this.getAttrs('translator');
+            case 'authorIntro':
+                return this.getAttr('author-intro');
+            default:
+                return $super(attr);
+        }
+    },
     
-    getSubtitle: function() {
-        return this.getAttr('subtitle');
-    },
-
-    getAuthors: function() {
-        return this.getAttrs('author');
-    },
-
-    getTranslators: function() {
-        return this.getAttrs('translator');
-    },
-
-    getIsbn10: function() {
-        return this.getAttr('isbn10');
-    },
-
-    getIsbn13: function() {
-        return this.getAttr('isbn13');
-    },
-
     getPages: function() {
         return this.getAttr('pages');
     },

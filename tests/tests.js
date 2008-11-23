@@ -515,7 +515,7 @@ test("test book object", function() {
     equals(book.releaseDate, "2004-04");
     equals(book.authorIntro, undefined);
     equals(book.url, "http://www.douban.com/subject/3137911/");
-    equals(book.iconUrl, "http://otho.douban.com/spic/s3168047.jpg");
+    equals(book.imageUrl, "http://otho.douban.com/spic/s3168047.jpg");
     equals(book.tags.length, 2);
     equals(book.tags[0].name, "日本");
     equals(book.tags[0].count, 1);
@@ -541,7 +541,7 @@ test("test movie object", function() {
     equals(movie.country.length, 3);
     equals(movie.summary, "简介");
     equals(movie.url, "http://www.douban.com/subject/1296339/");
-    equals(movie.iconUrl, "http://otho.douban.com/spic/s1401102.jpg");
+    equals(movie.imageUrl, "http://otho.douban.com/spic/s1401102.jpg");
     equals(movie.tags.length, 5);
     equals(movie.rating, 4.49);
     equals(movie.votes, 9988);
