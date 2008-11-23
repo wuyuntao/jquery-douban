@@ -802,9 +802,13 @@ var DoubanObject = $.class({
                 return this.getAttr('privacy') == 'public' ? true : false;
             case 'isReplyEnabled':
                 return this.getAttr('can_reply') == 'yes' ? true : false;
+            case 'limit':
+                return parseInt(this.getAttr("opensearch:itemsPerPage") || "0");
             case 'location':
             case 'status':
                 return this.getAttr('db:' + attr);
+            case 'offset':
+                return parseInt(this.getAttr("opensearch:startIndex") || "1") - 1;
             case 'published':
             case 'updated':
                 return this.getTime(attr);
@@ -818,6 +822,8 @@ var DoubanObject = $.class({
                 return this.getSubject();
             case 'tags':
                 return this.getTags();
+            case 'total':
+                return parseInt(this.getAttr("opensearch:totalResults") || "0");
             case 'type':
                 return this.getAttr('category');
             case 'url':
@@ -924,60 +930,32 @@ DoubanObject.subjectFactory = function(json) {
     }
 };
 
-
 var DoubanObjectEntry = $.class(DoubanObject, {
     init: function(feed) {
+        this.all = ['title', 'total', 'offset', 'limit', 'entries'];
         this._feed = feed;
         this._entries = feed.entry;
         this.createFromJson();
     },
 
-    /* Create object from given JSON feed.
-     * Get general attributes for entry feed, like ``total`` and ``limit``
-     * @param   data JSON
-     */
-    createFromJson: function(doubanObject) {
-        this.total = this.getTotal();
-        this.offset = this.getOffset();
-        this.limit = this.getLimit();
+    createFromJson: function($super, doubanObject) {
+        $super();
         this.entries = [];
         for (var i = 0, len = this._entries.length; i < len; i++) {
             this.entries.push(new doubanObject(this._entries[i]));
         }
-    },
-
-    getTotal: function() {
-        return parseInt(this.getAttr("opensearch:totalResults") || "0");
-    },
-
-    getOffset: function() {
-        return parseInt(this.getAttr("opensearch:startIndex") || "1") - 1;
-    },
-
-    getLimit: function() {
-        return parseInt(this.getAttr("opensearch:itemsPerPage") || "0");
     }
-
 });
 
 var AuthorEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
-        this.title = this.getAttr('title');
         this.author = this.getAuthor();
-        $super(doubanObject);
-    }
-});
-
-var SubjectEntry = $.class(DoubanObjectEntry, {
-    createFromJson: function($super, doubanObject) {
-        this.title = this.getAttr('title');
         $super(doubanObject);
     }
 });
 
 var SearchEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
-        this.title = this.getAttr('title');
         this.query = this.getAttr('title').replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
         $super(doubanObject);
     }
@@ -1140,7 +1118,7 @@ var ReviewForUserEntry = $.class(AuthorEntry, {
     }
 });
 
-var ReviewForSubjectEntry = $.class(SubjectEntry, {
+var ReviewForSubjectEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super) {
         $super(Review);
     }
