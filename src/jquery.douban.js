@@ -15,7 +15,7 @@ const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
 
 const API_HOST = 'http://api.douban.com';
 const PEOPLE_URL = API_HOST + '/people';
-// API BUG: 不加'/'的话，使用不能。http://www.douban.com/group/topic/4655057/ 
+// API Bug => http://www.douban.com/group/topic/4655057/ 
 const SEARCH_PEOPLE_URL = PEOPLE_URL + '/';
 const GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}';
 const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
@@ -738,7 +738,10 @@ var DoubanObject = $.class({
      * @param   data JSON
      */
     createFromJson: function() {
-        throw new Error("Not Implemented Yet");
+        for (var i = 0, len = this.all.length; i < len; i++) {
+            var name = this.all[i];
+            this[name] = this.getAttribute(name);
+        }
     },
 
     /* Get read-only json feed
@@ -747,16 +750,33 @@ var DoubanObject = $.class({
         return this._feed;
     },
 
+    updateFeed: function(feed) {
+        this._feed = feed;
+        this.createFromJson();
+    },
+
+    /* Implemented in subclasses */
+    getAttribute: function(attr) {
+        return this.getAttr(attr);
+    },
+
     /* JSON feed parsers
      */
     // Get the attribute which is first got
     getAttr: function (attr) {
         if (!this._feed) return;
-        if (this._feed[attr]) return this._feed[attr]['$t'];
-        var attrs = this._feed['db:attribute'];
-        if (attrs)
-            for (var i in attrs)
-                if (attrs[i]['@name'] == attr) return attrs[i]['$t'];
+        switch (attr) {
+            case 'url':
+                return this.getUrl();
+            case 'imageUrl':
+                return this.getUrl('image') || this.getUrl('icon');
+            default:
+                if (this._feed[attr]) return this._feed[attr]['$t'];
+                var attrs = this._feed['db:attribute'];
+                if (attrs)
+                    for (var i in attrs)
+                        if (attrs[i]['@name'] == attr) return attrs[i]['$t'];
+        }
     },
 
     getUrl: function(attr) {
@@ -888,53 +908,43 @@ var SearchEntry = $.class(DoubanObjectEntry, {
  * @attribute       userName        用户名，"ahbei"
  * @attribute       screenName      昵称，"阿北"
  * @attribute       location        常居地，"北京"
- * @attribute       blog            网志主页，"http://ahbei.com/"
+ * @attribute       homepage        网志主页，"http://ahbei.com/"
  * @attribute       intro           自我介绍，"豆瓣的临时总管..."
  * @attribute       url             豆瓣主页，"http://www.douban.com/people/ahbei/"
- * @attribute       iconUrl         头像，"http://otho.douban.com/icon/u1000001-14.jpg"
+ * @attribute       iamgeUrl        头像，"http://otho.douban.com/icon/u1000001-14.jpg"
  * @method          createFromJson  由豆瓣返回的用户JSON，初始化用户数据
  */
 var User = $.class(DoubanObject, {
-    createFromJson: function() {
-        this.id = this.getUserId();
-        this.userName = this.getUserName()
-        this.screenName = this.getScreenName();
-        this.location = this.getLocation();
-        this.intro = this.getContent();
-        this.url = this.getUrl();
-        this.iconUrl = this.getIconUrl();
-        this.blog = this.getBlog();
+    createFromJson: function($super) {
+        this.all = ['id', 'userName', 'screenName', 'location', 'homepage', 'intro', 'url', 'imageUrl'];
+        $super();
     },
 
-    /* JSON feed parsers */
-    getUserId: function() {
-        return this.getAttr('id') || this.getAttr('uri');
-    },
-
-    getUserName: function() {
-        return this.getAttr('db:uid');
-    },
-
-    getScreenName: function() {
-        return this.getTitle() || this.getAttr('name');
-    },
-
-    getLocation: function() {
-        return this.getAttr('db:location');
-    },
-
-    getBlog: function() {
-        return this.getUrl('homepage');
+    getAttribute: function($super, attr) {
+        switch (attr) {
+            case 'id':
+                return this.getAttr('id') || this.getAttr('uri');
+            case 'userName':
+                return this.getAttr('db:uid');
+            case 'screenName':
+                return this.getAttr('title') || this.getAttr('name');
+            case 'location':
+                return this.getAttr('db:location');
+            case 'intro':
+                return this.getAttr('content');
+            default:
+                return $super(attr);
+        }
     }
 });
 
 /* Douban user entries
- * @param       data                Well-formatted json feed
- * @attribute   total
- * @attribute   offset
- * @attribute   limit
- * @attribute   entries
- * @method      createFromJson
+ * @param           data                Well-formatted json feed
+ * @attribute       total
+ * @attribute       offset
+ * @attribute       limit
+ * @attribute       entries
+ * @method          createFromJson
  */
 var UserEntry = $.class(SearchEntry, {
     createFromJson: function($super) {
