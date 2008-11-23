@@ -450,28 +450,39 @@ test("test recommendation api", function() {
 
     /* get recommendation for user
      */
-    recommendations = service.recommendation.getForUser('wyt', 10, 10);
+    var recommendations = service.recommendation.getForUser('wyt', 10, 10);
     equals(recommendations.offset, 10);
     ok(recommendations.entries[9].id.match(/http:\/\/api\.douban\.com\/recommendation\/\d+/), "get recommendation id");
     ok(recommendations.entries[9].type.match(/\w+/), "get type ok");
 
-    /* get recommendation for contacts
-    recommendations2 = service.recommendation.getForContacts('iloveshutuo', 9, 9);
-    equals(recommendations2.limit, 9);
-    ok(recommendations2.entries[5].id.match(/http:\/\/api\.douban\.com\/recommendation\/\d+/), "get recommendation id");
-     */
-
     /* add recommendation
      */
-    recomm2 = service.recommendation.add({ title: 'luliban.com', url: 'http://blog.luliban.com/', comment: 'My blog' });
+    var recomm2 = service.recommendation.add({ title: 'luliban.com', url: 'http://blog.luliban.com/', comment: 'My blog' });
     console.debug(recomm2);
     equals(recomm2.title, '推荐luliban.com');
     equals(recomm2.comment, 'My blog');
 
+    /* add comment for recommendation
+     */
+    var comment = service.recommendation.addComment(recomm2, { content: '回复你个头啦' });
+    ok(comment.id.match(/http:\/\/api\.douban\.com\/recommendation\/\d+\/comment\/\d+/), "get id ok");
+    ok(comment.content, '回复你个头啦', "get content ok");
+
+    /* get comment for recommendation
+     */
+    var comments = service.recommendation.getComment(recomm2);
+    equals(comments.total, 1, "get total comments ok");
+    equals(comments.entries[0].id, comment.id, "get comment id ok");
+
+    /* delete comment for recommendation
+     */
+    var response = service.recommendation.deleteComment(comment);
+    ok(response, "comment deleted");
+
     /* delete recommendation
      */
-    var response = service.recommendation.delete(recomm2);
-    ok(response, "recommendation deleted");
+    var response2 = service.recommendation.delete(recomm2);
+    ok(response2, "recommendation deleted");
 
 });
 

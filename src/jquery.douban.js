@@ -206,10 +206,29 @@ var DoubanService = $.class({
         }
     },
 
+    /* Adapter methods of client
+     */
     login: function(accessToken) {
         return this._client.login(accessToken);
     },
 
+    getRequestToken: function() {
+        return this._client.getRequestToken();
+    },
+
+    getAuthorizationUrl: function(requestToken, callbackUrl) {
+        return this._client.getAuthorizationUrl(requestToken, callbackUrl);
+    },
+
+    getAccessToken: function(requestToken) {
+        return this._client.getAccessToken(requestToken);
+    },
+
+    isAuthenticated: function() {
+        return this._client.isAuthenticated();
+    },
+
+    /* HTTP methods */
     get: function(url, params, callback) {
         var json = null;
         var params = this.setParams(params);
@@ -313,15 +332,6 @@ var BaseService = $.class({
         if (typeof obj == 'object') return obj.id;
         else if (obj.match(/^\w+$/) && tmpl) return tmpl.replace(/\{ID\}/, obj);
         else return obj;
-    },
-
-    /* Get URL of subject
-     * returns  url
-     * @param   subject Object or String
-     */
-    lazySubject: function(subject) {
-        if (typeof subject == 'object') return subject.id;
-        else return subject;
     },
 
     /* Get new object from given object or url
@@ -589,7 +599,7 @@ var ReviewService = $.class(CommonService, {
     },
 
     getForSubject: function(subject, offset, limit) {
-        subject = this.lazySubject(subject);
+        subject = this.lazyUrl(subject);
         return this._getForObject(subject, offset, limit, ReviewForSubjectEntry, null, '/reviews');
     }
 });
@@ -678,9 +688,9 @@ var EventService = $.class(CommonService, {
  * @method      getForUser      获取用户的所有推荐
  * @method      add             发表新推荐
  * @method      delete          删除推荐
- * @method      getReply        获取推荐回复
- * @method      addReply        发表新回复
- * @method      deleteReply     删除回复
+ * @method      getComment      获取推荐回复
+ * @method      addComment      发表新回复
+ * @method      deleteComment   删除回复
  */
 var RecommendationService = $.class(CommonService, {
     init: function($super, service) {
@@ -694,16 +704,17 @@ var RecommendationService = $.class(CommonService, {
         $super(service);
     },
 
-    getReply: function(id) {
-        throw new Error("Not Implemented Yet");
+    getComment: function(recommendation, offset, limit) {
+        return this._getForObject(recommendation, offset, limit, CommentEntry, GET_RECOMMENDATION_URL, '/comments');
     },
 
-    addReply: function(id) {
-        throw new Error("Not Implemented Yet");
+    addComment: function(recommendation, data) {
+        var url = this.lazyUrl(recommendation, GET_RECOMMENDATION_URL) + '/comments';
+        return this._add(data, url, Comment);
     },
 
-    deleteReply: function(name) {
-        throw new Error("Not Implemented Yet");
+    deleteComment: function(comment) {
+        return this._delete(comment);
     }
 });
 
@@ -1210,6 +1221,24 @@ Recommendation.createXml = function(data) {
 var RecommendationEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Recommendation);
+    }
+});
+
+var Comment = $.class(DoubanObject, {
+    createFromJson: function($super) {
+        this.all = ['id', 'author', 'published', 'content'];
+        $super();
+    }
+});
+Comment.createXml = function(data) {
+    data = $.extend({ content: '' }, data || {});
+    var xml = '<entry><content>{CONTENT}</content></entry>';
+    return xml.replace(/\{CONTENT\}/, data.content);
+}
+
+var CommentEntry = $.class(AuthorEntry, {
+    createFromJson: function($super) {
+        $super(Comment);
     }
 });
 
