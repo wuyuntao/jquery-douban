@@ -757,7 +757,22 @@ var DoubanObject = $.class({
 
     /* Implemented in subclasses */
     getAttribute: function(attr) {
-        return this.getAttr(attr);
+        switch (attr) {
+            case 'id':
+                return this.getAttr('id') || this.getUrl('self');
+            case 'imageUrl':
+                return this.getUrl('image') || this.getUrl('icon');
+            case 'published':
+                return this.getPublished();
+            case 'title':
+                return this.getAttr('title');
+            case 'updated':
+                return this.getUpdated();
+            case 'url':
+                return this.getUrl();
+            default:
+                return this.getAttr(attr);
+        }
     },
 
     /* JSON feed parsers
@@ -765,18 +780,11 @@ var DoubanObject = $.class({
     // Get the attribute which is first got
     getAttr: function (attr) {
         if (!this._feed) return;
-        switch (attr) {
-            case 'url':
-                return this.getUrl();
-            case 'imageUrl':
-                return this.getUrl('image') || this.getUrl('icon');
-            default:
-                if (this._feed[attr]) return this._feed[attr]['$t'];
-                var attrs = this._feed['db:attribute'];
-                if (attrs)
-                    for (var i in attrs)
-                        if (attrs[i]['@name'] == attr) return attrs[i]['$t'];
-        }
+        if (this._feed[attr]) return this._feed[attr]['$t'];
+        var attrs = this._feed['db:attribute'];
+        if (attrs)
+            for (var i in attrs)
+                if (attrs[i]['@name'] == attr) return attrs[i]['$t'];
     },
 
     getUrl: function(attr) {
@@ -922,8 +930,6 @@ var User = $.class(DoubanObject, {
 
     getAttribute: function($super, attr) {
         switch (attr) {
-            case 'id':
-                return this.getAttr('id') || this.getAttr('uri');
             case 'userName':
                 return this.getAttr('db:uid');
             case 'screenName':
@@ -939,7 +945,7 @@ var User = $.class(DoubanObject, {
 });
 
 /* Douban user entries
- * @param           data                Well-formatted json feed
+ * @param           data            Well-formatted json feed
  * @attribute       total
  * @attribute       offset
  * @attribute       limit
@@ -954,36 +960,35 @@ var UserEntry = $.class(SearchEntry, {
 
 /* Douban note
  * @param           data            Well-formatted json feed
- * @attribute       id              用户ID，"http://api.douban.com/people/1000001"
- * @attribute       userName        用户名，"ahbei"
- * @attribute       screenName      昵称，"阿北"
- * @attribute       location        常居地，"北京"
- * @attribute       blog            网志主页，"http://ahbei.com/"
- * @attribute       intro           自我介绍，"豆瓣的临时总管..."
- * @attribute       url             豆瓣主页，"http://www.douban.com/people/ahbei/"
- * @attribute       iconUrl         头像，"http://otho.douban.com/icon/u1000001-14.jpg"
- * @method          createFromJson  由豆瓣返回的用户JSON，初始化用户数据
+ * @attribute       id              日记ID
+ * @attribute       title           日记标题
+ * @attribute       author          日记作者，User object
+ * @attribute       summary         日记摘要，如果设为全文输出，则和content相同
+ * @attribute       content         日记全文
+ * @attribute       published       日记发布时间
+ * @attribute       updated         日记最近更新时间
+ * @attribute       url             日记网志
+ * @attribute       isPublic        是否公开
+ * @attribute       isReplyEnabled  是否允许回复
+ * @method          createFromJson  由豆瓣返回的日记JSON，初始化日记数据
  */
 var Note = $.class(DoubanObject, {
-    createFromJson: function() {
-        this.id = this.getId();
-        this.title = this.getTitle();
-        this.author = this.getAuthor();
-        this.summary = this.getSummary();
-        this.content = this.getContent();
-        this.published = this.getPublished();
-        this.updated = this.getUpdated();
-        this.url = this.getUrl();
-        this.isPublic = this.getIsPublic();
-        this.isReplyEnabled = this.getIsReplyEnabled();
+    createFromJson: function($super) {
+        this.all = ['id', 'title', 'author', 'summary', 'content', 'published', 'updated', 'url', 'isPublic', 'isReplyEnabled'];
+        $super();
     },
 
-    getIsPublic: function() {
-        return this.getAttr('privacy') == 'public' ? true: false;
-    },
-
-    getIsReplyEnabled: function() {
-        return this.getAttr('can_reply') == 'yes' ? true: false;
+    getAttribute: function($super, attr) {
+        switch (attr) {
+            case 'author':
+                return this.getAuthor();
+            case 'isPublic':
+                return this.getAttr('privacy') == 'public' ? true : false;
+            case 'isReplyEnabled':
+                return this.getAttr('can_reply') == 'yes' ? true : false;
+            default:
+                return $super(attr);
+        }
     }
 });
 // Class methods
