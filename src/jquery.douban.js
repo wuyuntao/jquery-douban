@@ -171,24 +171,24 @@ $.extend({
 /* Douban service
  * @returns     null
  * @param       options Dict
- * @option      apiKey String
- * @option      apiSecret String
+ * @option      key String
+ * @option      secret String
  * @option      httpType String
  * @option      httpHandler String
  */
 var DoubanService = $.class({
     init: function(options) {
         var defaults = {
-            apiKey: '',
-            apiSecret: '',
+            key: '',
+            secret: '',
             httpType: 'jquery',
         };
         this.options = $.extend(defaults, options || {});;
-        this.api = new Token(this.options.apiKey, this.options.apiSecret);
+        this.api = new Token(this.options.key, this.options.secret);
 
         this._http = $.douban.http.factory({ type: this.options.httpType });
-        this._client = $.douban('client', { apiKey: this.api.key,
-                                            apiSecret: this.api.secret,
+        this._client = $.douban('client', { key: this.api.key,
+                                            secret: this.api.secret,
                                             type: this.options.httpType });
         var services = {
             'user': UserService,
@@ -200,6 +200,7 @@ var DoubanService = $.class({
             'collection': CollectionService,
             'miniblog': MiniblogService,
             'recommendation': RecommendationService,
+            'tag': TagService
         }
         for (var name in services) {
             this[name] = new services[name](this);
@@ -599,7 +600,6 @@ var ReviewService = $.class(CommonService, {
     },
 
     getForSubject: function(subject, offset, limit) {
-        subject = this.lazyUrl(subject);
         return this._getForObject(subject, offset, limit, ReviewForSubjectEntry, null, '/reviews');
     }
 });
@@ -723,12 +723,12 @@ var RecommendationService = $.class(CommonService, {
  * @method      getForUser         用户对书籍、电影、音乐标记的所有标签
 */
 var TagService = $.class(BaseService, {
-    getForSubject: function(id) {
-        throw new Error("Not Implemented Yet");
+    getForSubject: function(subject, offset, limit) {
+        return this._getForObject(subject, offset, limit, TagEntry, null, '/tags');
     },
 
-    getForUser: function(name) {
-        throw new Error("Not Implemented Yet");
+    getForUser: function(user, offset, limit, type) {
+        return this._getForObject(user, offset, limit, TagEntry, GET_PEOPLE_URL, '/tags', { 'cat': type });
     }
 });
 
@@ -792,6 +792,8 @@ var DoubanObject = $.class({
                 return this.getCategory();
             case 'chineseTitle':
                 return this.getChineseTitle();
+            case 'count':
+                return this._feed['@count'] || this.getAttr('db:count');
             case 'id':
                 return this.getAttr('id') || this.getUrl('self');
             case 'intro':
@@ -807,6 +809,8 @@ var DoubanObject = $.class({
             case 'location':
             case 'status':
                 return this.getAttr('db:' + attr);
+            case 'name':
+                return this._feed['@name'] || this.getAttr('title');
             case 'offset':
                 return parseInt(this.getAttr("opensearch:startIndex") || "1") - 1;
             case 'published':
@@ -911,7 +915,7 @@ var DoubanObject = $.class({
         if (!this._feed || !this._feed['db:tag']) return [];
         var tags = [], entries = this._feed['db:tag'];
         for (var i = 0, len = entries.length; i < len; i++)
-            tags.push(new Tag(entries[i]['@name'], entries[i]['@count']));
+            tags.push(new Tag(entries[i]));
         return tags;
     }
 });
@@ -1220,17 +1224,24 @@ var CommentEntry = $.class(AuthorEntry, {
     }
 });
 
-/* A simple tag object */
-function Tag(name, count) {
-    this.name = name;
-    this.count = count;
-}
+var Tag = $.class(DoubanObject, {
+    createFromJson: function($super) {
+        this.all = ['id', 'name', 'count'];
+        $super();
+    }
+});
+
+var TagEntry = $.class(DoubanObjectEntry, {
+    createFromJson: function($super) {
+        $super(Tag);
+    }
+});
 // }}}
 
 /* {{{ OAuth client
  * @usage
- * var apiToken = { apiKey: 'blah', apiSecret: 'blah' };
- * var client = $.douban('client', { apiKey: 'blah', apiSecret: 'blah' });
+ * var apiToken = { key: 'blah', secret: 'blah' };
+ * var client = $.douban('client', { key: 'blah', secret: 'blah' });
  * var requestToken = client.getRequestToken();
  * var url = client.getAuthorizationUrl(requestToken);
  * var accessToken = client.getAccessToken(requestToken);
@@ -1239,12 +1250,12 @@ function Tag(name, count) {
 function OAuthClient(options) {
     /* Default options */
     var defaults = {
-        apiKey: '',
-        apiSecret: '',
+        key: '',
+        secret: '',
         httpType: 'jquery',
     };
     this.options = $.extend(defaults, options || {});;
-    this.api = new Token(this.options.apiKey, this.options.apiSecret);
+    this.api = new Token(this.options.key, this.options.secret);
     this._http = $.douban.http.factory({ type: this.options.httpType });
 
     this.requestToken = new Token();
@@ -1408,7 +1419,8 @@ var factoryDict = {
     'review': Review,
     'collection': Collection,
     'miniblog': Miniblog,
-    'recommendation': Recommendation
+    'recommendation': Recommendation,
+    'tag': Tag
 };
 
 /* Factory method of jQuery Douban
@@ -1416,7 +1428,7 @@ var factoryDict = {
  * @param       factory, String
  * @param       options, Object
  * @usage
- * var service = $.douban({ apiKey: 'blahblah', apiSecret: 'blahblah' });
+ * var service = $.douban({ key: 'blahblah', secret: 'blahblah' });
  * service.login(accessKey, accessSecret);
  * if (service.isAuthenticated()) {
  *     var id = service.miniblog.add("发送一条广播");
@@ -1528,10 +1540,9 @@ $.douban.http.unregister = function(name) {
     $.douban.http.handlers[name] = undefined;
 };
 
-/* Built-in HTTP request handlers: 'jquery', 'greasemonkey' and 'gears'
+/* Built-in HTTP request handlers: 'jquery', 'greasemonkey', 'gears'
  */
 function jqueryHandler(options) {
-    // options = $.extend($.douban.http.settings, options);
     return $.ajax(options);
 }
 jqueryHandler.name = 'jquery';

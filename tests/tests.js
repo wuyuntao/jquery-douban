@@ -1,5 +1,5 @@
 function createService() {
-    var service = $.douban('service', { apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban('service', { key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
     return service;
 }
@@ -10,19 +10,19 @@ test("test misc", function() {
 module("Basic Testcases");
 
 test("test factory method", function() {
-    var service = $.douban({ apiKey: '1', apiSecret: '2' });
+    var service = $.douban({ key: '1', secret: '2' });
     ok(service, "initialize douban service ok");
     equals(service.api.key, '1', "api key expected to be 1");
     equals(service.api.secret, '2', "api secret expected to be 2");
     equals(service._http.name, 'jquery', "http type expected to be \"jquery\"");
 
-    var service2 = $.douban({ apiKey: '3', apiSecret: '4', httpType: 'gears' });
+    var service2 = $.douban({ key: '3', secret: '4', httpType: 'gears' });
     ok(service2, "initialize douban service ok");
     equals(service2.api.key, '3', "api key expected to be 3");
     equals(service2.api.secret, '4', "api secret expected to be 4");
     equals(service2.options.httpType, 'gears', "http type expected to be \"gears\"");
 
-    var client = $.douban('client', { apiKey: '5', apiSecret: '6' });
+    var client = $.douban('client', { key: '5', secret: '6' });
     ok(client, "initialize douban client ok");
     equals(client.api.key, '5', "api key expected to be 5");
     equals(client.api.secret, '6', "api secret expected to be 6");
@@ -66,7 +66,7 @@ test("test jquery http methods", function() {
 module("OAuth Client Testcases");
 
 test("test factory method", function() {
-    var client = $.douban('client', { apiKey: '1', apiSecret: '2' });
+    var client = $.douban('client', { key: '1', secret: '2' });
     equals(client.api.key, '1', "api key expected to be 1");
     equals(client.api.secret, '2', "api secret expected to be 2");
     equals(client._http.name, 'jquery', "http type expected to be \"jquery\"");
@@ -75,14 +75,14 @@ test("test factory method", function() {
 test("test authorization step 1: get request token", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var client = $.douban('client', { apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var client = $.douban('client', { key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     var requestToken = client.getRequestToken();
     equals(requestToken.key.length, 32, "check the length of request key ( \"" + requestToken.key + "\" )");
     equals(requestToken.secret.length, 16, "check the length of request secret ( \"" + requestToken.secret + "\" )");
 });
 
 test("test authorization step 2: get authorization url", function() {
-    var client = $.douban('client', { apiKey: '1', apiSecret: '2' });
+    var client = $.douban('client', { key: '1', secret: '2' });
     var callback = 'mycallback';
     // Set request token manually
     client.requestToken = { key: '3', secret: '4' };
@@ -97,7 +97,7 @@ test("test authorization step 2: get authorization url", function() {
 test("test authorization step 3: get access token ", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var client = $.douban('client', { apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var client = $.douban('client', { key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     client.requestToken = { key: 'ad6a4a13fb9b1ce7083ede3bf2d156b5',
                             secret: '6fb16ea234a309fd' };
     var accessToken = client.getAccessToken();
@@ -108,7 +108,7 @@ test("test authorization step 3: get access token ", function() {
 });
 
 test("test programmatic login", function() {
-    var client = $.douban('client', { apiKey: '1', apiSecret: '2' });
+    var client = $.douban('client', { key: '1', secret: '2' });
     var accessToken = { key: '6fcf833aff0589883f6e89b0fd109c98', secret: 'b692646c5d1929ab' };
     var login = client.login(accessToken);
     ok(login, "login successful");
@@ -116,7 +116,7 @@ test("test programmatic login", function() {
 });
 
 test("test auth headers", function() {
-    var client = $.douban('client', { apiKey: '1', apiSecret: '2' });
+    var client = $.douban('client', { key: '1', secret: '2' });
     var headers = client.getAuthHeaders('http://api.douban.com/people/1000001', 'GET', { 'alt': 'json' });
     ok(headers, "get headers ( \"" + headers + "\" )");
 });
@@ -124,7 +124,7 @@ test("test auth headers", function() {
 module("Douban Service Testcases");
 
 test("test factory method", function() {
-    var service = $.douban('service', { apiKey: '1', apiSecret: '2' });
+    var service = $.douban('service', { key: '1', secret: '2' });
     equals(service.api.key, '1', "api key expected to be 1");
     equals(service.api.secret, '2', "api secret expected to be 2");
     equals(service._http.name, 'jquery', "http type expected to be \"jquery\"");
@@ -134,7 +134,7 @@ test("test factory method", function() {
 test("test client login", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban({ key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     var accessToken = { key: '6fcf833aff0583884f6e89b0fd109c98', secret: 'b623646c5d1929ab' };
     var login = service.login(accessToken);
     ok(login, "login successful");
@@ -143,7 +143,7 @@ test("test client login", function() {
 test("test user api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban({ key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
 
     // get user profile
@@ -242,7 +242,7 @@ test("test note api", function() {
 test("test book api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban({ key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
 
     var book = service.book.get('1493316');
@@ -264,7 +264,7 @@ test("test book api", function() {
 test("test movie api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban({ key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
 
     var movie = service.movie.get('1789283');
@@ -287,7 +287,7 @@ test("test movie api", function() {
 test("test music api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
-    var service = $.douban({ apiKey: '0107c5c3c9d4ecc40317514b5d7ec64c', apiSecret: '7feaf4ec7b6989f8' });
+    var service = $.douban({ key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
 
     var music = service.music.get('http://api.douban.com/music/subject/3040677');
@@ -458,7 +458,6 @@ test("test recommendation api", function() {
     /* add recommendation
      */
     var recomm2 = service.recommendation.add({ title: 'luliban.com', url: 'http://blog.luliban.com/', comment: 'My blog' });
-    console.debug(recomm2);
     equals(recomm2.title, '推荐luliban.com');
     equals(recomm2.comment, 'My blog');
 
@@ -483,7 +482,24 @@ test("test recommendation api", function() {
      */
     var response2 = service.recommendation.delete(recomm2);
     ok(response2, "recommendation deleted");
+});
 
+test("test tag api", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+
+    /* get for subject
+     */
+    tags = service.tag.getForSubject('http://api.douban.com/movie/subject/3158990', 5, 3);
+    equals(tags.entries.length, 3);
+    equals(tags.entries[0].id, 'http://api.douban.com/movie/tag/范逸臣');
+    equals(tags.entries[0].name, '范逸臣');
+    equals(tags.entries[0].count, 684);
+
+    /* get for user
+     */
+    tags2 = service.tag.getForUser('wyt', 2, 1, 'book');
+    equals(tags2.entries.length, 1);
 });
 
 module("Douban Object Testcases");
