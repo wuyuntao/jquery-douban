@@ -140,7 +140,6 @@ test("test client login", function() {
     ok(login, "login successful");
 });
 
-/*
 test("test user api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
@@ -153,7 +152,7 @@ test("test user api", function() {
     equals(ahbei.userName, "ahbei", "get user name ok");
     equals(ahbei.screenName, "阿北", "get screen name ok");
     equals(ahbei.location, "北京", "get location ok");
-    equals(ahbei.homepage, "http://ahbei.com/", "get blog ok");
+    equals(ahbei.blog, "http://ahbei.com/", "get blog ok");
     equals(ahbei.intro, "豆瓣的临时总管。现在多数时间在忙忙碌碌地为豆瓣添砖加瓦。坐在马桶上看书，算是一天中最放松的时间。\r\n\r\n我不但喜欢读书、旅行和音乐电影，还曾经是一个乐此不疲的实践者，有一墙碟、两墙书、三大洲的车船票为记。现在自己游荡差不多够了，开始懂得分享和回馈。豆瓣是一个开始，希望它对你同样有用。\r\n\r\n(我的朋友邀请原则：一般是线下朋友，见过不只一次面。谢谢“关注” )。\r\n", "get introduction ok");
     equals(ahbei.url, "http://www.douban.com/people/ahbei/", "get user url ok");
     equals(ahbei.imageUrl, "http://otho.douban.com/icon/u1000001-14.jpg", "get user icon url ok");
@@ -259,7 +258,6 @@ test("test book api", function() {
     equals(result.entries[0].id, "http://api.douban.com/book/subject/1909003", "get book id ok");
     equals(result.entries[1].id, "http://api.douban.com/book/subject/1232101", "get book id ok");
 });
-*/
 
 /* Because all sujects are inherited from same class,
  * it's ok to test only one of them
@@ -303,7 +301,6 @@ test("test music api", function() {
     equals(result.limit, 3, "search music max results ok");
     equals(result.entries.length, 3, "search music ok");
 });
- */
 
 /* Only ``getForSubject`` should be tested
  */
@@ -327,12 +324,12 @@ test("test review api", function() {
      */
 
     /* get review for subject
+    */
     var reviews2 = service.review.getForSubject('http://api.douban.com/movie/subject/3199462');
     equals(reviews2.total, 6);
     equals(reviews2.offset, 0);
     equals(reviews2.limit, 50);
     equals(reviews2.entries.length, 6);
-    */
 
     /* add
     var review2 = service.review.add({ subject: 'http://api.douban.com/music/subject/3288632', title: "测试", content: "评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。评论的内容不会太短了吧，可恶的测试啊。果然就是太短了，可恶的测试啊。", rating: 5 });
@@ -375,6 +372,7 @@ test("test collection api", function() {
      */
 
     /* get collections of user by user id
+     */
     var collections = service.collection.getForUser('NullPointer', 4, 2);
     ok(collections.total >= 908, "get total collections ok"); 
     equals(collections.offset, 4, "get collections of np start index ok");
@@ -384,7 +382,6 @@ test("test collection api", function() {
     // Not author but owner or user
     var user = collections.author;
     equals(user.screenName, "NullPointer", "get author of collections ok");
-     */
 
     /* get book collection
     var collections2 = service.collection.getForUser('wyt', 4, 2, 'book');
@@ -426,10 +423,10 @@ test("test miniblog api", function() {
      */
 
     /* get miniblog for contacts
+     */
     miniblogs2 = service.miniblog.getForContacts('iloveshutuo', 9, 9);
     equals(miniblogs2.limit, 9);
     ok(miniblogs2.entries[5].id.match(/http:\/\/api\.douban\.com\/miniblog\/\d+/), "get miniblog id");
-     */
 
     /* add miniblog
     miniblog = service.miniblog.add({ content: '真是的，这是什么啊' });
@@ -451,7 +448,7 @@ test("test user object", function() {
     equals(user.userName, "whoami", "get user name ok");
     equals(user.screenName, "我是谁", "get screen name ok");
     equals(user.location, undefined, "get user location ok");
-    equals(user.homepage, undefined, "get user blog ok");
+    equals(user.blog, undefined, "get user blog ok");
     equals(user.intro, '', "get user introduction ok");
     equals(user.url, "http://www.douban.com/people/whoami/", "get user homepage ok");
     equals(user.imageUrl, "http://otho.douban.com/icon/u2139418-1.jpg", "get user icon url ok");
@@ -460,7 +457,7 @@ test("test user object", function() {
     equals(user2.id, undefined);
     equals(user2.userName, undefined);
     equals(user2.location, undefined);
-    equals(user2.homepage, undefined);
+    equals(user2.blog, undefined);
     equals(user2.intro, undefined);
     equals(user2.url, undefined);
     equals(user2.imageUrl, undefined);

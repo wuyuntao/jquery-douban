@@ -740,7 +740,7 @@ var DoubanObject = $.class({
     createFromJson: function() {
         for (var i = 0, len = this.all.length; i < len; i++) {
             var name = this.all[i];
-            this[name] = this.getAttribute(name);
+            this[name] = this._getAttribute(name);
         }
     },
 
@@ -757,33 +757,62 @@ var DoubanObject = $.class({
         this.createFromJson();
     },
 
-    /* Implemented in subclasses */
-    getAttribute: function(attr) {
+    _getAttribute: function(attr) {
         switch (attr) {
+            case 'artists':
+                return this.getAttrs('singer');
             case 'aka':
-                return this.getAttrs('aka');
+            case 'cast':
+            case 'country':
+            case 'language':
+                return this.getAttrs(attr);
             case 'author':
+            case 'owner':
                 return this.getAuthor();
+            case 'authors':
+            case 'directors':
+            case 'translators':
+            case 'writers':
+                return this.getAttrs(attr.slice(0, -1));
+            case 'authorIntro':
+                return this.getAttr('author-intro');
+            case 'blog':
+                return this.getUrl('homepage');
+            case 'category':
+                return this.getCategory();
+            case 'chineseTitle':
+                return this.getChineseTitle();
             case 'id':
                 return this.getAttr('id') || this.getUrl('self');
+            case 'intro':
+                return this.getAttr('content');
             case 'imageUrl':
                 return this.getUrl('image') || this.getUrl('icon');
+            case 'isPublic':
+                return this.getAttr('privacy') == 'public' ? true : false;
+            case 'isReplyEnabled':
+                return this.getAttr('can_reply') == 'yes' ? true : false;
+            case 'location':
+                return this.getAttr('db:location');
             case 'published':
-                return this.getTime('published');
+            case 'updated':
+                return this.getTime(attr);
             case 'rating':
                 return this.getRating();
             case 'releaseDate':
                 return this.getAttr('pubdate');
+            case 'screenName':
+                return this.getAttr('title') || this.getAttr('name');
+            case 'status':
+                return this.getAttr('db:status');
             case 'subject':
                 return this.getSubject();
             case 'tags':
                 return this.getTags();
-            case 'title':
-                return this.getAttr('title');
-            case 'updated':
-                return this.getTime('updated');
             case 'url':
                 return this.getUrl();
+            case 'userName':
+                return this.getAttr('db:uid');
             case 'votes':
                 return this.getVotes();
             default:
@@ -823,46 +852,31 @@ var DoubanObject = $.class({
             if (links[i]['@rel'] == attr) return links[i]['@href'];
     },
 
-    getId: function() {
-        return this.getAttr('id') || this.getUrl('self');
+    getCategory: function() {
+        if (!this._feed || !this._feed['category']) return;
+        return this._feed['category'][0]['@term'].match(/\.(\w+)$/)[1];
     },
 
-    getTitle: function() {
-        return this.getAttr('title');
+    getChineseTitle: function() {
+        if (!this._feed || !this._feed['db:attribute']) return;
+        var attrs = this._feed['db:attribute'];
+        for (var i = 0, len = attrs.length; i < len; i++)
+            if (attrs[i]['@name'] == 'aka' && attrs[i]['@lang'] == 'zh_CN')
+                return attrs[i]['$t'];
     },
 
     getAuthor: function() {
         if (this._feed && this._feed.author) return new User(this._feed.author);
     },
 
-    getSummary: function() {
-        return this.getAttr('summary');
-    },
-
-    getContent: function() {
-        return this.getAttr('content');
-    },
-
     getSubject: function() {
         if (!this._feed || !this._feed['db:subject']) return;
-        return Subject.factory(this._feed['db:subject']);
-    },
-
-    getIconUrl: function() {
-        return this.getUrl('icon');
+        return DoubanObject.subjectFactory(this._feed['db:subject']);
     },
 
     getTime: function(attr) {
         var time = this.getAttr(attr);
         return time ? $.parseDate(time) : undefined;
-    },
-
-    getPublished: function() {
-        return this.getTime('published');
-    },
-
-    getUpdated: function() {
-        return this.getTime('updated');
     },
 
     getRating: function() {
@@ -884,6 +898,19 @@ var DoubanObject = $.class({
         return tags;
     }
 });
+// Class method
+DoubanObject.subjectFactory = function(json) {
+    if (typeof json == 'undefined') return json;
+    var category = json['category']['@term'];
+    if (category.match(/book$/)) {
+        return new Book(json);
+    } else if (category.match(/movie$/)) {
+        return new Movie(json);
+    } else if (category.match(/music$/)) {
+        return new Music(json);
+    }
+};
+
 
 var DoubanObjectEntry = $.class(DoubanObject, {
     init: function(feed) {
@@ -922,7 +949,7 @@ var DoubanObjectEntry = $.class(DoubanObject, {
 
 var AuthorEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
-        this.title = this.getTitle();
+        this.title = this.getAttr('title');
         this.author = this.getAuthor();
         $super(doubanObject);
     }
@@ -930,14 +957,15 @@ var AuthorEntry = $.class(DoubanObjectEntry, {
 
 var SubjectEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
-        this.title = this.getTitle();
+        this.title = this.getAttr('title');
         $super(doubanObject);
     }
 });
 
 var SearchEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
-        this.query = this.getTitle().replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
+        this.title = this.getAttr('title');
+        this.query = this.getAttr('title').replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
         $super(doubanObject);
     }
 });
@@ -948,7 +976,7 @@ var SearchEntry = $.class(DoubanObjectEntry, {
  * @attribute       userName        用户名，"ahbei"
  * @attribute       screenName      昵称，"阿北"
  * @attribute       location        常居地，"北京"
- * @attribute       homepage        网志主页，"http://ahbei.com/"
+ * @attribute       blog            网志主页，"http://ahbei.com/"
  * @attribute       intro           自我介绍，"豆瓣的临时总管..."
  * @attribute       url             豆瓣主页，"http://www.douban.com/people/ahbei/"
  * @attribute       iamgeUrl        头像，"http://otho.douban.com/icon/u1000001-14.jpg"
@@ -956,24 +984,9 @@ var SearchEntry = $.class(DoubanObjectEntry, {
  */
 var User = $.class(DoubanObject, {
     createFromJson: function($super) {
-        this.all = ['id', 'userName', 'screenName', 'location', 'homepage', 'intro', 'url', 'imageUrl'];
+        this.all = ['id', 'userName', 'screenName', 'location', 'blog', 'intro', 'url', 'imageUrl'];
         $super();
     },
-
-    getAttribute: function($super, attr) {
-        switch (attr) {
-            case 'userName':
-                return this.getAttr('db:uid');
-            case 'screenName':
-                return this.getAttr('title') || this.getAttr('name');
-            case 'location':
-                return this.getAttr('db:location');
-            case 'intro':
-                return this.getAttr('content');
-            default:
-                return $super(attr);
-        }
-    }
 });
 
 /* Douban user entries
@@ -1008,19 +1021,6 @@ var Note = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'author', 'summary', 'content', 'published', 'updated', 'url', 'isPublic', 'isReplyEnabled'];
         $super();
-    },
-
-    getAttribute: function($super, attr) {
-        switch (attr) {
-            case 'author':
-                return this.getAuthor();
-            case 'isPublic':
-                return this.getAttr('privacy') == 'public' ? true : false;
-            case 'isReplyEnabled':
-                return this.getAttr('can_reply') == 'yes' ? true : false;
-            default:
-                return $super(attr);
-        }
     }
 });
 // Class methods
@@ -1056,54 +1056,10 @@ var NoteEntry = $.class(AuthorEntry, {
     }
 });
 
-var Subject = $.class(DoubanObject, {
-    getIconUrl: function() {
-        return this.getUrl('image');
-    },
-
-    getAka: function() {
-        return this.getAttrs('aka');
-    },
-
-    getReleaseDate: function() {
-        return this.getAttr('pubdate');
-    },
-
-    getPublisher: function() {
-        return this.getAttr('publisher');
-    },
-
-});
-// Class method
-Subject.factory = function(json) {
-    if (typeof json == 'undefined') return json;
-    var category = json['category']['@term'];
-    if (category.match(/book$/)) {
-        return new Book(json);
-    } else if (category.match(/movie$/)) {
-        return new Movie(json);
-    } else if (category.match(/music$/)) {
-        return new Music(json);
-    }
-};
-
 var Book = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'aka', 'subtitle', 'authors', 'translators', 'isbn10', 'isbn13', 'releaseDate', 'published', 'publisher', 'price', 'pages', 'binding', 'authorIntro', 'summary', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
         $super();
-    },
-
-    getAttribute: function($super, attr) {
-        switch (attr) {
-            case 'authors':
-                return this.getAttrs('author');
-            case 'authorIntro':
-                return this.getAttr('author-intro');
-            case 'translators':
-                return this.getAttrs('translator');
-            default:
-                return $super(attr);
-        }
     }
 });
 
@@ -1117,33 +1073,6 @@ var Movie = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'chineseTitle', 'aka', 'directors', 'writers', 'cast', 'imdb', 'releaseDate', 'episode', 'language', 'country', 'summary', 'url', 'imageUrl', 'website', 'tags', 'rating', 'votes'];
         $super();
-    },
-
-    getAttribute: function($super, attr) {
-        switch (attr) {
-            case 'chineseTitle':
-                return this.getChineseTitle();
-            case 'directors':
-                return this.getAttrs('director');
-            case 'writers':
-                return this.getAttrs('writer');
-            case 'cast':
-                return this.getAttrs('cast')
-            case 'language':
-                return this.getAttrs('language');
-            case 'country':
-                return this.getAttrs('country');
-            default:
-                return $super(attr);
-        }
-    },
-
-    getChineseTitle: function() {
-        if (!this._feed || !this._feed['db:attribute']) return;
-        var attrs = this._feed['db:attribute'];
-        for (var i = 0, len = attrs.length; i < len; i++)
-            if (attrs[i]['@name'] == 'aka' && attrs[i]['@lang'] == 'zh_CN')
-                return attrs[i]['$t'];
     }
 });
 
@@ -1153,19 +1082,10 @@ var MovieEntry = $.class(SearchEntry, {
     }
 });
 
-var Music = $.class(Subject, {
+var Music = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'aka', 'artists', 'ean', 'releaseDate', 'publisher', 'media', 'discs', 'version', 'summary', 'tracks', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
         $super();
-    },
-
-    getAttribute: function($super, attr) {
-        switch (attr) {
-            case 'artists':
-                return this.getAttrs('singer');
-            default:
-                return $super(attr);
-        }
     }
 });
 
@@ -1179,15 +1099,6 @@ var Review = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'author', 'subject', 'summary', 'content', 'published', 'updated', 'url', 'rating'];
         $super();
-    },
-
-    getAttribute: function($super, attr) {
-        switch (attr) {
-            case 'subject':
-                return this.getSubject();
-            default:
-                return $super(attr);
-        }
     }
 });
 // Class methods
@@ -1223,20 +1134,9 @@ var ReviewForSubjectEntry = $.class(SubjectEntry, {
 });
 
 var Collection = $.class(DoubanObject, {
-    createFromJson: function() {
-        this.id = this.getId();
-        this.title = this.getTitle();
-        this.owner = this.getAuthor();
-        this.content = this.getSummary();
-        this.updated = this.getUpdated();
-        this.subject = this.getSubject();
-        this.status = this.getStatus();
-        this.tags = this.getTags();
-        this.rating = this.getRating();
-    },
-
-    getStatus: function() {
-        return this.getAttr('db:status');
+    createFromJson: function($super) {
+        this.all = ['id', 'title', 'owner', 'content', 'updated', 'subject', 'status', 'tags', 'rating'];
+        $super();
     }
 });
 // Class methods
@@ -1274,18 +1174,9 @@ var CollectionEntry = $.class(AuthorEntry, {
 });
 
 var Miniblog = $.class(DoubanObject, {
-    createFromJson: function() {
-        this.id = this.getId();
-        this.title = this.getTitle()
-        this.content = this.getContent();
-        this.published = this.getPublished();
-        this.category = this.getCategory();
-        this.iconUrl = this.getIconUrl();
-    },
-
-    getCategory: function() {
-        if (!this._feed || !this._feed['category']) return;
-        return this._feed['category'][0]['@term'].match(/\.(\w+)$/)[1];
+    createFromJson: function($super) {
+        this.all = ['id', 'title', 'content', 'published', 'category', 'imageUrl'];
+        $super();
     }
 });
 Miniblog.createXml = function(data) {
