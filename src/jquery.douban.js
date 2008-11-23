@@ -750,6 +750,8 @@ var DoubanObject = $.class({
         return this._feed;
     },
 
+    /* Update the feed and object
+     */
     updateFeed: function(feed) {
         this._feed = feed;
         this.createFromJson();
@@ -758,12 +760,14 @@ var DoubanObject = $.class({
     /* Implemented in subclasses */
     getAttribute: function(attr) {
         switch (attr) {
+            case 'aka':
+                return this.getAttrs('aka');
             case 'id':
                 return this.getAttr('id') || this.getUrl('self');
             case 'imageUrl':
                 return this.getUrl('image') || this.getUrl('icon');
             case 'published':
-                return this.getPublished();
+                return this.getTime('published');
             case 'rating':
                 return this.getRating();
             case 'releaseDate':
@@ -773,7 +777,7 @@ var DoubanObject = $.class({
             case 'title':
                 return this.getAttr('title');
             case 'updated':
-                return this.getUpdated();
+                return this.getTime('updated');
             case 'url':
                 return this.getUrl();
             case 'votes':
@@ -785,7 +789,7 @@ var DoubanObject = $.class({
 
     /* JSON feed parsers
      */
-    // Get the attribute which is first got
+    // Get the attribute
     getAttr: function (attr) {
         if (!this._feed) return;
         if (this._feed[attr]) return this._feed[attr]['$t'];
@@ -795,6 +799,17 @@ var DoubanObject = $.class({
                 if (attrs[i]['@name'] == attr) return attrs[i]['$t'];
     },
 
+    // Get a list of attributes
+    getAttrs: function(name) {
+        if (!this._feed || !this._feed['db:attribute']) return;
+        var attrs = [], feedAttributes = this._feed['db:attribute'];
+        for (var i = 0, len = feedAttributes.length; i < len; i++)
+            if (feedAttributes[i]['@name'] == name)
+                attrs.push(feedAttributes[i]['$t']);
+        return attrs;
+    },
+
+    // Get the url
     getUrl: function(attr) {
         if (!this._feed) return;
         // default ``attr`` is 'alternate'
@@ -850,6 +865,11 @@ var DoubanObject = $.class({
         if (!this._feed || !this._feed['gd:rating']) return;
         return parseFloat(this._feed['gd:rating']['@average'] || 
                           this._feed['gd:rating']['@value']);
+    },
+
+    getVotes: function() {
+        if (!this._feed || !this._feed['gd:rating']) return;
+        return this._feed['gd:rating']['@numRaters'];
     },
 
     getTags: function() {
@@ -1033,16 +1053,6 @@ var NoteEntry = $.class(AuthorEntry, {
 });
 
 var Subject = $.class(DoubanObject, {
-    // Returns a list of attributes
-    getAttrs: function(name) {
-        if (!this._feed || !this._feed['db:attribute']) return;
-        var attrs = [], feedAttributes = this._feed['db:attribute'];
-        for (var i = 0, len = feedAttributes.length; i < len; i++)
-            if (feedAttributes[i]['@name'] == name)
-                attrs.push(feedAttributes[i]['$t']);
-        return attrs;
-    },
-
     getIconUrl: function() {
         return this.getUrl('image');
     },
@@ -1059,10 +1069,6 @@ var Subject = $.class(DoubanObject, {
         return this.getAttr('publisher');
     },
 
-    getVotes: function() {
-        if (!this._feed || !this._feed['gd:rating']) return;
-        return this._feed['gd:rating']['@numRaters'];
-    }
 });
 // Class method
 Subject.factory = function(json) {
@@ -1077,7 +1083,7 @@ Subject.factory = function(json) {
     }
 };
 
-var Book = $.class(Subject, {
+var Book = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'aka', 'subtitle', 'authors', 'translators', 'isbn10', 'isbn13', 'releaseDate', 'published', 'publisher', 'price', 'pages', 'binding', 'authorIntro', 'summary', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
         $super();
@@ -1085,33 +1091,15 @@ var Book = $.class(Subject, {
 
     getAttribute: function($super, attr) {
         switch (attr) {
-            case 'aka':
-                return this.getAttrs('aka');
             case 'authors':
                 return this.getAttrs('author');
-            case 'translators':
-                return this.getAttrs('translator');
             case 'authorIntro':
                 return this.getAttr('author-intro');
+            case 'translators':
+                return this.getAttrs('translator');
             default:
                 return $super(attr);
         }
-    },
-    
-    getPages: function() {
-        return this.getAttr('pages');
-    },
-
-    getPrice: function() {
-        return this.getAttr('price');
-    },
-
-    getBinding: function() {
-        return this.getAttr('binding');
-    },
-
-    getAuthorIntro: function() {
-        return this.getAttr('author-intro');
     }
 });
 
@@ -1121,28 +1109,29 @@ var BookEntry = $.class(SearchEntry, {
     }
 });
 
-var Movie = $.class(Subject, {
+var Movie = $.class(DoubanObject, {
     createFromJson: function($super) {
-        this.id = this.getId();
-        this.title = this.getTitle();
-        this.chineseTitle = this.getChineseTitle();
-        this.aka = this.getAka();
-        this.directors = this.getDirectors();
-        this.writers = this.getWriters();
-        this.cast = this.getCast()
-        this.imdb = this.getImdb();
-        this.releaseDate = this.getReleaseDate();
-        this.episode = this.getEpisode();
-        this.language = this.getLanguage();
-        this.country = this.getCountry();
-        this.summary = this.getSummary();
-        this.url = this.getUrl();
-        this.iconUrl = this.getIconUrl();
-        this.website = this.getWebsite();
-        this.tags = this.getTags();
-        this.rating = this.getRating();
-        this.votes = this.getVotes();
+        this.all = ['id', 'title', 'chineseTitle', 'aka', 'directors', 'writers', 'cast', 'imdb', 'releaseDate', 'episode', 'language', 'country', 'summary', 'url', 'imageUrl', 'website', 'tags', 'rating', 'votes'];
         $super();
+    },
+
+    getAttribute: function($super, attr) {
+        switch (attr) {
+            case 'chineseTitle':
+                return this.getChineseTitle();
+            case 'directors':
+                return this.getAttrs('director');
+            case 'writers':
+                return this.getAttrs('writer');
+            case 'cast':
+                return this.getAttrs('cast')
+            case 'language':
+                return this.getAttrs('language');
+            case 'country':
+                return this.getAttrs('country');
+            default:
+                return $super(attr);
+        }
     },
 
     getChineseTitle: function() {
@@ -1151,38 +1140,6 @@ var Movie = $.class(Subject, {
         for (var i = 0, len = attrs.length; i < len; i++)
             if (attrs[i]['@name'] == 'aka' && attrs[i]['@lang'] == 'zh_CN')
                 return attrs[i]['$t'];
-    },
-
-    getDirectors: function() {
-        return this.getAttrs('director');
-    },
-
-    getWriters: function() {
-        return this.getAttrs('writer');
-    },
-
-    getCast: function() {
-        return this.getAttrs('cast');
-    },
-
-    getEpisode: function() {
-        return this.getAttr('episode');
-    },
-
-    getImdb: function() {
-        return this.getAttr('imdb');
-    },
-
-    getLanguage: function() {
-        return this.getAttrs('language');
-    },
-
-    getCountry: function() {
-        return this.getAttrs('country');
-    },
-
-    getWebsite: function() {
-        return this.getAttr('website');
     }
 });
 
