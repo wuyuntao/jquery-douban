@@ -762,6 +762,8 @@ var DoubanObject = $.class({
         switch (attr) {
             case 'aka':
                 return this.getAttrs('aka');
+            case 'author':
+                return this.getAuthor();
             case 'id':
                 return this.getAttr('id') || this.getUrl('self');
             case 'imageUrl':
@@ -772,6 +774,8 @@ var DoubanObject = $.class({
                 return this.getRating();
             case 'releaseDate':
                 return this.getAttr('pubdate');
+            case 'subject':
+                return this.getSubject();
             case 'tags':
                 return this.getTags();
             case 'title':
@@ -1172,17 +1176,18 @@ var MusicEntry = $.class(SearchEntry, {
 });
 
 var Review = $.class(DoubanObject, {
-    createFromJson: function() {
-        this.id = this.getId()
-        this.title = this.getTitle();
-        this.author = this.getAuthor();
-        this.subject = this.getSubject();
-        this.summary = this.getSummary();
-        this.content = this.getContent();
-        this.published = this.getPublished();
-        this.updated = this.getUpdated();
-        this.url = this.getUrl();
-        this.rating = this.getRating();
+    createFromJson: function($super) {
+        this.all = ['id', 'title', 'author', 'subject', 'summary', 'content', 'published', 'updated', 'url', 'rating'];
+        $super();
+    },
+
+    getAttribute: function($super, attr) {
+        switch (attr) {
+            case 'subject':
+                return this.getSubject();
+            default:
+                return $super(attr);
+        }
     }
 });
 // Class methods
