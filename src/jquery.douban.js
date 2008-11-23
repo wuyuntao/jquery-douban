@@ -1151,48 +1151,17 @@ var MovieEntry = $.class(SearchEntry, {
 
 var Music = $.class(Subject, {
     createFromJson: function($super) {
-        this.id = this.getId();
-        this.title = this.getTitle();
-        this.aka = this.getAka();
-        this.artists = this.getArtists();
-        this.ean = this.getEan();
-        this.releaseDate = this.getReleaseDate();
-        this.publisher = this.getPublisher();
-        this.media = this.getMedia();
-        this.discs = this.getDiscs();
-        this.version = this.getVersion();
-        this.summary = this.getSummary();
-        this.tracks = this.getTracks();
-        this.url = this.getUrl();
-        this.iconUrl = this.getIconUrl();
-        this.tags = this.getTags();
-        this.rating = this.getRating();
-        this.votes = this.getVotes();
+        this.all = ['id', 'title', 'aka', 'artists', 'ean', 'releaseDate', 'publisher', 'media', 'discs', 'version', 'summary', 'tracks', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
         $super();
     },
 
-    getArtists: function() {
-        return this.getAttrs('singer');
-    },
-
-    getEan: function() {
-        return this.getAttr('ean');
-    },
-
-    getTracks: function() {
-        return this.getAttr('track');
-    },
-
-    getMedia: function() {
-        return this.getAttr('media');
-    },
-
-    getDiscs: function() {
-        return this.getAttr('discs');
-    },
-
-    getVersion: function() {
-        return this.getAttr('version');
+    getAttribute: function($super, attr) {
+        switch (attr) {
+            case 'artists':
+                return this.getAttrs('singer');
+            default:
+                return $super(attr);
+        }
     }
 });
 
