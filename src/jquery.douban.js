@@ -47,6 +47,10 @@ const ADD_COLLECTION_URL = COLLECTION_URL;
 const MINIBLOG_URL = API_HOST + '/miniblog';
 const GET_MINIBLOG_URL = MINIBLOG_URL + '/{ID}';
 const ADD_MINIBLOG_URL = MINIBLOG_URL + '/saying';
+
+const RECOMMENDATION_URL = API_HOST + '/recommendation';
+const GET_RECOMMENDATION_URL = RECOMMENDATION_URL + '/{ID}';
+const ADD_RECOMMENDATION_URL = RECOMMENDATION_URL + 's';
 // }}}
 
 /* {{{ Some utilities
@@ -195,6 +199,7 @@ var DoubanService = $.class({
             'review': ReviewService,
             'collection': CollectionService,
             'miniblog': MiniblogService,
+            'recommendation': RecommendationService,
         }
         for (var name in services) {
             this[name] = new services[name](this);
@@ -399,7 +404,6 @@ var BaseService = $.class({
     _delete: function(object, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
         var response = this._service.delete(url);
-        console.debug(response);
         return response == 'OK' ? true : false;
     },
 
@@ -679,27 +683,22 @@ var EventService = $.class(CommonService, {
  * @method      deleteReply     删除回复
  */
 var RecommendationService = $.class(CommonService, {
-    get: function(id) {
-        throw new Error("Not Implemented Yet");
+    init: function($super, service) {
+        this._model = Recommendation;
+        this._modelEntry = RecommendationEntry;
+        this._getObjectUrl = GET_RECOMMENDATION_URL;
+        this._addObjectUrl = ADD_RECOMMENDATION_URL;
+        this._suffix = '/recommendations';
+        // Mask ``update`` method
+        this.update = undefined;
+        $super(service);
     },
 
-    getForUser: function(id) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    add: function(id) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    delete: function(name) {
+    getReply: function(id) {
         throw new Error("Not Implemented Yet");
     },
 
     addReply: function(id) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    updateReply: function(id) {
         throw new Error("Not Implemented Yet");
     },
 
@@ -793,7 +792,8 @@ var DoubanObject = $.class({
             case 'isReplyEnabled':
                 return this.getAttr('can_reply') == 'yes' ? true : false;
             case 'location':
-                return this.getAttr('db:location');
+            case 'status':
+                return this.getAttr('db:' + attr);
             case 'published':
             case 'updated':
                 return this.getTime(attr);
@@ -803,12 +803,12 @@ var DoubanObject = $.class({
                 return this.getAttr('pubdate');
             case 'screenName':
                 return this.getAttr('title') || this.getAttr('name');
-            case 'status':
-                return this.getAttr('db:status');
             case 'subject':
                 return this.getSubject();
             case 'tags':
                 return this.getTags();
+            case 'type':
+                return this.getAttr('category');
             case 'url':
                 return this.getUrl();
             case 'userName':
@@ -899,6 +899,8 @@ var DoubanObject = $.class({
     }
 });
 // Class method
+/* Factory method of Douban books, movies and music
+ */
 DoubanObject.subjectFactory = function(json) {
     if (typeof json == 'undefined') return json;
     var category = json['category']['@term'];
@@ -1175,7 +1177,7 @@ var CollectionEntry = $.class(AuthorEntry, {
 
 var Miniblog = $.class(DoubanObject, {
     createFromJson: function($super) {
-        this.all = ['id', 'title', 'content', 'published', 'category', 'imageUrl'];
+        this.all = ['id', 'title', 'content', 'published', 'category', 'type', 'imageUrl'];
         $super();
     }
 });
@@ -1188,6 +1190,26 @@ Miniblog.createXml = function(data) {
 var MiniblogEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Collection);
+    }
+});
+
+var Recommendation = $.class(DoubanObject, {
+    createFromJson: function($super) {
+        this.all = ['id', 'title', 'content', 'published', 'type', 'comment'];
+        $super();
+    }
+});
+Recommendation.createXml = function(data) {
+    data = $.extend({ comment: '', title: '', url: '' }, data || {});
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:gd="http://schemas.google.com/g/2005" xmlns:opensearch="http://a9.com/-/spec/opensearchrss/1.0/" xmlns:db="http://www.douban.com/xmlns/"><title>{TITLE}</title><db:attribute name="comment">{COMMENT}</db:attribute><link href="{URL}" rel="related" /></entry>';
+    return xml.replace(/\{COMMENT\}/, data.comment)
+              .replace(/\{URL\}/, data.url)
+              .replace(/\{TITLE\}/, data.title);
+};
+
+var RecommendationEntry = $.class(AuthorEntry, {
+    createFromJson: function($super) {
+        $super(Recommendation);
     }
 });
 
@@ -1379,6 +1401,7 @@ var factoryDict = {
     'review': Review,
     'collection': Collection,
     'miniblog': Miniblog,
+    'recommendation': Recommendation
 };
 
 /* Factory method of jQuery Douban

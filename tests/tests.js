@@ -439,6 +439,42 @@ test("test miniblog api", function() {
      */
 });
 
+test("test recommendation api", function() {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+
+    /* get recommendation
+     */
+    var recomm = service.recommendation.get('3917477');
+    equals(recomm.id, 'http://api.douban.com/recommendation/3917477', "get id ok");
+
+    /* get recommendation for user
+     */
+    recommendations = service.recommendation.getForUser('wyt', 10, 10);
+    equals(recommendations.offset, 10);
+    ok(recommendations.entries[9].id.match(/http:\/\/api\.douban\.com\/recommendation\/\d+/), "get recommendation id");
+    ok(recommendations.entries[9].type.match(/\w+/), "get type ok");
+
+    /* get recommendation for contacts
+    recommendations2 = service.recommendation.getForContacts('iloveshutuo', 9, 9);
+    equals(recommendations2.limit, 9);
+    ok(recommendations2.entries[5].id.match(/http:\/\/api\.douban\.com\/recommendation\/\d+/), "get recommendation id");
+     */
+
+    /* add recommendation
+     */
+    recomm2 = service.recommendation.add({ title: 'luliban.com', url: 'http://blog.luliban.com/', comment: 'My blog' });
+    console.debug(recomm2);
+    equals(recomm2.title, '推荐luliban.com');
+    equals(recomm2.comment, 'My blog');
+
+    /* delete recommendation
+     */
+    var response = service.recommendation.delete(recomm2);
+    ok(response, "recommendation deleted");
+
+});
+
 module("Douban Object Testcases");
 
 test("test user object", function() {
@@ -609,10 +645,22 @@ test("test miniblog object", function() {
     equals(miniblog.content, "在看康熙卸妆那集，google广告提示“如何去掉脸上的豆豆，豆印”～～");
     equals(miniblog.published.getTime(), date.getTime());
     equals(miniblog.category, "saying");
-    equals(miniblog.iconUrl, undefined);
+    equals(miniblog.imageUrl, undefined);
 
     var xml = $.douban.createXml('miniblog', { content: '内容' });
     equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><content>内容</content></entry>');
 });
 
+test("test recommendation object", function() {
+    var json = {"title":{"$t":"推荐喵喵喵之小团子"},"content":{"$t":"推荐<a href=\"http://www.douban.com/photos/album/12573993/\">喵喵喵之小团子</a>","@type":"html"},"link":[],"published":{"$t":"2008-11-07T08:28:40+08:00"},"db:attribute":[{"$t":"photo_album","@name":"category"},{"$t":"团子，我家团子，以前觉得她小时候很丑，现在觉得一点也不丑啊～哇哈哈哈","@name":"comment"},{"$t":7,"@name":"comments_count"}],"id":{"$t":"http://api.douban.com/recommendation/3673470"}};
+
+    var recommendation = $.douban('recommendation', json);
+    var date = new Date(2008, 10, 07, 08, 28, 40);
+    equals(recommendation.id, "http://api.douban.com/recommendation/3673470");
+    equals(recommendation.title, "推荐喵喵喵之小团子", "get title ok");
+    equals(recommendation.content, "推荐<a href=\"http://www.douban.com/photos/album/12573993/\">喵喵喵之小团子</a>");
+    equals(recommendation.published.getTime(), date.getTime(), "get time ok" + recommendation.published);
+    equals(recommendation.type, "photo_album", "get type ok");
+    equals(recommendation.comment, "团子，我家团子，以前觉得她小时候很丑，现在觉得一点也不丑啊～哇哈哈哈", "get comment ok");
+});
 // vim: foldmethod=indent
