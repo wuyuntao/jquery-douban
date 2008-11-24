@@ -494,10 +494,10 @@ var SubjectService = $.class(BaseService, {
 
 /* Douban User API Service
  * @method      get             获取用户信息
- * @method      search          获取当前授权用户信息
- * @method      current         搜索用户
- * @method      friend          获取用户朋友
- * @method      contact         获取用户关注的人
+ * @method      search          搜索用户
+ * @method      current         获取当前授权用户信息
+ * @method      friends         获取用户朋友
+ * @method      contacts        获取用户关注的人
  */
 var UserService = $.class(BaseService, {
     get: function(user) {

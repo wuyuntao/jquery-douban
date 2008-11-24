@@ -1,6 +1,6 @@
 function createService() {
     var service = $.douban('service', { key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
-    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
+    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0', httpType: 'jquery' });
     return service;
 }
 
@@ -142,9 +142,7 @@ test("test client login", function() {
 
 test("test user api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
-
-    var service = $.douban({ key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
-    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
+    var service = createService();
 
     // get user profile
     var ahbei = service.user.get('ahbei');
@@ -241,9 +239,7 @@ test("test note api", function() {
 
 test("test book api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
-
-    var service = $.douban({ key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
-    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
+    var service = createService();
 
     var book = service.book.get('1493316');
     equals(book.id, 'http://api.douban.com/book/subject/1493316');
@@ -263,9 +259,7 @@ test("test book api", function() {
  * it's ok to test only one of them
 test("test movie api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
-
-    var service = $.douban({ key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
-    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
+    var service = createService();
 
     var movie = service.movie.get('1789283');
     equals(movie.id, 'http://api.douban.com/movie/subject/1789283');
@@ -286,9 +280,7 @@ test("test movie api", function() {
 
 test("test music api", function() {
     netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
-
-    var service = $.douban({ key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
-    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
+    var service = createService();
 
     var music = service.music.get('http://api.douban.com/music/subject/3040677');
     equals(music.id, 'http://api.douban.com/music/subject/3040677');
