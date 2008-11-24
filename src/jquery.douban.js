@@ -767,6 +767,9 @@ var DoubanObject = $.class({
         this.createFromJson();
     },
 
+    /* Get attributes from JSON feed and given them 
+     * a human-readable name
+     */
     _getAttribute: function(attr) {
         switch (attr) {
             case 'artists':
@@ -841,8 +844,6 @@ var DoubanObject = $.class({
         }
     },
 
-    /* JSON feed parsers
-     */
     // Get the attribute
     getAttr: function (attr) {
         if (!this._feed) return;
@@ -873,11 +874,13 @@ var DoubanObject = $.class({
             if (links[i]['@rel'] == attr) return links[i]['@href'];
     },
 
+    // Get the category for miniblog object
     getCategory: function() {
         if (!this._feed || !this._feed['category']) return;
         return this._feed['category'][0]['@term'].match(/\.(\w+)$/)[1];
     },
 
+    // Get chinese title for movie object
     getChineseTitle: function() {
         if (!this._feed || !this._feed['db:attribute']) return;
         var attrs = this._feed['db:attribute'];
@@ -886,31 +889,37 @@ var DoubanObject = $.class({
                 return attrs[i]['$t'];
     },
 
+    // Get author, returns a user object
     getAuthor: function() {
         if (this._feed && this._feed.author) return new User(this._feed.author);
     },
 
+    // Get subject, returns a book, movie or music object
     getSubject: function() {
         if (!this._feed || !this._feed['db:subject']) return;
         return DoubanObject.subjectFactory(this._feed['db:subject']);
     },
 
+    // Get time and turn it into javascript date object
     getTime: function(attr) {
         var time = this.getAttr(attr);
         return time ? $.parseDate(time) : undefined;
     },
 
+    // get rating
     getRating: function() {
         if (!this._feed || !this._feed['gd:rating']) return;
         return parseFloat(this._feed['gd:rating']['@average'] || 
                           this._feed['gd:rating']['@value']);
     },
 
+    // get votes
     getVotes: function() {
         if (!this._feed || !this._feed['gd:rating']) return;
         return this._feed['gd:rating']['@numRaters'];
     },
 
+    // get tags for subject or user, returns a list of tag object
     getTags: function() {
         if (!this._feed || !this._feed['db:tag']) return [];
         var tags = [], entries = this._feed['db:tag'];
@@ -921,6 +930,7 @@ var DoubanObject = $.class({
 });
 // Class method
 /* Factory method of Douban books, movies and music
+ * @returns     Book, Movie or Music object
  */
 DoubanObject.subjectFactory = function(json) {
     if (typeof json == 'undefined') return json;
@@ -934,6 +944,15 @@ DoubanObject.subjectFactory = function(json) {
     }
 };
 
+/* Base class of douban object entry like ``UserEntry`` and ``NoteEntry``
+ * @param   feed JSON. Gdata JSON feed
+ * Following attributes are provided in all subclasses
+ * @attribute       total           对象总数
+ * @attribute       offset          一次返回的对象偏移量，对应'start-index - 1'
+ * @attribute       limit           一次返回的对象数量，对应'max-results'
+ * @attribute       entries         对象数组
+ * @method          createFromJson
+ */
 var DoubanObjectEntry = $.class(DoubanObject, {
     init: function(feed) {
         this.all = ['title', 'total', 'offset', 'limit', 'entries'];
@@ -951,6 +970,9 @@ var DoubanObjectEntry = $.class(DoubanObject, {
     }
 });
 
+/* Base class for entries which has an author attribute
+ * @attribute       author      作者
+ */
 var AuthorEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
         this.author = this.getAuthor();
@@ -958,6 +980,9 @@ var AuthorEntry = $.class(DoubanObjectEntry, {
     }
 });
 
+/* Base class for search queries which has an query attribute
+ * @attribute       query       搜索词
+ */
 var SearchEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
         this.query = this.getAttr('title').replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
@@ -967,15 +992,15 @@ var SearchEntry = $.class(DoubanObjectEntry, {
 
 /* Douban user class
  * @param           data            Well-formatted json feed
- * @attribute       id              用户ID，"http://api.douban.com/people/1000001"
- * @attribute       userName        用户名，"ahbei"
- * @attribute       screenName      昵称，"阿北"
- * @attribute       location        常居地，"北京"
- * @attribute       blog            网志主页，"http://ahbei.com/"
- * @attribute       intro           自我介绍，"豆瓣的临时总管..."
- * @attribute       url             豆瓣主页，"http://www.douban.com/people/ahbei/"
- * @attribute       iamgeUrl        头像，"http://otho.douban.com/icon/u1000001-14.jpg"
- * @method          createFromJson  由豆瓣返回的用户JSON，初始化用户数据
+ * @attribute       id              用户ID
+ * @attribute       userName        用户名
+ * @attribute       screenName      昵称
+ * @attribute       location        常居地
+ * @attribute       blog            网志主页
+ * @attribute       intro           自我介绍
+ * @attribute       url             豆瓣主页
+ * @attribute       iamgeUrl        头像
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var User = $.class(DoubanObject, {
     createFromJson: function($super) {
@@ -985,12 +1010,6 @@ var User = $.class(DoubanObject, {
 });
 
 /* Douban user entries
- * @param           data            Well-formatted json feed
- * @attribute       total
- * @attribute       offset
- * @attribute       limit
- * @attribute       entries
- * @method          createFromJson
  */
 var UserEntry = $.class(SearchEntry, {
     createFromJson: function($super) {
@@ -998,7 +1017,7 @@ var UserEntry = $.class(SearchEntry, {
     }
 });
 
-/* Douban note
+/* Douban note class
  * @param           data            Well-formatted json feed
  * @attribute       id              日记ID
  * @attribute       title           日记标题
@@ -1007,10 +1026,10 @@ var UserEntry = $.class(SearchEntry, {
  * @attribute       content         日记全文
  * @attribute       published       日记发布时间
  * @attribute       updated         日记最近更新时间
- * @attribute       url             日记网志
+ * @attribute       url             日记URL
  * @attribute       isPublic        是否公开
  * @attribute       isReplyEnabled  是否允许回复
- * @method          createFromJson  由豆瓣返回的日记JSON，初始化日记数据
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Note = $.class(DoubanObject, {
     createFromJson: function($super) {
@@ -1038,12 +1057,6 @@ Note.createXml = function(data) {
 };
 
 /* Douban note entries
- * @param       data                Well-formatted json feed
- * @attribute   total
- * @attribute   offset
- * @attribute   limit
- * @attribute   entries
- * @method      createFromJson
  */
 var NoteEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
@@ -1051,19 +1064,68 @@ var NoteEntry = $.class(AuthorEntry, {
     }
 });
 
+/* Douban book class
+ * @param           data            Well-formatted json feed
+ * @attribute       id              书本ID
+ * @attribute       title           书名
+ * @attribute       aka             又名
+ * @attribute       subtitle        副标题
+ * @attribute       authors         作者
+ * @attribute       translator      译者
+ * @attribute       isbn10          10位ISBN
+ * @attribute       isbn13          13位ISBN
+ * @attribute       releaseDate     发布时间
+ * @attribute       publisher       出版社
+ * @attribute       price           单价
+ * @attribute       pages           页数
+ * @attribute       binding         封装
+ * @attribute       authorIntro     作者介绍
+ * @attribute       summary         书本介绍
+ * @attribute       url             条目URL
+ * @attribute       imageUrl        封面URL
+ * @attribute       tags            被标记最多的TAG
+ * @attribute       rating          平均得分
+ * @attribute       votes           投票人数
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
+ */
 var Book = $.class(DoubanObject, {
     createFromJson: function($super) {
-        this.all = ['id', 'title', 'aka', 'subtitle', 'authors', 'translators', 'isbn10', 'isbn13', 'releaseDate', 'published', 'publisher', 'price', 'pages', 'binding', 'authorIntro', 'summary', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
+        this.all = ['id', 'title', 'aka', 'subtitle', 'authors', 'translators', 'isbn10', 'isbn13', 'releaseDate', 'publisher', 'price', 'pages', 'binding', 'authorIntro', 'summary', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
         $super();
     }
 });
 
+/* Douban book entries
+ */
 var BookEntry = $.class(SearchEntry, {
     createFromJson: function($super) {
         $super(Book);
     }
 });
 
+/* Douban movie class
+ * @param           data            Well-formatted json feed
+ * @attribute       id              电影ID
+ * @attribute       title           电影名
+ * @attribute       chineseTitle    中文电影名
+ * @attribute       aka             又名
+ * @attribute       directors       导演
+ * @attribute       writers         编剧
+ * @attribute       cast            演员
+ * @attribute       imdb            IMDB
+ * @attribute       releaseDate     发布时间
+ * @attribute       episode         集数
+ * @attribute       language        语言
+ * @attribute       country         国家
+ * @attribute       summary         电影简介
+ * @attribute       url             条目URL
+ * @attribute       imageUrl        海报URL
+ * @attribute       website         官方网站
+ * @attribute       tags            被标记最多的TAG
+ * @attribute       rating          平均得分
+ * @attribute       votes           投票人数
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
+ */
 var Movie = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'chineseTitle', 'aka', 'directors', 'writers', 'cast', 'imdb', 'releaseDate', 'episode', 'language', 'country', 'summary', 'url', 'imageUrl', 'website', 'tags', 'rating', 'votes'];
@@ -1071,12 +1133,34 @@ var Movie = $.class(DoubanObject, {
     }
 });
 
+/* Douban movie entry
+ */
 var MovieEntry = $.class(SearchEntry, {
     createFromJson: function($super) {
         $super(Movie);
     }
 });
 
+/* Douban movie class
+ * @param           data            Well-formatted json feed
+ * @attribute       id              唱片ID
+ * @attribute       title           唱片名
+ * @attribute       aka             又名
+ * @attribute       artists         表演者
+ * @attribute       ean             EAN
+ * @attribute       releaseDate     发布时间
+ * @attribute       media           媒介
+ * @attribute       discs           唱片书
+ * @attribute       version         版本特性
+ * @attribute       summary         唱片简介
+ * @attribute       track           曲目
+ * @attribute       url             条目URL
+ * @attribute       imageUrl        封面URL
+ * @attribute       tags            被标记最多的TAG
+ * @attribute       rating          平均得分
+ * @attribute       votes           投票人数
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
+ */
 var Music = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'aka', 'artists', 'ean', 'releaseDate', 'publisher', 'media', 'discs', 'version', 'summary', 'tracks', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
@@ -1084,12 +1168,27 @@ var Music = $.class(DoubanObject, {
     }
 });
 
+/* Douban music entry
+ */
 var MusicEntry = $.class(SearchEntry, {
     createFromJson: function($super) {
         $super(Music);
     }
 });
 
+/* Douban review entry
+ * @param           data            Well-formatted json feed
+ * @attribute       id              评论ID
+ * @attribute       title           评论标题
+ * @attribute       author          评论作者，User object
+ * @attribute       summary         评论摘要
+ * @attribute       content         评论全文
+ * @attribute       published       评论发布时间
+ * @attribute       updated         评论最近更新时间
+ * @attribute       url             评论URL
+ * @attribute       rating          评论对条目的评分
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
+ */
 var Review = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'author', 'subject', 'summary', 'content', 'published', 'updated', 'url', 'rating'];
@@ -1116,18 +1215,34 @@ Review.createXml = function(data) {
               .replace(/\{RATING\}/, data.rating);
 };
 
+/* Douban review for user entry
+ */
 var ReviewForUserEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Review);
     }
 });
 
+/* Douban review for subject entry
+ */
 var ReviewForSubjectEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super) {
         $super(Review);
     }
 });
 
+/* Douban collection class
+ * @param           data            Well-formatted json feed
+ * @attribute       id              收藏ID
+ * @attribute       title           收藏标题
+ * @attribute       author          收藏者，User object
+ * @attribute       content         收藏评论
+ * @attribute       updated         收藏最近更新时间
+ * @attribute       status          收藏状态，查表可去：http://tinyurl.com/59rqm2
+ * @attribute       tags            收藏用TAG
+ * @attribute       rating          收藏评分
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
+ */
 var Collection = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'owner', 'content', 'updated', 'subject', 'status', 'tags', 'rating'];
@@ -1162,36 +1277,73 @@ Collection.createXml = function(data) {
               .replace(/\{IS_PRIVATE\}/, data.isPrivate ? 'private' : 'public');
 };
 
+/* Douban collection entry
+ */
 var CollectionEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Collection);
     }
 });
 
+/* Douban miniblog class
+ * @param           data            Well-formatted json feed
+ * @attribute       id              广播ID
+ * @attribute       title           广播标题
+ * @attribute       content         广播内容
+ * @attribute       published       广播发布时间
+ * @attribute       category        类别
+ * @attribute       type            子类别
+ * @attribute       imageUrl        相关图片链接
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
+ */
 var Miniblog = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'content', 'published', 'category', 'type', 'imageUrl'];
         $super();
     }
 });
+// Class methods
+/* create POST or PUT xml
+ * @param       data, Object
+ * @data        content, String
+ */
 Miniblog.createXml = function(data) {
     data = $.extend({ content: '' }, data || {});
     var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><content>{CONTENT}</content></entry>';
     return xml.replace(/\{CONTENT\}/, data.content);
 };
 
+/* Douban miniblog entry
+ */
 var MiniblogEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Collection);
     }
 });
 
+/* Douban recommendation class
+ * @param           data            Well-formatted json feed
+ * @attribute       id              推荐ID
+ * @attribute       title           推荐标题
+ * @attribute       content         推荐全文
+ * @attribute       published       推荐发布时间
+ * @attribute       type            类别
+ * @attribute       comment         评论
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
+ */
 var Recommendation = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'content', 'published', 'type', 'comment'];
         $super();
     }
 });
+// Class methods
+/* create POST or PUT xml
+ * @param       data, Object
+ * @data        comment, String
+ * @data        title, String
+ * @data        url, String
+ */
 Recommendation.createXml = function(data) {
     data = $.extend({ comment: '', title: '', url: '' }, data || {});
     var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:gd="http://schemas.google.com/g/2005" xmlns:opensearch="http://a9.com/-/spec/opensearchrss/1.0/" xmlns:db="http://www.douban.com/xmlns/"><title>{TITLE}</title><db:attribute name="comment">{COMMENT}</db:attribute><link href="{URL}" rel="related" /></entry>';
@@ -1200,30 +1352,54 @@ Recommendation.createXml = function(data) {
               .replace(/\{TITLE\}/, data.title);
 };
 
+/* Douban recommendation entry
+ */
 var RecommendationEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Recommendation);
     }
 });
 
+/* Douban recommendation comment class
+ * @param           data            Well-formatted json feed
+ * @attribute       id              回复ID
+ * @attribute       author          回复者，User object
+ * @attribute       content         回复全文
+ * @attribute       published       回复发布时间
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
+ */
 var Comment = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'author', 'published', 'content'];
         $super();
     }
 });
+// Class methods
+/* create POST or PUT xml
+ * @param       data, Object
+ * @data        content, String
+ */
 Comment.createXml = function(data) {
     data = $.extend({ content: '' }, data || {});
     var xml = '<entry><content>{CONTENT}</content></entry>';
     return xml.replace(/\{CONTENT\}/, data.content);
 }
 
+/* Douban recommendation comment entry
+ */
 var CommentEntry = $.class(AuthorEntry, {
     createFromJson: function($super) {
         $super(Comment);
     }
 });
 
+/* Douban tag class
+ * @param           data            Well-formatted json feed
+ * @attribute       id              标签ID
+ * @attribute       name            标签名
+ * @attribute       count           标签被使用的次数
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
+ */
 var Tag = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'name', 'count'];
@@ -1231,6 +1407,8 @@ var Tag = $.class(DoubanObject, {
     }
 });
 
+/* Douban tag entry
+ */
 var TagEntry = $.class(DoubanObjectEntry, {
     createFromJson: function($super) {
         $super(Tag);
@@ -1455,9 +1633,9 @@ $.douban.createXml = function(factory, data) {
 /* Factory method of HTTP request handlers
  * @usage
  * // Register new request handler
- * $.douban.http.register('air', AirHttpRequestHandler });
- * // Use Gears HTTP Request API as handler
- * $.douban.http.setActive('gears');
+ * $.douban.http.register('gears', GearsHttpRequestHandler });
+ * // Still use 'jquery' HTTP Request API as handler
+ * $.douban.http.setActive('jquery');
  * // Get some url
  * var json = $.douban.http({ url: url, params: params });
  * // Unregister request handler
@@ -1468,8 +1646,7 @@ $.douban.http = function(options) {
     return $.douban.http.activeHandler(options);
 };
 
-/* Create HTTP request handler by the given type
- * including 'jquery', 'greasemonkey' and 'gears'
+/* Create HTTP request handler by the default 'jquery' handler 
  * In addition, you can register other handlers either
  * by passing arguments ``httpType`` and ``httpHandler`` to the factory
  * method
@@ -1492,24 +1669,6 @@ $.douban.http.factory = function(options) {
     return $.douban.http.handlers[options.type];
 };
 
-/* Setup HTTP settings */
-$.douban.http.setup = function(options) {
-    $.douban.http.settings = $.extend($.douban.http.settings, options || {});
-};
-
-/* Default settings
- */
-$.douban.http.settings = {
-    url: location.href,
-    type: 'GET',
-    params: null,
-    data: null,
-    headers: null,
-    contentType: 'application/atom+xml',
-    dataType: 'json',
-    processData: true
-};
-
 /* Default handler is jquery
  */
 $.douban.http.activeHandler = jqueryHandler;
@@ -1518,10 +1677,10 @@ $.douban.http.activeHandler = jqueryHandler;
  */
 $.douban.http.handlers = {
     jquery: jqueryHandler,
-    greasemonkey: greasemonkeyHandler,
-    gears: gearsHandler
 };
 
+/* Set active handler
+ */
 $.douban.http.setActive = function(name) {
     $.douban.http.activeHandler = $.douban.http.handlers[name];
 }
@@ -1540,22 +1699,12 @@ $.douban.http.unregister = function(name) {
     $.douban.http.handlers[name] = undefined;
 };
 
-/* Built-in HTTP request handlers: 'jquery', 'greasemonkey', 'gears'
+/* Built-in HTTP request handlers: 'jquery'
  */
 function jqueryHandler(options) {
     return $.ajax(options);
 }
 jqueryHandler.name = 'jquery';
-
-function greasemonkeyHandler(options) {
-    throw new Error("Not Implemented Yet");
-}
-greasemonkeyHandler.name = 'greasemonkey';
-
-function gearsHandler(options) {
-    throw new Error("Not Implemented Yet");
-}
-gearsHandler.name = 'gears';
 // }}}
 
 })(jQuery);

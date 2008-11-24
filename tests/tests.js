@@ -63,6 +63,12 @@ test("test jquery http methods", function() {
     ok(response2, 'get response ok');
 });
 
+test("test greasemonkey http methods", function() {
+});
+
+test("test gears http methods", function() {
+});
+
 module("OAuth Client Testcases");
 
 test("test factory method", function() {
@@ -486,7 +492,7 @@ test("test tag api", function() {
     equals(tags.entries.length, 3);
     equals(tags.entries[0].id, 'http://api.douban.com/movie/tag/范逸臣');
     equals(tags.entries[0].name, '范逸臣');
-    equals(tags.entries[0].count, 684);
+    ok(tags.entries[0].count >= 684, "get tag count ok");
 
     /* get for user
      */
