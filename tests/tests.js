@@ -61,12 +61,6 @@ test("test jquery http methods", function() {
     ok(response2, 'get response ok');
 });
 
-test("test greasemonkey http methods", function() {
-});
-
-test("test gears http methods", function() {
-});
-
 module("OAuth Client Testcases");
 
 test("test factory method", function() {
