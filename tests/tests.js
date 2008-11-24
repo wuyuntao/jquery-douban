@@ -16,12 +16,6 @@ test("test factory method", function() {
     equals(service.api.secret, '2', "api secret expected to be 2");
     equals(service._http.name, 'jquery', "http type expected to be \"jquery\"");
 
-    var service2 = $.douban({ key: '3', secret: '4', httpType: 'gears' });
-    ok(service2, "initialize douban service ok");
-    equals(service2.api.key, '3', "api key expected to be 3");
-    equals(service2.api.secret, '4', "api secret expected to be 4");
-    equals(service2.options.httpType, 'gears', "http type expected to be \"gears\"");
-
     var client = $.douban('client', { key: '5', secret: '6' });
     ok(client, "initialize douban client ok");
     equals(client.api.key, '5', "api key expected to be 5");
@@ -32,15 +26,19 @@ test("test factory method", function() {
 module("HTTP Testcases");
 
 test("test factory method", function() {
+    function AirHandler(options) { return; }
+    AirHandler.name = 'air';
+
     equals($.douban.http.activeHandler.name, 'jquery', "default handler is 'jquyer'");
-    $.douban.http.setActive('gears');
-    equals($.douban.http.activeHandler.name, 'gears', "set handler to 'geas' ok");
+    $.douban.http.register('air', AirHandler);
+    $.douban.http.setActive('air');
+    equals($.douban.http.activeHandler.name, 'air', "set handler to 'air' ok");
 
     var request = $.douban.http.factory();
     equals(request.name, 'jquery', "initialize jquery http request handler ok");
 
-    var request2 = $.douban.http.factory({ type: 'greasemonkey' });
-    equals(request2.name, 'greasemonkey', "initialize greasemonkey http request handler ok");
+    var request2 = $.douban.http.factory({ type: 'air' });
+    equals(request2.name, 'air', "initialize air http request handler ok");
 
     $.douban.http.setActive('jquery');
 });

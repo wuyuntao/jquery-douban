@@ -1689,7 +1689,7 @@ $.douban.http.setActive = function(name) {
  */
 $.douban.http.register = function(name, handler) {
     if ($.isFunction(handler)) {
-        $.douban.http.handlers[name] = constructor;
+        $.douban.http.handlers[name] = handler;
     }
 };
 
