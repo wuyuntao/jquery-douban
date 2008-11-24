@@ -173,7 +173,7 @@ $.extend({
  * @param       options Dict
  * @option      key String
  * @option      secret String
- * @option      httpType String
+ * @option      type String
  * @option      httpHandler String
  */
 var DoubanService = $.class({
@@ -181,15 +181,15 @@ var DoubanService = $.class({
         var defaults = {
             key: '',
             secret: '',
-            httpType: 'jquery',
+            type: 'jquery',
         };
         this.options = $.extend(defaults, options || {});;
         this.api = new Token(this.options.key, this.options.secret);
 
-        this._http = $.douban.http.factory({ type: this.options.httpType });
+        this._http = $.douban.http.factory({ type: this.options.type });
         this._client = $.douban('client', { key: this.api.key,
                                             secret: this.api.secret,
-                                            type: this.options.httpType });
+                                            type: this.options.type });
         var services = {
             'user': UserService,
             'note': NoteService,
@@ -213,16 +213,16 @@ var DoubanService = $.class({
         return this._client.login(accessToken);
     },
 
-    getRequestToken: function() {
-        return this._client.getRequestToken();
+    getRequestToken: function(callback) {
+        return this._client.getRequestToken(callback);
     },
 
     getAuthorizationUrl: function(requestToken, callbackUrl) {
         return this._client.getAuthorizationUrl(requestToken, callbackUrl);
     },
 
-    getAccessToken: function(requestToken) {
-        return this._client.getAccessToken(requestToken);
+    getAccessToken: function(requestToken, callback) {
+        return this._client.getAccessToken(requestToken, callback);
     },
 
     isAuthenticated: function() {
@@ -231,6 +231,11 @@ var DoubanService = $.class({
 
     /* HTTP methods */
     get: function(url, params, callback) {
+		// shift arguments if params argument was ommited
+		if ($.isFunction(params)) {
+			callback = params;
+			params = null;
+		}
         var json = null;
         var params = this.setParams(params);
         var headers = this.getHeaders(url, 'GET', params);
@@ -331,84 +336,99 @@ var BaseService = $.class({
     /* Get new object from given object or url
      * @returns     new object, Object or undefined
      * @param       object, Object or String
+     * @param       callback, Function
      * @param       model, Constructor
      * @param       templateUrl, String
      */
-    _get: function(object, model, templateUrl) {
+    _get: function(object, callback, model, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
-        var json = this._service.get(url);
+        var json = this._service.get(url, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 
     /* Get object entries from given object
      * @returns     new object entries, Object or undefined
      * @param       object, Object or String
+     * @param       offset, Integer
+     * @param       limit, Integer
+     * @param       callback, Function
      * @param       model, Constructor
      * @param       templateUrl, String
      * @param       suffix, String
-     * @param       offset, Integer
-     * @param       limit, Integer
      */
-    _getForObject: function(object, offset, limit, model, templateUrl, suffix, extraParams) {
+    _getForObject: function(object, offset, limit, callback, model, templateUrl, suffix, extraParams) {
         var url = this.lazyUrl(object, templateUrl) + suffix;
         var params = $.extend({ 'start-index': (offset || 0) + 1,
                                 'max-results': limit || 50 },
                               extraParams || {});
-        var json = this._service.get(url, params);
+        var json = this._service.get(url, params, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 
     /* Search object from given query
      * @returns     new object entries, Object or undefined
      * @param       url, String
-     * @param       model, Constructor
-     * @param       query, String
      * @param       offset, Integer
      * @param       limit, Integer
+     * @param       callback, Function
+     * @param       model, Constructor
+     * @param       query, String
      */
-    _search: function(query, offset, limit, url, model) {
+    _search: function(query, offset, limit, callback, url, model) {
         var params = { 'q': query,
                        'start-index': (offset || 0) + 1,
                        'max-results': limit || 50 };
-        var json = this._service.get(url, params);
+        var json = this._service.get(url, params, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 
     /* Add object 
      * @returns     object created, Object or undefined
+     * @param       data, Dict or XML String
+     * @param       callback, Function
      * @param       url, String
      * @param       model, Constructor
-     * @param       data, Dict or XML String
      */
-    _add: function(data, url, model) {
+    _add: function(data, callback, url, model) {
         if (typeof data == 'object') data = model.createXml(data);
-        var json = this._service.post(url, data);
+        var json = this._service.post(url, data, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 
     /* Update object 
      * @returns     object updated, Object or undefined
      * @param       object, Object or String
+     * @param       data, Dict or XML String
+     * @param       callback, Function
      * @param       model, Constructor
      * @param       templateUrl, String
-     * @param       data, Dict or XML String
      */
-    _update: function(object, data, model, templateUrl) {
+    _update: function(object, data, callback, model, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
         if (typeof data == 'object') data = model.createXml(data);
-        var json = this._service.put(url, data);
+        var json = this._service.put(url, data, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 
     /* Delete object
      * @returns     if object is deleted, Boolean
      * @param       object, Object or String
+     * @param       callback, Function
      * @param       templateUrl, String
      */
-    _delete: function(object, templateUrl) {
+    _delete: function(object, callback, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
-        var response = this._service.delete(url);
+        var response = this._service.delete(url, this._onSuccess(callback, model));
         return response == 'OK' ? true : false;
+    },
+
+    _onSuccess: function(callback, model) {
+        var self = this;
+        return function(data) {
+            if (typeof data == 'string') data == 'OK' ? true : false;
+            else data = self._response(data, model);
+            if ($.isFunction(callback)) callback(data);
+        }
     },
 
     /* Get response or undefined
@@ -441,24 +461,24 @@ var BaseService = $.class({
  * @method      delete
  */
 var CommonService = $.class(BaseService, {
-    get: function(object) {
-        return this._get(object, this._model, this._getObjectUrl);
+    get: function(object, callback) {
+        return this._get(object, callback, this._model, this._getObjectUrl);
     },
 
-    getForUser: function(user, offset, limit, extraParams) {
-        return this._getForObject(user, offset, limit, this._modelEntry, GET_PEOPLE_URL, this._suffix, extraParams);
+    getForUser: function(user, offset, limit, callback, extraParams) {
+        return this._getForObject(user, offset, limit, callback, this._modelEntry, GET_PEOPLE_URL, this._suffix, extraParams);
     },
 
-    add: function(data) {
-        return this._add(data, this._addObjectUrl, this._model);
+    add: function(data, callback) {
+        return this._add(data, callback, this._addObjectUrl, this._model);
     },
 
-    update: function(object, data) {
-        return this._update(object, data, this._model, this._getObjectUrl);
+    update: function(object, data, callback) {
+        return this._update(object, data, callback, this._model, this._getObjectUrl);
     },
 
-    delete: function(object) {
-        return this._delete(object, this._getObjectUrl);
+    delete: function(object, callback) {
+        return this._delete(object, callback, this._getObjectUrl);
     }
 });
 
@@ -476,12 +496,12 @@ var CommonService = $.class(BaseService, {
  * @method      search
  */
 var SubjectService = $.class(BaseService, {
-    get: function(subject) {
-        return this._get(subject, this._model, this._getSubjectUrl);
+    get: function(subject, callback) {
+        return this._get(subject, callback, this._model, this._getSubjectUrl);
     },
 
-    search: function(query, offset, limit) {
-        return this._search(query, offset, limit, this._searchSubjectUrl, this._modelEntry);
+    search: function(query, offset, limit, callback) {
+        return this._search(query, offset, limit, callback, this._searchSubjectUrl, this._modelEntry);
     }
 });
 
@@ -493,24 +513,24 @@ var SubjectService = $.class(BaseService, {
  * @method      contacts        获取用户关注的人
  */
 var UserService = $.class(BaseService, {
-    get: function(user) {
-        return this._get(user, User, GET_PEOPLE_URL);
+    get: function(user, callback) {
+        return this._get(user, callback, User, GET_PEOPLE_URL);
     },
 
-    search: function(query, offset, limit) {
-        return this._search(query, offset, limit, SEARCH_PEOPLE_URL, UserEntry);
+    search: function(query, offset, limit, callback) {
+        return this._search(query, offset, limit, callback, SEARCH_PEOPLE_URL, UserEntry);
     },
 
-    current: function() {
-        return this._get(GET_CURRENT_URL, User);
+    current: function(callback) {
+        return this._get(GET_CURRENT_URL, callback, User);
     },
 
-    friends: function(user, offset, limit) {
-        return this._getForObject(user, offset, limit, UserEntry, GET_PEOPLE_URL, '/friends');
+    friends: function(user, offset, limit, callback) {
+        return this._getForObject(user, offset, limit, callback, UserEntry, GET_PEOPLE_URL, '/friends');
     },
 
-    contacts: function(user, offset, limit) {
-        return this._getForObject(user, offset, limit, UserEntry, GET_PEOPLE_URL, '/contacts');
+    contacts: function(user, offset, limit, callback) {
+        return this._getForObject(user, offset, limit, callback, UserEntry, GET_PEOPLE_URL, '/contacts');
     }
 });
 
@@ -592,8 +612,8 @@ var ReviewService = $.class(CommonService, {
         $super(service);
     },
 
-    getForSubject: function(subject, offset, limit) {
-        return this._getForObject(subject, offset, limit, ReviewForSubjectEntry, null, '/reviews');
+    getForSubject: function(subject, offset, limit, callback) {
+        return this._getForObject(subject, offset, limit, callback, ReviewForSubjectEntry, null, '/reviews');
     }
 });
 
@@ -614,8 +634,8 @@ var CollectionService = $.class(CommonService, {
         $super(service);
     },
 
-    getForUser: function(user, offset, limit, type) {
-        return this._getForObject(user, offset, limit, CollectionEntry, GET_PEOPLE_URL, '/collection', { 'cat': type });
+    getForUser: function(user, offset, limit, callback, type) {
+        return this._getForObject(user, offset, limit, callback, CollectionEntry, GET_PEOPLE_URL, '/collection', { 'cat': type });
     }
 });
 
@@ -638,8 +658,8 @@ var MiniblogService = $.class(CommonService, {
         $super(service);
     },
 
-    getForContacts: function(user, offset, limit) {
-        return this._getForObject(user, offset, limit, this._modelEntry, GET_PEOPLE_URL, '/miniblog/contacts');
+    getForContacts: function(user, offset, limit, callback) {
+        return this._getForObject(user, offset, limit, callback, this._modelEntry, GET_PEOPLE_URL, '/miniblog/contacts');
     }
 });
 
@@ -697,17 +717,17 @@ var RecommendationService = $.class(CommonService, {
         $super(service);
     },
 
-    getComment: function(recommendation, offset, limit) {
-        return this._getForObject(recommendation, offset, limit, CommentEntry, GET_RECOMMENDATION_URL, '/comments');
+    getComment: function(recommendation, offset, limit, callback) {
+        return this._getForObject(recommendation, offset, limit, callback, CommentEntry, GET_RECOMMENDATION_URL, '/comments');
     },
 
-    addComment: function(recommendation, data) {
+    addComment: function(recommendation, data, callback) {
         var url = this.lazyUrl(recommendation, GET_RECOMMENDATION_URL) + '/comments';
-        return this._add(data, url, Comment);
+        return this._add(data, callback, url, Comment);
     },
 
-    deleteComment: function(comment) {
-        return this._delete(comment);
+    deleteComment: function(comment, callback) {
+        return this._delete(comment, callback);
     }
 });
 
@@ -716,12 +736,12 @@ var RecommendationService = $.class(CommonService, {
  * @method      getForUser         用户对书籍、电影、音乐标记的所有标签
 */
 var TagService = $.class(BaseService, {
-    getForSubject: function(subject, offset, limit) {
-        return this._getForObject(subject, offset, limit, TagEntry, null, '/tags');
+    getForSubject: function(subject, offset, limit, callback) {
+        return this._getForObject(subject, offset, limit, callback, TagEntry, null, '/tags');
     },
 
-    getForUser: function(user, offset, limit, type) {
-        return this._getForObject(user, offset, limit, TagEntry, GET_PEOPLE_URL, '/tags', { 'cat': type });
+    getForUser: function(user, offset, limit, callback, type) {
+        return this._getForObject(user, offset, limit, callback, TagEntry, GET_PEOPLE_URL, '/tags', { 'cat': type });
     }
 });
 
@@ -948,17 +968,16 @@ DoubanObject.subjectFactory = function(json) {
  */
 var DoubanObjectEntry = $.class(DoubanObject, {
     init: function(feed) {
-        this.all = ['title', 'total', 'offset', 'limit', 'entries'];
         this._feed = feed;
-        this._entries = feed.entry;
         this.createFromJson();
     },
 
     createFromJson: function($super, doubanObject) {
+        this.all = ['title', 'total', 'offset', 'limit', 'entries'];
         $super();
         this.entries = [];
-        for (var i = 0, len = this._entries.length; i < len; i++) {
-            this.entries.push(new doubanObject(this._entries[i]));
+        for (var i = 0, len = this._feed.entry.length; i < len; i++) {
+            this.entries.push(new doubanObject(this._feed.entry[i]));
         }
     }
 });
@@ -1423,11 +1442,11 @@ function OAuthClient(options) {
     var defaults = {
         key: '',
         secret: '',
-        httpType: 'jquery',
+        type: 'jquery',
     };
     this.options = $.extend(defaults, options || {});;
     this.api = new Token(this.options.key, this.options.secret);
-    this._http = $.douban.http.factory({ type: this.options.httpType });
+    this._http = $.douban.http.factory({ type: this.options.type });
 
     this.requestToken = new Token();
     this.accessToken = new Token();
@@ -1438,12 +1457,13 @@ $.extend(OAuthClient.prototype, {
     /* Get request token
      * @returns         Token object
      */ 
-    getRequestToken: function() {
+    getRequestToken: function(callback) {
         var token = null;
         this.oauthRequest(REQUEST_TOKEN_URL, null, function(data) {
             data = $.unparam(data);
             token = { key: data.oauth_token,
                       secret: data.oauth_token_secret };
+            if ($.isFunction(callback)) callback(data);
         });
         this.requestToken = token;
         return this.requestToken
@@ -1641,7 +1661,7 @@ $.douban.http = function(options) {
 
 /* Create HTTP request handler by the default 'jquery' handler 
  * In addition, you can register other handlers either
- * by passing arguments ``httpType`` and ``httpHandler`` to the factory
+ * by passing arguments ``type`` and ``handler`` to the factory
  * method
  */
 $.douban.http.factory = function(options) {
@@ -1670,6 +1690,7 @@ $.douban.http.activeHandler = jqueryHandler;
  */
 $.douban.http.handlers = {
     jquery: jqueryHandler,
+    greasemonkey: greasemonkeyHandler
 };
 
 /* Set active handler
@@ -1724,7 +1745,8 @@ jqueryHandler.name = 'jquery';
 
 function greasemonkeyHandler(s) {
     s = $.extend($.douban.http.settings, s || {});
-    if ( s.data && s.type == "GET" ) {
+    if ( s.data && typeof s.data != "string" ) s.data = $.param(s.data);
+    if (s.data && s.type == "GET") {
         s.url += (s.url.match(/\?/) ? "&" : "?") + s.data;
         s.data = null;
     }
@@ -1735,12 +1757,12 @@ function greasemonkeyHandler(s) {
             url: s.url,
             data: s.data,
             headers: s.headers,
-            onload: s.success,
+            onload: onLoad,
             // onerror: s.error
         });
     }
     function onLoad(response) {
-        var data = response.responseText 
+        var data = response.responseText;
         if (s.dataType == 'json') data = eval("(" + data + ")");
         return s.success(data);
     }

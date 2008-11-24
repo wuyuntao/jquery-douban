@@ -1,13 +1,10 @@
 function createService() {
-    var service = $.douban('service', { key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
-    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0', httpType: 'jquery' });
+    var service = $.douban('service', { key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8', type: 'jquery' });
+    service.login({ key: '242968ea69f7cbc46c7c3abf3de7634c', secret: '9858f453d21ab6e0' });
     return service;
 }
 
 test("test misc", function() {
-    var A = { a: 1 };
-    $.extend(A, { b: 2 }, { c: 3 });
-    equals(A.c, 3);
 });
 
 module("Basic Testcases");
@@ -23,7 +20,7 @@ test("test factory method", function() {
     ok(client, "initialize douban client ok");
     equals(client.api.key, '5', "api key expected to be 5");
     equals(client.api.secret, '6', "api secret expected to be 6");
-    equals(client.options.httpType, 'jquery', "http type expected to be \"jquery\"");
+    equals(client.options.type, 'jquery', "http type expected to be \"jquery\"");
 });
 
 module("HTTP Testcases");
