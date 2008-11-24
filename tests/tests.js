@@ -5,6 +5,9 @@ function createService() {
 }
 
 test("test misc", function() {
+    var A = { a: 1 };
+    $.extend(A, { b: 2 }, { c: 3 });
+    equals(A.c, 3);
 });
 
 module("Basic Testcases");

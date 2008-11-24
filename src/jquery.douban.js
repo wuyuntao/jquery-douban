@@ -233,13 +233,12 @@ var DoubanService = $.class({
     get: function(url, params, callback) {
         var json = null;
         var params = this.setParams(params);
-        var setHeaders = this.setHeaders(url, 'GET', params);
-        this._http({ async: false,
-                     url: url,
+        var headers = this.getHeaders(url, 'GET', params);
+        this._http({ url: url,
                      type: 'GET',
                      data: params,
                      dataType: 'json',
-                     beforeSend: setHeaders,
+                     headers: headers,
                      success: onSuccess });
         return json;
 
@@ -260,16 +259,13 @@ var DoubanService = $.class({
     _sendData: function(url, data, callback, type) {
         var json = null;
         var params = this.setParams();
-        var setHeaders = this.setHeaders(url, type, params);
-        var url = url + '?' + $.param(params);
-        this._http({ async: false,
-                     url: url,
+        var headers = this.getHeaders(url, type, params);
+        url += (url.match(/\?/) ? '&' : '?') + $.param(params);
+        this._http({ url: url,
                      data: data,
                      dataType: 'json',
                      type: type,
-                     contentType: 'application/atom+xml',
-                     processData: false,
-                     beforeSend: setHeaders,
+                     headers: headers,
                      success: onSuccess });
         return json;
 
@@ -282,12 +278,12 @@ var DoubanService = $.class({
     delete: function(url, callback) {
         var response = null;
         var params = this.setParams();
-        var setHeaders = this.setHeaders(url, 'DELETE', params);
-        this._http({ async: false,
-                     url: url,
+        var headers = this.getHeaders(url, 'DELETE', params);
+        this._http({ url: url,
                      type: 'DELETE',
                      data: params,
-                     beforeSend: setHeaders,
+                     dataType: 'text',
+                     headers: headers,
                      success: onSuccess });
         return response;
 
@@ -302,18 +298,15 @@ var DoubanService = $.class({
         return params;
     },
 
-    /* Set headers for request
-     * @returns     beforeSend callback function
+    /* Get headers for request
+     * @returns     headers object
      * @param       url String
      * @param       type String. 'GET', 'PUT', 'POST' or 'DELETE'
      * @param       params Dict
      */
-    setHeaders: function(url, type, params) {
+    getHeaders: function(url, type, params) {
         var headers = this._client.getAuthHeaders(url, type, params);
-        return function(xhr) {
-            xhr.setRequestHeader('Authorization', headers);
-            xhr.setRequestHeader('WWW-Authenticate', 'OAuth realm=""');
-        }
+        return { 'Authorization': headers };
     }
 });
 
@@ -1572,7 +1565,7 @@ $.extend(OAuthClient.prototype, {
      */
     oauthRequest: function(url, data, callback) {
         var data = this.getParameters(url, 'GET', data);
-        this._http({ async: false, url: url, data: data, success: callback });
+        this._http({ url: url, data: data, success: callback });
     }
 });
 
@@ -1683,7 +1676,20 @@ $.douban.http.handlers = {
  */
 $.douban.http.setActive = function(name) {
     $.douban.http.activeHandler = $.douban.http.handlers[name];
-}
+};
+
+/* Default http settings
+ */
+$.douban.http.settings = {
+    url: location.href,
+    type: 'GET',
+    data: null,
+    headers: {},
+    contentType: 'application/atom+xml',
+    dataType: 'text',
+    error: null,
+    success: null
+};
 
 /* Register new HTTP request handler to ``handlers``
  */
@@ -1701,10 +1707,45 @@ $.douban.http.unregister = function(name) {
 
 /* Built-in HTTP request handlers: 'jquery'
  */
-function jqueryHandler(options) {
-    return $.ajax(options);
+function jqueryHandler(s) {
+    s = $.extend($.douban.http.settings, s || {});
+    $.extend(s, {
+        async: false,
+        headers: undefined,
+        processData: s.type.match(/^P(OS|U)T$/) ? false : true,
+        beforeSend: function(xhr) {
+            for (var name in s.headers)
+                xhr.setRequestHeader(name, s.headers[name]);
+        }
+    });
+    return $.ajax(s);
 }
 jqueryHandler.name = 'jquery';
+
+function greasemonkeyHandler(s) {
+    s = $.extend($.douban.http.settings, s || {});
+    if ( s.data && s.type == "GET" ) {
+        s.url += (s.url.match(/\?/) ? "&" : "?") + s.data;
+        s.data = null;
+    }
+    $.extend(s.headers, { 'Content-type': s.contentType });
+    if (GM_xmlhttpRequest) {
+        return GM_xmlhttpRequest({
+            method: s.type,
+            url: s.url,
+            data: s.data,
+            headers: s.headers,
+            onload: s.success,
+            // onerror: s.error
+        });
+    }
+    function onLoad(response) {
+        var data = response.responseText 
+        if (s.dataType == 'json') data = eval("(" + data + ")");
+        return s.success(data);
+    }
+}
+greasemonkeyHandler.name = 'greasemonkey';
 // }}}
 
 })(jQuery);
