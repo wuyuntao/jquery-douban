@@ -341,7 +341,7 @@ var BaseService = $.klass({
      */
     _get: function(object, callback, model, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
-        var json = this._service.get(url, this._onSuccess(callback, model));
+        var json = this._service.GET(url, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 
@@ -360,7 +360,7 @@ var BaseService = $.klass({
         var params = $.extend({ 'start-index': (offset || 0) + 1,
                                 'max-results': limit || 50 },
                               extraParams || {});
-        var json = this._service.get(url, params, this._onSuccess(callback, model));
+        var json = this._service.GET(url, params, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 
@@ -377,7 +377,7 @@ var BaseService = $.klass({
         var params = { 'q': query,
                        'start-index': (offset || 0) + 1,
                        'max-results': limit || 50 };
-        var json = this._service.get(url, params, this._onSuccess(callback, model));
+        var json = this._service.GET(url, params, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 
@@ -390,7 +390,7 @@ var BaseService = $.klass({
      */
     _add: function(data, callback, url, model) {
         if (typeof data == 'object') data = model.createXml(data);
-        var json = this._service.post(url, data, this._onSuccess(callback, model));
+        var json = this._service.POSt(url, data, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 
@@ -405,7 +405,7 @@ var BaseService = $.klass({
     _update: function(object, data, callback, model, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
         if (typeof data == 'object') data = model.createXml(data);
-        var json = this._service.put(url, data, this._onSuccess(callback, model));
+        var json = this._service.PUT(url, data, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 

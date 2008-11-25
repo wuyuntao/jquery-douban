@@ -45,7 +45,8 @@ test("test factory method", function() {
 
 test("test jquery http methods", function() {
     // Privileges are granted only in the scope of the requesting function.
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
     var response = null;
     var request = $.douban.http({ async: false,
@@ -71,7 +72,8 @@ test("test factory method", function() {
 });
 
 test("test authorization step 1: get request token", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
     var client = $.douban('client', { key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     var requestToken = client.getRequestToken();
@@ -93,7 +95,8 @@ test("test authorization step 2: get authorization url", function() {
 });
 
 test("test authorization step 3: get access token ", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
     var client = $.douban('client', { key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     client.requestToken = { key: 'ad6a4a13fb9b1ce7083ede3bf2d156b5',
@@ -130,7 +133,8 @@ test("test factory method", function() {
 });
 
 test("test client login", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
 
     var service = $.douban({ key: '0107c5c3c9d4ecc40317514b5d7ec64c', secret: '7feaf4ec7b6989f8' });
     var accessToken = { key: '6fcf833aff0583884f6e89b0fd109c98', secret: 'b623646c5d1929ab' };
@@ -139,7 +143,8 @@ test("test client login", function() {
 });
 
 test("test user api", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
     // get user profile
@@ -180,7 +185,8 @@ test("test user api", function() {
 });
 
 test("test note api", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
     // get note by id
@@ -230,13 +236,14 @@ test("test note api", function() {
     equals(note4.title, '功能多不如DD多', "get title of note ok");
     equals(note4.content, '错了，当时不是这样的', "get title of note ok");
 
-    // delete the note
-    var response = service.note.delete(note4);
-    ok(response, "note deleted");
+    // remove the note
+    var response = service.note.remove(note4);
+    ok(response, "note removed");
 });
 
 test("test book api", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
     var book = service.book.get('1493316');
@@ -256,7 +263,8 @@ test("test book api", function() {
 /* Because all sujects are inherited from same class,
  * it's ok to test only one of them
 test("test movie api", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
     var movie = service.movie.get('1789283');
@@ -277,7 +285,8 @@ test("test movie api", function() {
 });
 
 test("test music api", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
     var music = service.music.get('http://api.douban.com/music/subject/3040677');
@@ -295,7 +304,8 @@ test("test music api", function() {
 /* Only ``getForSubject`` should be tested
  */
 test("test review api", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
     /* get review
@@ -337,16 +347,17 @@ test("test review api", function() {
     equals(review3.rating, 4);
      */
 
-    /* delete
-    var response = service.review.delete(review2);
-    ok(response, "review deleted");
+    /* remove
+    var response = service.review.remove(review2);
+    ok(response, "review removed");
      */
 });
 
 /* Only ``getForUser`` should be tested
  */
 test("test collection api", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
     /* get collection by id
@@ -394,16 +405,17 @@ test("test collection api", function() {
     equals(collection4.content, '错了，当时不是这样的', "get content of collection ok");
      */
 
-    /* delete the collection
-    var response = service.collection.delete(collection4);
-    ok(response , "collection deleted");
+    /* remove the collection
+    var response = service.collection.remove(collection4);
+    ok(response , "collection removed");
      */
 });
 
 /* Only ``getForContacts`` should be tested
  */
 test("test miniblog api", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
     /* get miniblog for user
@@ -423,14 +435,15 @@ test("test miniblog api", function() {
     equals(miniblog.content, '真是的，这是什么啊');
      */
 
-    /* delete miniblog
-    var response = service.miniblog.delete(miniblog);
-    ok(response, "miniblog deleted");
+    /* remove miniblog
+    var response = service.miniblog.remove(miniblog);
+    ok(response, "miniblog removed");
      */
 });
 
 test("test recommendation api", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
     /* get recommendation
@@ -463,19 +476,20 @@ test("test recommendation api", function() {
     equals(comments.total, 1, "get total comments ok");
     equals(comments.entries[0].id, comment.id, "get comment id ok");
 
-    /* delete comment for recommendation
+    /* remove comment for recommendation
      */
-    var response = service.recommendation.deleteComment(comment);
-    ok(response, "comment deleted");
+    var response = service.recommendation.removeComment(comment);
+    ok(response, "comment removed");
 
-    /* delete recommendation
+    /* remove recommendation
      */
-    var response2 = service.recommendation.delete(recomm2);
-    ok(response2, "recommendation deleted");
+    var response2 = service.recommendation.remove(recomm2);
+    ok(response2, "recommendation removed");
 });
 
 test("test tag api", function() {
-    netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
     /* get for subject
