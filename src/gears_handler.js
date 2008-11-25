@@ -23,9 +23,8 @@ var gearsHandler = function(s) {
         success(message.body);
     };
 
-    // Create child worker
+    // Create child worker and sent message to her
     var childWorkerId = workerPool.createWorkerFromUrl(gearsHandler.workerUrl);
-
     workerPool.sendMessage(s, childWorkerId);
 };
 
@@ -33,5 +32,4 @@ gearsHandler.name = 'gears';
 
 gearsHandler.proxy = 'http://jquery-douban.appspot.com/proxy?url=';
 
-gearsHandler.workerUrl = 'http://localhost/jdouban/src/gears_worker.js';
-// gearsHandler.workerUrl = 'http://jquery-douban.appspot.com/worker.js';
+gearsHandler.workerUrl = 'http://jquery-douban.appspot.com/worker.js';
