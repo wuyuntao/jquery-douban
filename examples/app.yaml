@@ -1,0 +1,26 @@
+application: jquery-douban
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /favicon.ico
+  static_files: media/favicon.ico
+  upload: media/favicon.ico
+
+- url: /worker.js
+  static_files: media/scripts/worker.js
+  upload: media/scripts/worker.js
+
+- url: /media
+  static_dir: media
+
+- url: /admin/
+  script: admin.py
+  login: admin
+
+- url: /proxy
+  script: proxy.py
+
+- url: /.*
+  script: main.py
