@@ -174,7 +174,6 @@ $.extend({
  * @option      key String
  * @option      secret String
  * @option      type String
- * @option      httpHandler String
  */
 var DoubanService = $.class({
     init: function(options) {
@@ -1691,7 +1690,6 @@ $.douban.http.activeHandler = jqueryHandler;
 $.douban.http.handlers = {
     jquery: jqueryHandler,
     greasemonkey: greasemonkeyHandler,
-    gears: gearsHandler
 };
 
 /* Set active handler
@@ -1769,16 +1767,6 @@ function greasemonkeyHandler(s) {
     }
 }
 greasemonkeyHandler.name = 'greasemonkey';
-
-var gearsHandler = function(options) {
-    var workerPool = google.gears.factory.create('beta.workerpool');
-    workerPool.onmessage = function(a, b, message) {
-        options.success(message.body);
-    };
-    var childWorkerId = workerPool.createWorker("http://jquery-douban.appspot.com/worker.js");
-    workerPool.sendMessage(options || {}, childWorkerId);
-};
-gearsHandler.name = 'gears';
 // }}}
 
 })(jQuery);
