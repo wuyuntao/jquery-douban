@@ -8,49 +8,49 @@
  */
 
 // {{{ Douban authentication and API URLs
-const AUTH_HOST = 'http://www.douban.com';
-const REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token';
-const AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize';
-const ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
+var AUTH_HOST = 'http://www.douban.com';
+var REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token';
+var AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize';
+var ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
 
-const API_HOST = 'http://api.douban.com';
-const PEOPLE_URL = API_HOST + '/people';
+var API_HOST = 'http://api.douban.com';
+var PEOPLE_URL = API_HOST + '/people';
 // API Bug => http://www.douban.com/group/topic/4655057/ 
-const SEARCH_PEOPLE_URL = PEOPLE_URL + '/';
-const GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}';
-const GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
+var SEARCH_PEOPLE_URL = PEOPLE_URL + '/';
+var GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}';
+var GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
 
-const NOTE_URL = API_HOST + '/note';
-const GET_NOTE_URL = NOTE_URL + '/{ID}';
-const ADD_NOTE_URL = API_HOST + '/notes';
+var NOTE_URL = API_HOST + '/note';
+var GET_NOTE_URL = NOTE_URL + '/{ID}';
+var ADD_NOTE_URL = API_HOST + '/notes';
 
-const BOOK_URL = API_HOST + '/book/subject';
-const GET_BOOK_URL = BOOK_URL + '/{ID}';
-const SEARCH_BOOK_URL = BOOK_URL + 's';
+var BOOK_URL = API_HOST + '/book/subject';
+var GET_BOOK_URL = BOOK_URL + '/{ID}';
+var SEARCH_BOOK_URL = BOOK_URL + 's';
 
-const MOVIE_URL = API_HOST + '/movie/subject';
-const GET_MOVIE_URL = MOVIE_URL + '/{ID}';
-const SEARCH_MOVIE_URL = MOVIE_URL + 's';
+var MOVIE_URL = API_HOST + '/movie/subject';
+var GET_MOVIE_URL = MOVIE_URL + '/{ID}';
+var SEARCH_MOVIE_URL = MOVIE_URL + 's';
 
-const MUSIC_URL = API_HOST + '/music/subject';
-const GET_MUSIC_URL = MUSIC_URL + '/{ID}';
-const SEARCH_MUSIC_URL = MUSIC_URL + 's';
+var MUSIC_URL = API_HOST + '/music/subject';
+var GET_MUSIC_URL = MUSIC_URL + '/{ID}';
+var SEARCH_MUSIC_URL = MUSIC_URL + 's';
 
-const REVIEW_URL = API_HOST + '/review';
-const GET_REVIEW_URL = REVIEW_URL + '/{ID}';
-const ADD_REVIEW_URL = REVIEW_URL + 's';
+var REVIEW_URL = API_HOST + '/review';
+var GET_REVIEW_URL = REVIEW_URL + '/{ID}';
+var ADD_REVIEW_URL = REVIEW_URL + 's';
 
-const COLLECTION_URL = API_HOST + '/collection';
-const GET_COLLECTION_URL = COLLECTION_URL + '/{ID}';
-const ADD_COLLECTION_URL = COLLECTION_URL;
+var COLLECTION_URL = API_HOST + '/collection';
+var GET_COLLECTION_URL = COLLECTION_URL + '/{ID}';
+var ADD_COLLECTION_URL = COLLECTION_URL;
 
-const MINIBLOG_URL = API_HOST + '/miniblog';
-const GET_MINIBLOG_URL = MINIBLOG_URL + '/{ID}';
-const ADD_MINIBLOG_URL = MINIBLOG_URL + '/saying';
+var MINIBLOG_URL = API_HOST + '/miniblog';
+var GET_MINIBLOG_URL = MINIBLOG_URL + '/{ID}';
+var ADD_MINIBLOG_URL = MINIBLOG_URL + '/saying';
 
-const RECOMMENDATION_URL = API_HOST + '/recommendation';
-const GET_RECOMMENDATION_URL = RECOMMENDATION_URL + '/{ID}';
-const ADD_RECOMMENDATION_URL = RECOMMENDATION_URL + 's';
+var RECOMMENDATION_URL = API_HOST + '/recommendation';
+var GET_RECOMMENDATION_URL = RECOMMENDATION_URL + '/{ID}';
+var ADD_RECOMMENDATION_URL = RECOMMENDATION_URL + 's';
 // }}}
 
 /* {{{ Some utilities
@@ -114,7 +114,7 @@ $.extend({
      * Copied from Low Pro for jQuery
      * http://www.danwebb.net/2008/2/3/how-to-use-low-pro-for-jquery
      */
-    class: function() {
+    klass: function() {
         var parent = null;
         var properties = $.makeArray(arguments);
         if ($.isFunction(properties[0])) parent = properties.shift();
@@ -175,7 +175,7 @@ $.extend({
  * @option      secret String
  * @option      type String
  */
-var DoubanService = $.class({
+var DoubanService = $.klass({
     init: function(options) {
         var defaults = {
             key: '',
@@ -229,7 +229,7 @@ var DoubanService = $.class({
     },
 
     /* HTTP methods */
-    get: function(url, params, callback) {
+    GET: function(url, params, callback) {
 		// shift arguments if params argument was ommited
 		if ($.isFunction(params)) {
 			callback = params;
@@ -252,11 +252,11 @@ var DoubanService = $.class({
         }
     },
 
-    post: function(url, data, callback) {
+    POST: function(url, data, callback) {
         return this._sendData(url, data, callback, 'POST');
     },
 
-    put: function(url, data, callback) {
+    PUT: function(url, data, callback) {
         return this._sendData(url, data, callback, 'PUT');
     },
 
@@ -279,7 +279,7 @@ var DoubanService = $.class({
         }
     },
 
-    delete: function(url, callback) {
+    DELETE: function(url, callback) {
         var response = null;
         var params = this.setParams();
         var headers = this.getHeaders(url, 'DELETE', params);
@@ -316,7 +316,7 @@ var DoubanService = $.class({
 
 /* Base class of Douban API services provides basic access methods
  */
-var BaseService = $.class({
+var BaseService = $.klass({
     init: function(service) {
         this._service = service;
     },
@@ -410,14 +410,14 @@ var BaseService = $.class({
     },
 
     /* Delete object
-     * @returns     if object is deleted, Boolean
+     * @returns     if object is removed, Boolean
      * @param       object, Object or String
      * @param       callback, Function
      * @param       templateUrl, String
      */
-    _delete: function(object, callback, templateUrl) {
+    _remove: function(object, callback, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
-        var response = this._service.delete(url, this._onSuccess(callback, model));
+        var response = this._service.DELETE(url, this._onSuccess(callback, model));
         return response == 'OK' ? true : false;
     },
 
@@ -441,7 +441,7 @@ var BaseService = $.class({
 });
 
 /* Template class of Douban services providing mostly used methods
- * like ``get``, ``getForUser``, ``add``, ``update`` and ``delete``.
+ * like ``get``, ``getForUser``, ``add``, ``update`` and ``remove``.
  * These methods could be redefined or undefined in subclasses.
  * Following attributes should be defined in the ``init`` function
  * of the subclass.
@@ -457,9 +457,9 @@ var BaseService = $.class({
  * @method      getForUser
  * @method      add
  * @method      update
- * @method      delete
+ * @method      remove
  */
-var CommonService = $.class(BaseService, {
+var CommonService = $.klass(BaseService, {
     get: function(object, callback) {
         return this._get(object, callback, this._model, this._getObjectUrl);
     },
@@ -476,8 +476,8 @@ var CommonService = $.class(BaseService, {
         return this._update(object, data, callback, this._model, this._getObjectUrl);
     },
 
-    delete: function(object, callback) {
-        return this._delete(object, callback, this._getObjectUrl);
+    remove: function(object, callback) {
+        return this._remove(object, callback, this._getObjectUrl);
     }
 });
 
@@ -494,7 +494,7 @@ var CommonService = $.class(BaseService, {
  * @method      get
  * @method      search
  */
-var SubjectService = $.class(BaseService, {
+var SubjectService = $.klass(BaseService, {
     get: function(subject, callback) {
         return this._get(subject, callback, this._model, this._getSubjectUrl);
     },
@@ -511,7 +511,7 @@ var SubjectService = $.class(BaseService, {
  * @method      friends         获取用户朋友
  * @method      contacts        获取用户关注的人
  */
-var UserService = $.class(BaseService, {
+var UserService = $.klass(BaseService, {
     get: function(user, callback) {
         return this._get(user, callback, User, GET_PEOPLE_URL);
     },
@@ -538,9 +538,9 @@ var UserService = $.class(BaseService, {
  * @method      getForUser      获取用户的所有日记
  * @method      add             发表新日记
  * @method      update          更新日记
- * @method      delete          删除日记
+ * @method      remove          删除日记
  */
-var NoteService = $.class(CommonService, {
+var NoteService = $.klass(CommonService, {
     init: function($super, service) {
         this._model = Note;
         this._modelEntry = NoteEntry;
@@ -555,7 +555,7 @@ var NoteService = $.class(CommonService, {
  * @method      get         获取书籍信息
  * @method      search      搜索书籍
  */
-var BookService = $.class(SubjectService, {
+var BookService = $.klass(SubjectService, {
     init: function($super, service) {
         this._model = Book;
         this._modelEntry = BookEntry;
@@ -569,7 +569,7 @@ var BookService = $.class(SubjectService, {
  * @method      get         获取电影信息
  * @method      search      搜索电影
  */
-var MovieService = $.class(SubjectService, {
+var MovieService = $.klass(SubjectService, {
     init: function($super, service) {
         this._model = Movie;
         this._modelEntry = MovieEntry;
@@ -583,7 +583,7 @@ var MovieService = $.class(SubjectService, {
  * @method      get         获取音乐信息
  * @method      search      搜索音乐
  */
-var MusicService = $.class(SubjectService, {
+var MusicService = $.klass(SubjectService, {
     init: function($super, service) {
         this._model = Music;
         this._modelEntry = MusicEntry;
@@ -599,9 +599,9 @@ var MusicService = $.class(SubjectService, {
  * @method      getForSubject   特定书籍、电影、音乐的所有评论
  * @method      add             发布新评论
  * @method      update          修改评论
- * @method      delete          删除评论
+ * @method      remove          删除评论
  */
-var ReviewService = $.class(CommonService, {
+var ReviewService = $.klass(CommonService, {
     init: function($super, service) {
         this._model = Review;
         this._modelEntry = ReviewForUserEntry;
@@ -621,9 +621,9 @@ var ReviewService = $.class(CommonService, {
  * @method      getForUser      获取用户收藏信息
  * @method      add             添加收藏
  * @method      update          更新收藏信息
- * @method      delete          删除收藏
+ * @method      remove          删除收藏
  */
-var CollectionService = $.class(CommonService, {
+var CollectionService = $.klass(CommonService, {
     init: function($super, service) {
         this._model = Collection;
         this._modelEntry = CollectionEntry;
@@ -642,9 +642,9 @@ var CollectionService = $.class(CommonService, {
  * @method      getForUser          获取用户广播
  * @method      getForContact       获取用户友邻广播
  * @method      add                 添加广播
- * @method      delete              删除广播
+ * @method      remove              删除广播
  */
-var MiniblogService = $.class(CommonService, {
+var MiniblogService = $.klass(CommonService, {
     init: function($super, service) {
         this._model = Miniblog;
         this._modelEntry = MiniblogEntry;
@@ -670,9 +670,9 @@ var MiniblogService = $.class(CommonService, {
  * @method      join            参加活动
  * @method      add             创建新活动
  * @method      update          更新活动
- * @method      delete          删除活动
+ * @method      remove          删除活动
  */
-var EventService = $.class(CommonService, {
+var EventService = $.klass(CommonService, {
     init: function($super, service) {
         this._model = Event;
         this._modelEntry = EventEntry;
@@ -699,12 +699,12 @@ var EventService = $.class(CommonService, {
  * @method      get             获取推荐
  * @method      getForUser      获取用户的所有推荐
  * @method      add             发表新推荐
- * @method      delete          删除推荐
+ * @method      remove          删除推荐
  * @method      getComment      获取推荐回复
  * @method      addComment      发表新回复
- * @method      deleteComment   删除回复
+ * @method      removeComment   删除回复
  */
-var RecommendationService = $.class(CommonService, {
+var RecommendationService = $.klass(CommonService, {
     init: function($super, service) {
         this._model = Recommendation;
         this._modelEntry = RecommendationEntry;
@@ -725,8 +725,8 @@ var RecommendationService = $.class(CommonService, {
         return this._add(data, callback, url, Comment);
     },
 
-    deleteComment: function(comment, callback) {
-        return this._delete(comment, callback);
+    removeComment: function(comment, callback) {
+        return this._remove(comment, callback);
     }
 });
 
@@ -734,7 +734,7 @@ var RecommendationService = $.class(CommonService, {
  * @method      getForSubject      某个书籍、电影、音乐中标记最多的标签
  * @method      getForUser         用户对书籍、电影、音乐标记的所有标签
 */
-var TagService = $.class(BaseService, {
+var TagService = $.klass(BaseService, {
     getForSubject: function(subject, offset, limit, callback) {
         return this._getForObject(subject, offset, limit, callback, TagEntry, null, '/tags');
     },
@@ -750,7 +750,7 @@ var TagService = $.class(BaseService, {
 /* Base class of douban object like user and note 
  * @param   feed JSON. Gdata JSON feed
  */
-var DoubanObject = $.class({
+var DoubanObject = $.klass({
     init: function(feed) {
         this._feed = feed;
         this.createFromJson();
@@ -965,7 +965,7 @@ DoubanObject.subjectFactory = function(json) {
  * @attribute       entries         对象数组
  * @method          createFromJson
  */
-var DoubanObjectEntry = $.class(DoubanObject, {
+var DoubanObjectEntry = $.klass(DoubanObject, {
     init: function(feed) {
         this._feed = feed;
         this.createFromJson();
@@ -984,7 +984,7 @@ var DoubanObjectEntry = $.class(DoubanObject, {
 /* Base class for entries which has an author attribute
  * @attribute       author      作者
  */
-var AuthorEntry = $.class(DoubanObjectEntry, {
+var AuthorEntry = $.klass(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
         this.author = this.getAuthor();
         $super(doubanObject);
@@ -994,7 +994,7 @@ var AuthorEntry = $.class(DoubanObjectEntry, {
 /* Base class for search queries which has an query attribute
  * @attribute       query       搜索词
  */
-var SearchEntry = $.class(DoubanObjectEntry, {
+var SearchEntry = $.klass(DoubanObjectEntry, {
     createFromJson: function($super, doubanObject) {
         this.query = this.getAttr('title').replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
         $super(doubanObject);
@@ -1013,7 +1013,7 @@ var SearchEntry = $.class(DoubanObjectEntry, {
  * @attribute       iamgeUrl        头像
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var User = $.class(DoubanObject, {
+var User = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'userName', 'screenName', 'location', 'blog', 'intro', 'url', 'imageUrl'];
         $super();
@@ -1022,7 +1022,7 @@ var User = $.class(DoubanObject, {
 
 /* Douban user entries
  */
-var UserEntry = $.class(SearchEntry, {
+var UserEntry = $.klass(SearchEntry, {
     createFromJson: function($super) {
         $super(User);
     }
@@ -1042,7 +1042,7 @@ var UserEntry = $.class(SearchEntry, {
  * @attribute       isReplyEnabled  是否允许回复
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var Note = $.class(DoubanObject, {
+var Note = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'author', 'summary', 'content', 'published', 'updated', 'url', 'isPublic', 'isReplyEnabled'];
         $super();
@@ -1069,7 +1069,7 @@ Note.createXml = function(data) {
 
 /* Douban note entries
  */
-var NoteEntry = $.class(AuthorEntry, {
+var NoteEntry = $.klass(AuthorEntry, {
     createFromJson: function($super) {
         $super(Note);
     }
@@ -1099,7 +1099,7 @@ var NoteEntry = $.class(AuthorEntry, {
  * @attribute       votes           投票人数
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var Book = $.class(DoubanObject, {
+var Book = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'aka', 'subtitle', 'authors', 'translators', 'isbn10', 'isbn13', 'releaseDate', 'publisher', 'price', 'pages', 'binding', 'authorIntro', 'summary', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
         $super();
@@ -1108,7 +1108,7 @@ var Book = $.class(DoubanObject, {
 
 /* Douban book entries
  */
-var BookEntry = $.class(SearchEntry, {
+var BookEntry = $.klass(SearchEntry, {
     createFromJson: function($super) {
         $super(Book);
     }
@@ -1137,7 +1137,7 @@ var BookEntry = $.class(SearchEntry, {
  * @attribute       votes           投票人数
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var Movie = $.class(DoubanObject, {
+var Movie = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'chineseTitle', 'aka', 'directors', 'writers', 'cast', 'imdb', 'releaseDate', 'episode', 'language', 'country', 'summary', 'url', 'imageUrl', 'website', 'tags', 'rating', 'votes'];
         $super();
@@ -1146,7 +1146,7 @@ var Movie = $.class(DoubanObject, {
 
 /* Douban movie entry
  */
-var MovieEntry = $.class(SearchEntry, {
+var MovieEntry = $.klass(SearchEntry, {
     createFromJson: function($super) {
         $super(Movie);
     }
@@ -1172,7 +1172,7 @@ var MovieEntry = $.class(SearchEntry, {
  * @attribute       votes           投票人数
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var Music = $.class(DoubanObject, {
+var Music = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'aka', 'artists', 'ean', 'releaseDate', 'publisher', 'media', 'discs', 'version', 'summary', 'tracks', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
         $super();
@@ -1181,7 +1181,7 @@ var Music = $.class(DoubanObject, {
 
 /* Douban music entry
  */
-var MusicEntry = $.class(SearchEntry, {
+var MusicEntry = $.klass(SearchEntry, {
     createFromJson: function($super) {
         $super(Music);
     }
@@ -1200,7 +1200,7 @@ var MusicEntry = $.class(SearchEntry, {
  * @attribute       rating          评论对条目的评分
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var Review = $.class(DoubanObject, {
+var Review = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'author', 'subject', 'summary', 'content', 'published', 'updated', 'url', 'rating'];
         $super();
@@ -1228,7 +1228,7 @@ Review.createXml = function(data) {
 
 /* Douban review for user entry
  */
-var ReviewForUserEntry = $.class(AuthorEntry, {
+var ReviewForUserEntry = $.klass(AuthorEntry, {
     createFromJson: function($super) {
         $super(Review);
     }
@@ -1236,7 +1236,7 @@ var ReviewForUserEntry = $.class(AuthorEntry, {
 
 /* Douban review for subject entry
  */
-var ReviewForSubjectEntry = $.class(DoubanObjectEntry, {
+var ReviewForSubjectEntry = $.klass(DoubanObjectEntry, {
     createFromJson: function($super) {
         $super(Review);
     }
@@ -1254,7 +1254,7 @@ var ReviewForSubjectEntry = $.class(DoubanObjectEntry, {
  * @attribute       rating          收藏评分
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var Collection = $.class(DoubanObject, {
+var Collection = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'owner', 'content', 'updated', 'subject', 'status', 'tags', 'rating'];
         $super();
@@ -1290,7 +1290,7 @@ Collection.createXml = function(data) {
 
 /* Douban collection entry
  */
-var CollectionEntry = $.class(AuthorEntry, {
+var CollectionEntry = $.klass(AuthorEntry, {
     createFromJson: function($super) {
         $super(Collection);
     }
@@ -1307,7 +1307,7 @@ var CollectionEntry = $.class(AuthorEntry, {
  * @attribute       imageUrl        相关图片链接
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var Miniblog = $.class(DoubanObject, {
+var Miniblog = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'content', 'published', 'category', 'type', 'imageUrl'];
         $super();
@@ -1326,7 +1326,7 @@ Miniblog.createXml = function(data) {
 
 /* Douban miniblog entry
  */
-var MiniblogEntry = $.class(AuthorEntry, {
+var MiniblogEntry = $.klass(AuthorEntry, {
     createFromJson: function($super) {
         $super(Collection);
     }
@@ -1342,7 +1342,7 @@ var MiniblogEntry = $.class(AuthorEntry, {
  * @attribute       comment         评论
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var Recommendation = $.class(DoubanObject, {
+var Recommendation = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'title', 'content', 'published', 'type', 'comment'];
         $super();
@@ -1365,7 +1365,7 @@ Recommendation.createXml = function(data) {
 
 /* Douban recommendation entry
  */
-var RecommendationEntry = $.class(AuthorEntry, {
+var RecommendationEntry = $.klass(AuthorEntry, {
     createFromJson: function($super) {
         $super(Recommendation);
     }
@@ -1379,7 +1379,7 @@ var RecommendationEntry = $.class(AuthorEntry, {
  * @attribute       published       回复发布时间
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var Comment = $.class(DoubanObject, {
+var Comment = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'author', 'published', 'content'];
         $super();
@@ -1398,7 +1398,7 @@ Comment.createXml = function(data) {
 
 /* Douban recommendation comment entry
  */
-var CommentEntry = $.class(AuthorEntry, {
+var CommentEntry = $.klass(AuthorEntry, {
     createFromJson: function($super) {
         $super(Comment);
     }
@@ -1411,7 +1411,7 @@ var CommentEntry = $.class(AuthorEntry, {
  * @attribute       count           标签被使用的次数
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
-var Tag = $.class(DoubanObject, {
+var Tag = $.klass(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'name', 'count'];
         $super();
@@ -1420,7 +1420,7 @@ var Tag = $.class(DoubanObject, {
 
 /* Douban tag entry
  */
-var TagEntry = $.class(DoubanObjectEntry, {
+var TagEntry = $.klass(DoubanObjectEntry, {
     createFromJson: function($super) {
         $super(Tag);
     }
@@ -1689,7 +1689,7 @@ $.douban.http.activeHandler = jqueryHandler;
  */
 $.douban.http.handlers = {
     jquery: jqueryHandler,
-    greasemonkey: greasemonkeyHandler,
+    greasemonkey: greasemonkeyHandler
 };
 
 /* Set active handler
@@ -1744,7 +1744,7 @@ jqueryHandler.name = 'jquery';
 
 function greasemonkeyHandler(s) {
     s = $.extend($.douban.http.settings, s || {});
-    if ( s.data && typeof s.data != "string" ) s.data = $.param(s.data);
+    if (s.data && typeof s.data != "string") s.data = $.param(s.data);
     if (s.data && s.type == "GET") {
         s.url += (s.url.match(/\?/) ? "&" : "?") + s.data;
         s.data = null;
@@ -1756,8 +1756,8 @@ function greasemonkeyHandler(s) {
             url: s.url,
             data: s.data,
             headers: s.headers,
-            onload: onLoad,
-            // onerror: s.error
+            onload: onLoad
+            // 'onerror': s.error
         });
     }
     function onLoad(response) {
