@@ -390,7 +390,7 @@ var BaseService = $.klass({
      */
     _add: function(data, callback, url, model) {
         if (typeof data == 'object') data = model.createXml(data);
-        var json = this._service.POSt(url, data, this._onSuccess(callback, model));
+        var json = this._service.POST(url, data, this._onSuccess(callback, model));
         return this._response(json, model);
     },
 
@@ -417,7 +417,7 @@ var BaseService = $.klass({
      */
     _remove: function(object, callback, templateUrl) {
         var url = this.lazyUrl(object, templateUrl);
-        var response = this._service.DELETE(url, this._onSuccess(callback, model));
+        var response = this._service.DELETE(url, this._onSuccess(callback));
         return response == 'OK' ? true : false;
     },
 

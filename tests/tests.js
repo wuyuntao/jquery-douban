@@ -252,12 +252,11 @@ test("test book api", function() {
     equals(book.aka[0], 'The Inmates Are Running the Asylum : Why High Tech Products Drive Us Crazy and How to Restore the Sanity');
     
     var result = service.book.search('mysql', 5, 2);
-    ok(result.total >= 130, "search book total results ok");
+    ok(result.total >= 100, "search book total results ok" + result.total);
     equals(result.offset, 5, "search book start index ok");
     equals(result.limit, 2, "search book max results ok");
     equals(result.entries.length, 2, "search book ok");
-    equals(result.entries[0].id, "http://api.douban.com/book/subject/1909003", "get book id ok");
-    equals(result.entries[1].id, "http://api.douban.com/book/subject/1232101", "get book id ok");
+    ok(result.entries[0].id.match(/^http:\/\/api\.douban\.com\/book\/subject\/\d+$/), "get book id ok: " + result.entries[0].id);
 });
 
 /* Because all sujects are inherited from same class,
@@ -502,7 +501,7 @@ test("test tag api", function() {
 
     /* get for user
      */
-    tags2 = service.tag.getForUser('wyt', 2, 1, 'book');
+    tags2 = service.tag.getForUser('wyt', 2, 1, null, 'book');
     equals(tags2.entries.length, 1);
 });
 
