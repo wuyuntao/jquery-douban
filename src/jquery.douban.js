@@ -98,16 +98,16 @@ $.extend({
     },
 
     bind: function(func, scope) {
-      return function() {
-        return func.apply(scope, $.makeArray(arguments));
-      }
+        return function() {
+            return func.apply(scope, $.makeArray(arguments));
+        }
     },
 
     wrap: function(func, wrapper) {
-      var __method = func;
-      return function() {
-        return wrapper.apply(this, [$.bind(__method, this)].concat($.makeArray(arguments)));
-      }
+        var __method = func;
+        return function() {
+            return wrapper.apply(this, [$.bind(__method, this)].concat($.makeArray(arguments)));
+        }
     },
 
     /* Class creation and inheriance.
@@ -180,7 +180,7 @@ var DoubanService = $.class({
         var defaults = {
             key: '',
             secret: '',
-            type: 'jquery',
+            type: 'jquery'
         };
         this.options = $.extend(defaults, options || {});;
         this.api = new Token(this.options.key, this.options.secret);
@@ -253,11 +253,11 @@ var DoubanService = $.class({
     },
 
     post: function(url, data, callback) {
-        return this._sendData(url, data, callback, 'POST')
+        return this._sendData(url, data, callback, 'POST');
     },
 
     put: function(url, data, callback) {
-        return this._sendData(url, data, callback, 'PUT')
+        return this._sendData(url, data, callback, 'PUT');
     },
 
     _sendData: function(url, data, callback, type) {
@@ -1017,7 +1017,7 @@ var User = $.class(DoubanObject, {
     createFromJson: function($super) {
         this.all = ['id', 'userName', 'screenName', 'location', 'blog', 'intro', 'url', 'imageUrl'];
         $super();
-    },
+    }
 });
 
 /* Douban user entries
@@ -1441,7 +1441,7 @@ function OAuthClient(options) {
     var defaults = {
         key: '',
         secret: '',
-        type: 'jquery',
+        type: 'jquery'
     };
     this.options = $.extend(defaults, options || {});;
     this.api = new Token(this.options.key, this.options.secret);
