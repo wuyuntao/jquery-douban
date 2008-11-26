@@ -1,8 +1,5 @@
 # -*- coding: UTF-8 -*-
 import re
-import cgi
-import logging
-from datetime import datetime
 
 from google.appengine.api import urlfetch
 from google.appengine.ext import webapp
@@ -11,19 +8,19 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 DEBUG = True
 
 class DoubanProxy(webapp.RequestHandler):
-    """Proxy for Gears calls to douban"""
+    """ Simple cross-origin proxy for Gears requests to douban """
     def get(self):
-        proxy(self, 'GET')
+        proxy(self)
     def post(self):
-        proxy(self, 'POST')
+        proxy(self)
     def put(self):
-        proxy(self, 'PUT')
+        proxy(self)
     def delete(self):
-        proxy(self, 'DELETE')
+        proxy(self)
 
-re_douban = re.compile(r'^http:\/\/(api|www)+\.douban\.com\/.*')
+re_douban = re.compile(r'^http:\/\/(api|www)\.douban\.com\/.*')
 
-def proxy(handler, type):
+def proxy(handler):
     url = handler.request.get('url')
     if re_douban.match(url):
         # Set correct headers
@@ -32,13 +29,11 @@ def proxy(handler, type):
             'Content-Type': handler.request.headers.get('Content-Type', '')
         }
 
-        # Get upload data for POST and PUT
-        payload = None
-        if type == 'POST' or type == 'PUT':
-            payload = handler.request.body
+        # Set upload data
+        payload = handler.request.body
 
         # Fetch result
-        response = urlfetch.fetch(payload=payload, url=url, method=type, headers=headers)
+        response = urlfetch.fetch(payload=payload, url=url, method=handler.request.method, headers=headers)
         handler.response.out.write(response.content)
     else:
         handler.response.out.write("Invalid URL")
