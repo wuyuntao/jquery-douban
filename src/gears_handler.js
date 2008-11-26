@@ -7,7 +7,7 @@
  */
 var gearsHandler = function(s) {
     if (!google || !google.gears) return;
-    s = $.extend($.douban.http.settings, s || {});
+    s = $.extend({}, $.douban.http.settings, s || {});
 
     // Convert data if not already a string
     if (s.data && typeof s.data != "string") s.data = $.param(s.data);
