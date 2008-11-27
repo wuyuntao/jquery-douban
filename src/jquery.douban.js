@@ -751,8 +751,8 @@ var TagService = $.klass(BaseService, {
  * @param   feed JSON. Gdata JSON feed
  */
 var DoubanObject = $.klass({
-    init: function(feed) {
-        this._feed = feed;
+    init: function(data) {
+        this._data = data;
         this.createFromJson();
     },
 
@@ -760,22 +760,24 @@ var DoubanObject = $.klass({
      * @param   data JSON
      */
     createFromJson: function() {
-        for (var i = 0, len = this.all.length; i < len; i++) {
-            var name = this.all[i];
-            this[name] = this._getAttribute(name);
+        if (this._data) {
+            for (var i = 0, len = this.all.length; i < len; i++) {
+                var name = this.all[i];
+                this[name] = this._getAttribute(name);
+            }
         }
     },
 
     /* Get read-only json feed
      */
-    getFeed: function() {
-        return this._feed;
+    getData: function() {
+        return this._data;
     },
 
     /* Update the feed and object
      */
-    updateFeed: function(feed) {
-        this._feed = feed;
+    updatedata: function(data) {
+        this._data = data;
         this.createFromJson();
     },
 
@@ -810,7 +812,7 @@ var DoubanObject = $.klass({
             case 'chineseTitle':
                 return this.getChineseTitle();
             case 'count':
-                return this._feed['@count'] || this.getAttr('db:count');
+                return this._data['@count'] || this.getAttr('db:count');
             case 'endTime':
             case 'published':
             case 'startTime':
@@ -836,7 +838,7 @@ var DoubanObject = $.klass({
             case 'status':
                 return this.getAttr('db:' + attr);
             case 'name':
-                return this._feed['@name'] || this.getAttr('title');
+                return this._data['@name'] || this.getAttr('title');
             case 'offset':
                 return parseInt(this.getAttr("opensearch:startIndex") || "1") - 1;
             case 'rating':
@@ -866,9 +868,9 @@ var DoubanObject = $.klass({
 
     // Get the attribute
     getAttr: function (attr) {
-        if (!this._feed) return;
-        if (this._feed[attr]) return this._feed[attr]['$t'];
-        var attrs = this._feed['db:attribute'];
+        if (this._data[attr])
+            return this._data[attr]['$t'];
+        var attrs = this._data['db:attribute'];
         if (attrs)
             for (var i in attrs)
                 if (attrs[i]['@name'] == attr) return attrs[i]['$t'];
@@ -876,8 +878,7 @@ var DoubanObject = $.klass({
 
     // Get a list of attributes
     getAttrs: function(name) {
-        if (!this._feed || !this._feed['db:attribute']) return;
-        var attrs = [], feedAttributes = this._feed['db:attribute'];
+        var attrs = [], feedAttributes = this._data['db:attribute'];
         for (var i = 0, len = feedAttributes.length; i < len; i++)
             if (feedAttributes[i]['@name'] == name)
                 attrs.push(feedAttributes[i]['$t']);
@@ -886,27 +887,24 @@ var DoubanObject = $.klass({
 
     // Get the url
     getUrl: function(attr) {
-        if (!this._feed) return;
         // default ``attr`` is 'alternate'
         attr = attr || 'alternate';
-        var links = this._feed['link'];
+        var links = this._data['link'];
         for (var i in links)
             if (links[i]['@rel'] == attr) return links[i]['@href'];
     },
 
     // Get the category for miniblog object
     getCategory: function() {
-        if (!this._feed || !this._feed['category']) return;
-        if (typeof this._feed['category'][0] != 'undefined')
-            return this._feed['category'][0]['@term'].match(/\.(\w+)$/)[1];
+        if (typeof this._data['category'][0] != 'undefined')
+            return this._data['category'][0]['@term'].match(/\.(\w+)$/)[1];
         else
-            return this._feed['category']['@term'].match(/\.(\w+)$/)[1];
+            return this._data['category']['@term'].match(/\.(\w+)$/)[1];
     },
 
     // Get chinese title for movie object
     getChineseTitle: function() {
-        if (!this._feed || !this._feed['db:attribute']) return;
-        var attrs = this._feed['db:attribute'];
+        var attrs = this._data['db:attribute'];
         for (var i = 0, len = attrs.length; i < len; i++)
             if (attrs[i]['@name'] == 'aka' && attrs[i]['@lang'] == 'zh_CN')
                 return attrs[i]['$t'];
@@ -914,51 +912,49 @@ var DoubanObject = $.klass({
 
     // Get an attibute and convert it into boolean value
     getBool: function(attr, trueValue) {
-        if (this._feed) return this.getAttr(attr) == (trueValue || 'yes') ? true : false;
+        return this.getAttr(attr) == (trueValue || 'yes') ? true : false;
     },
 
     // Get address
     getAddress: function() {
-        if (this._feed && this._feed['gd:where']) return this._feed['gd:where']['@valueString'];
+        return this._data['gd:where']['@valueString'];
     },
 
     // Get author, returns a user object
     getAuthor: function() {
-        if (this._feed && this._feed.author) return new User(this._feed.author);
+        return new User(this._data.author);
     },
 
     // Get subject, returns a book, movie or music object
     getSubject: function() {
-        if (!this._feed || !this._feed['db:subject']) return;
-        return DoubanObject.subjectFactory(this._feed['db:subject']);
+        return DoubanObject.subjectFactory(this._data['db:subject']);
     },
 
     // Get time and turn it into javascript date object
     getTime: function(attr) {
-        if (this._feed) 
-            var time = typeof this._feed['gd:when'] != 'undefined' ? this._feed['gd:when']['@' + attr] : this.getAttr(attr);
+        var time = typeof this._data['gd:when'] != 'undefined' ? this._data['gd:when']['@' + attr] : this.getAttr(attr);
         return time ? $.parseDate(time) : undefined;
     },
 
     // Get rating
     getRating: function() {
-        if (!this._feed || !this._feed['gd:rating']) return;
-        return parseFloat(this._feed['gd:rating']['@average'] || 
-                          this._feed['gd:rating']['@value']);
+        var rating = this._data['gd:rating'];
+        if (rating) return parseFloat(rating['@average'] || rating['@value']);
     },
 
     // Get votes
     getVotes: function() {
-        if (!this._feed || !this._feed['gd:rating']) return;
-        return this._feed['gd:rating']['@numRaters'];
+        var rating = this._data['gd:rating'];
+        if (rating) return rating['@numRaters'];
     },
 
     // Get tags for subject or user, returns a list of tag object
     getTags: function() {
-        if (!this._feed || !this._feed['db:tag']) return [];
-        var tags = [], entries = this._feed['db:tag'];
-        for (var i = 0, len = entries.length; i < len; i++)
-            tags.push(new Tag(entries[i]));
+        var dbTags = this._data['db:tag'];
+        var tags = [];
+        if (dbTags)
+            for (var i = 0, len = dbTags.length; i < len; i++)
+                tags.push(new Tag(dbTags[i]));
         return tags;
     }
 });
@@ -988,17 +984,18 @@ DoubanObject.subjectFactory = function(json) {
  * @method          createFromJson
  */
 var DoubanObjectEntry = $.klass(DoubanObject, {
-    init: function(feed) {
-        this._feed = feed;
-        this.createFromJson();
+    init: function($super, data) {
+        this.all = ['title', 'total', 'offset', 'limit', 'entries'];
+        $super(data);
     },
 
-    createFromJson: function($super, doubanObject) {
-        this.all = ['title', 'total', 'offset', 'limit', 'entries'];
-        $super();
-        this.entries = [];
-        for (var i = 0, len = this._feed.entry.length; i < len; i++) {
-            this.entries.push(new doubanObject(this._feed.entry[i]));
+    createFromJson: function($super) {
+        if (this._data) {
+            $super();
+            this.entries = [];
+            for (var i = 0, len = this._data.entry.length; i < len; i++) {
+                this.entries.push(new this.model(this._data.entry[i]));
+            }
         }
     }
 });
@@ -1007,9 +1004,9 @@ var DoubanObjectEntry = $.klass(DoubanObject, {
  * @attribute       author      作者
  */
 var AuthorEntry = $.klass(DoubanObjectEntry, {
-    createFromJson: function($super, doubanObject) {
+    createFromJson: function($super) {
         this.author = this.getAuthor();
-        $super(doubanObject);
+        $super();
     }
 });
 
@@ -1017,9 +1014,9 @@ var AuthorEntry = $.klass(DoubanObjectEntry, {
  * @attribute       query       搜索词
  */
 var SearchEntry = $.klass(DoubanObjectEntry, {
-    createFromJson: function($super, doubanObject) {
+    createFromJson: function($super) {
         this.query = this.getAttr('title').replace(/^搜索\ /, '').replace(/\ 的结果$/, '');
-        $super(doubanObject);
+        $super();
     }
 });
 
@@ -1036,17 +1033,18 @@ var SearchEntry = $.klass(DoubanObjectEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var User = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'userName', 'screenName', 'location', 'blog', 'intro', 'url', 'imageUrl'];
-        $super();
+        $super(data);
     }
 });
 
 /* Douban user entries
  */
 var UserEntry = $.klass(SearchEntry, {
-    createFromJson: function($super) {
-        $super(User);
+    init: function($super, data) {
+        this.model = User;
+        $super(data);
     }
 });
 
@@ -1065,9 +1063,9 @@ var UserEntry = $.klass(SearchEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Note = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'title', 'author', 'summary', 'content', 'published', 'updated', 'url', 'isPublic', 'isReplyEnabled'];
-        $super();
+        $super(data);
     }
 });
 // Class methods
@@ -1092,8 +1090,9 @@ Note.createXml = function(data) {
 /* Douban note entries
  */
 var NoteEntry = $.klass(AuthorEntry, {
-    createFromJson: function($super) {
-        $super(Note);
+    init: function($super, data) {
+        this.model = Note
+        $super(data);
     }
 });
 
@@ -1122,17 +1121,18 @@ var NoteEntry = $.klass(AuthorEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Book = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'title', 'aka', 'subtitle', 'authors', 'translators', 'isbn10', 'isbn13', 'releaseDate', 'publisher', 'price', 'pages', 'binding', 'authorIntro', 'summary', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
-        $super();
+        $super(data);
     }
 });
 
 /* Douban book entries
  */
 var BookEntry = $.klass(SearchEntry, {
-    createFromJson: function($super) {
-        $super(Book);
+    init: function($super, data) {
+        this.model = Book;
+        $super(data);
     }
 });
 
@@ -1160,17 +1160,18 @@ var BookEntry = $.klass(SearchEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Movie = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'title', 'chineseTitle', 'aka', 'directors', 'writers', 'cast', 'imdb', 'releaseDate', 'episode', 'language', 'country', 'summary', 'url', 'imageUrl', 'website', 'tags', 'rating', 'votes'];
-        $super();
+        $super(data);
     }
 });
 
 /* Douban movie entry
  */
 var MovieEntry = $.klass(SearchEntry, {
-    createFromJson: function($super) {
-        $super(Movie);
+    init: function($super, data) {
+        this.model = Movie;
+        $super(data);
     }
 });
 
@@ -1195,17 +1196,18 @@ var MovieEntry = $.klass(SearchEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Music = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'title', 'aka', 'artists', 'ean', 'releaseDate', 'publisher', 'media', 'discs', 'version', 'summary', 'tracks', 'url', 'imageUrl', 'tags', 'rating', 'votes'];
-        $super();
+        $super(data);
     }
 });
 
 /* Douban music entry
  */
 var MusicEntry = $.klass(SearchEntry, {
-    createFromJson: function($super) {
-        $super(Music);
+    init: function($super, data) {
+        this.model = Music;
+        $super(data);
     }
 });
 
@@ -1223,9 +1225,9 @@ var MusicEntry = $.klass(SearchEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Review = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'title', 'author', 'subject', 'summary', 'content', 'published', 'updated', 'url', 'rating'];
-        $super();
+        $super(data);
     }
 });
 // Class methods
@@ -1251,16 +1253,18 @@ Review.createXml = function(data) {
 /* Douban review for user entry
  */
 var ReviewForUserEntry = $.klass(AuthorEntry, {
-    createFromJson: function($super) {
-        $super(Review);
+    init: function($super, data) {
+        this.model = Review;
+        $super(data);
     }
 });
 
 /* Douban review for subject entry
  */
 var ReviewForSubjectEntry = $.klass(DoubanObjectEntry, {
-    createFromJson: function($super) {
-        $super(Review);
+    init: function($super, data) {
+        this.model = Review;
+        $super(data);
     }
 });
 
@@ -1277,9 +1281,9 @@ var ReviewForSubjectEntry = $.klass(DoubanObjectEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Collection = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'title', 'owner', 'content', 'updated', 'subject', 'status', 'tags', 'rating'];
-        $super();
+        $super(data);
     }
 });
 // Class methods
@@ -1313,8 +1317,9 @@ Collection.createXml = function(data) {
 /* Douban collection entry
  */
 var CollectionEntry = $.klass(AuthorEntry, {
-    createFromJson: function($super) {
-        $super(Collection);
+    init: function($super, data) {
+        this.model = Collection;
+        $super(data);
     }
 });
 
@@ -1330,9 +1335,9 @@ var CollectionEntry = $.klass(AuthorEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Miniblog = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'title', 'content', 'published', 'category', 'type', 'imageUrl'];
-        $super();
+        $super(data);
     }
 });
 // Class methods
@@ -1349,8 +1354,9 @@ Miniblog.createXml = function(data) {
 /* Douban miniblog entry
  */
 var MiniblogEntry = $.klass(AuthorEntry, {
-    createFromJson: function($super) {
-        $super(Collection);
+    init: function($super, data) {
+        this.model = Collection;
+        $super(data);
     }
 });
 
@@ -1365,9 +1371,9 @@ var MiniblogEntry = $.klass(AuthorEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Recommendation = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'title', 'content', 'published', 'type', 'comment'];
-        $super();
+        $super(data);
     }
 });
 // Class methods
@@ -1388,8 +1394,9 @@ Recommendation.createXml = function(data) {
 /* Douban recommendation entry
  */
 var RecommendationEntry = $.klass(AuthorEntry, {
-    createFromJson: function($super) {
-        $super(Recommendation);
+    init: function($super, data) {
+        this.model = Recommendation;
+        $super(data);
     }
 });
 
@@ -1402,9 +1409,9 @@ var RecommendationEntry = $.klass(AuthorEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Comment = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'author', 'published', 'content'];
-        $super();
+        $super(data);
     }
 });
 // Class methods
@@ -1421,8 +1428,9 @@ Comment.createXml = function(data) {
 /* Douban recommendation comment entry
  */
 var CommentEntry = $.klass(AuthorEntry, {
-    createFromJson: function($super) {
-        $super(Comment);
+    init: function($super, data) {
+        this.model = Comment;
+        $super(data);
     }
 });
 
@@ -1447,9 +1455,9 @@ var CommentEntry = $.klass(AuthorEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Event = $.klass(DoubanObject, {
-    init: function($super, feed) {
+    init: function($super, data) {
         this.all = ['id', 'title', 'owner', 'category', 'location', 'startTime', 'endTime', 'summary', 'content', 'url', 'imageUrl', 'isInviteOnly', 'isInviteEnabled', 'participants', 'wishers', 'address' ];
-        $super(feed);
+        $super(data);
     }
 });
 // Class methods
@@ -1464,8 +1472,9 @@ Event.createXml = function(data) {
 /* Douban event entry
  */
 var EventEntry = $.klass(DoubanObjectEntry, {
-    createFromJson: function($super) {
-        $super(Event);
+    init: function($super, data) {
+        this.model = Event;
+        $super(data);
     }
 });
 
@@ -1477,17 +1486,18 @@ var EventEntry = $.klass(DoubanObjectEntry, {
  * @method          createFromJson  由豆瓣返回的JSON，初始化数据
  */
 var Tag = $.klass(DoubanObject, {
-    createFromJson: function($super) {
+    init: function($super, data) {
         this.all = ['id', 'name', 'count'];
-        $super();
+        $super(data);
     }
 });
 
 /* Douban tag entry
  */
 var TagEntry = $.klass(DoubanObjectEntry, {
-    createFromJson: function($super) {
-        $super(Tag);
+    init: function($super, data) {
+        this.model = Tag;
+        $super(data);
     }
 });
 // }}}
