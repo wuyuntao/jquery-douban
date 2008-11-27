@@ -784,6 +784,8 @@ var DoubanObject = $.klass({
      */
     _getAttribute: function(attr) {
         switch (attr) {
+            case 'address':
+                return this.getAddress();
             case 'artists':
                 return this.getAttrs('singer');
             case 'aka':
@@ -809,16 +811,25 @@ var DoubanObject = $.klass({
                 return this.getChineseTitle();
             case 'count':
                 return this._feed['@count'] || this.getAttr('db:count');
+            case 'endTime':
+            case 'published':
+            case 'startTime':
+            case 'updated':
+                return this.getTime(attr);
             case 'id':
                 return this.getAttr('id') || this.getUrl('self');
             case 'intro':
                 return this.getAttr('content');
             case 'imageUrl':
                 return this.getUrl('image') || this.getUrl('icon');
-            case 'isPublic':
-                return this.getAttr('privacy') == 'public' ? true : false;
+            case 'isInviteOnly':
+                return this.getBool('invite_only');
+            case 'isInviteEnabled':
+                return this.getBool('can_invite');
             case 'isReplyEnabled':
-                return this.getAttr('can_reply') == 'yes' ? true : false;
+                return this.getBool('can_reply');
+            case 'isPublic':
+                return this.getBool('privacy', 'public');
             case 'limit':
                 return parseInt(this.getAttr("opensearch:itemsPerPage") || "0");
             case 'location':
@@ -828,9 +839,6 @@ var DoubanObject = $.klass({
                 return this._feed['@name'] || this.getAttr('title');
             case 'offset':
                 return parseInt(this.getAttr("opensearch:startIndex") || "1") - 1;
-            case 'published':
-            case 'updated':
-                return this.getTime(attr);
             case 'rating':
                 return this.getRating();
             case 'releaseDate':
@@ -889,7 +897,10 @@ var DoubanObject = $.klass({
     // Get the category for miniblog object
     getCategory: function() {
         if (!this._feed || !this._feed['category']) return;
-        return this._feed['category'][0]['@term'].match(/\.(\w+)$/)[1];
+        if (typeof this._feed['category'][0] != 'undefined')
+            return this._feed['category'][0]['@term'].match(/\.(\w+)$/)[1];
+        else
+            return this._feed['category']['@term'].match(/\.(\w+)$/)[1];
     },
 
     // Get chinese title for movie object
@@ -899,6 +910,16 @@ var DoubanObject = $.klass({
         for (var i = 0, len = attrs.length; i < len; i++)
             if (attrs[i]['@name'] == 'aka' && attrs[i]['@lang'] == 'zh_CN')
                 return attrs[i]['$t'];
+    },
+
+    // Get an attibute and convert it into boolean value
+    getBool: function(attr, trueValue) {
+        if (this._feed) return this.getAttr(attr) == (trueValue || 'yes') ? true : false;
+    },
+
+    // Get address
+    getAddress: function() {
+        if (this._feed && this._feed['gd:where']) return this._feed['gd:where']['@valueString'];
     },
 
     // Get author, returns a user object
@@ -914,24 +935,25 @@ var DoubanObject = $.klass({
 
     // Get time and turn it into javascript date object
     getTime: function(attr) {
-        var time = this.getAttr(attr);
+        if (this._feed) 
+            var time = typeof this._feed['gd:when'] != 'undefined' ? this._feed['gd:when']['@' + attr] : this.getAttr(attr);
         return time ? $.parseDate(time) : undefined;
     },
 
-    // get rating
+    // Get rating
     getRating: function() {
         if (!this._feed || !this._feed['gd:rating']) return;
         return parseFloat(this._feed['gd:rating']['@average'] || 
                           this._feed['gd:rating']['@value']);
     },
 
-    // get votes
+    // Get votes
     getVotes: function() {
         if (!this._feed || !this._feed['gd:rating']) return;
         return this._feed['gd:rating']['@numRaters'];
     },
 
-    // get tags for subject or user, returns a list of tag object
+    // Get tags for subject or user, returns a list of tag object
     getTags: function() {
         if (!this._feed || !this._feed['db:tag']) return [];
         var tags = [], entries = this._feed['db:tag'];
@@ -1441,7 +1463,7 @@ Event.createXml = function(data) {
 
 /* Douban event entry
  */
-var EventEntry = $.class(DoubanObjectEntry, {
+var EventEntry = $.klass(DoubanObjectEntry, {
     createFromJson: function($super) {
         $super(Event);
     }
@@ -1653,6 +1675,7 @@ var factoryDict = {
     'collection': Collection,
     'miniblog': Miniblog,
     'recommendation': Recommendation,
+    'event': Event,
     'tag': Tag
 };
 

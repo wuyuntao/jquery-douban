@@ -693,4 +693,26 @@ test("test recommendation object", function() {
     equals(recommendation.type, "photo_album", "get type ok");
     equals(recommendation.comment, "团子，我家团子，以前觉得她小时候很丑，现在觉得一点也不丑啊～哇哈哈哈", "get comment ok");
 });
+
+test("test event object", function() {
+    var json = {"category":{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#event.party"},"db:location":{"$t":"上海","@id":"shanghai"},"title":{"$t":"{NianNian's Home}我来为他（她）做蛋糕"},"gd:when":{"@endTime":"2008-11-30T21:00:00+08:00","@startTime":"2008-11-01T13:00:00+08:00"},"author":{"link":[{"@rel":"self","@href":"http://api.douban.com/people/1162488"},{"@rel":"alternate","@href":"http://www.douban.com/people/yiyun_tsai/"},{"@rel":"icon","@href":"http://otho.douban.com/icon/u1162488-48.jpg"}],"uri":{"$t":"http://api.douban.com/people/1162488"},"name":{"$t":"蔡粘粘"}},"summary":[{"$t":"注：如想收到更多关于聆舞文化联盟、聆舞剧团、聆舞创意、NianNian's Home的活动信息请加入我们的邮件组：http://www.linc2.org/mailinglist/\r\n\r\n————————————————————————————————\r\n{NianNian's Home}我来为他（她）做蛋糕\r\n\r\n他的生日快到了，很想亲手为他做一只独一无二的蛋糕，哪怕不好吃，不好看，也是我..."}],"content":[{"$t":"注：如想收到更多关于聆舞文化联盟、聆舞剧团、聆舞创意、NianNian's Home的活动信息请加入我们的邮件组：http://www.linc2.org/mailinglist/\r\n\r\n————————————————————————————————\r\n{NianNian's Home}我来为他（她）做蛋糕\r\n\r\n他的生日快到了，很想亲手为他做一只独一无二的蛋糕，哪怕不好吃，不好看，也是我..."}],"link":[{"@rel":"self","@href":"http://api.douban.com/event/10132699"},{"@rel":"alternate","@href":"http://www.douban.com/event/10132699/"},{"@rel":"image","@href":"http://otho.douban.com/mpic/e23411.jpg"}],"db:attribute":[{"$t":"no","@name":"invite_only"},{"$t":"yes","@name":"can_invite"},{"$t":371,"@name":"participants"},{"$t":939,"@name":"wishers"}],"id":{"$t":"http://api.douban.com/event/10132699"},"gd:where":{"@valueString":"上海 长乐路682弄6号后门4F"}}
+
+
+    var evento = $.douban('event', json);
+    var date1 = new Date(2008, 10, 1, 13);
+    var date2 = new Date(2008, 10, 30, 21);
+    equals(evento.id, "http://api.douban.com/event/10132699");
+    equals(evento.title, "{NianNian's Home}我来为他（她）做蛋糕");
+    equals(evento.owner.id, "http://api.douban.com/people/1162488");
+    equals(evento.category, 'party');
+    equals(evento.location, '上海');
+    equals(evento.startTime.getTime(), date1.getTime(), "get start time ok: " + evento.startTime);
+    equals(evento.endTime.getTime(), date2.getTime(), "get end time ok: " + evento.endTime);
+    equals(evento.address, "上海 长乐路682弄6号后门4F");
+    equals(evento.isInviteOnly, false);
+    equals(evento.isInviteEnabled, true);
+    equals(evento.participants, 371);
+    equals(evento.wishers, 939);
+
+});
 // vim: foldmethod=indent
