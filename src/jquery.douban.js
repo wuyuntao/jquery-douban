@@ -51,6 +51,11 @@ var ADD_MINIBLOG_URL = MINIBLOG_URL + '/saying';
 var RECOMMENDATION_URL = API_HOST + '/recommendation';
 var GET_RECOMMENDATION_URL = RECOMMENDATION_URL + '/{ID}';
 var ADD_RECOMMENDATION_URL = RECOMMENDATION_URL + 's';
+
+var EVENT_URL = API_HOST + '/event';
+var GET_EVENT_URL = EVENT_URL + '/{ID}';
+var ADD_EVENT_URL = EVENT_URL + 's';
+var GET_EVENT_FOR_CITY_URL = EVENT_URL + '/location/{ID}';
 // }}}
 
 /* {{{ Some utilities
@@ -138,16 +143,33 @@ $.extend({
         return klass;
     },
 
-    /* Parse datetime string to Date object
+    /* Parse datetime string to Date object, or vice versa
      */
-    parseDate: function(str) {
+    parseDate: function(datetime) {
         var re = /^(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})/;
-        var date = str.match(re);
-        for (var i = 1, len = date.length; i < len; i++) {
-            date[i] = parseInt(date[i], 10);
-            if (i == 2) date[i] -= 1;
+        var tmpl = 'YY-MM-DDThh:mm:ss+08:00';
+        if (typeof datetime == 'string') {
+            var datetime = datetime.match(re);
+            for (var i = 1, len = datetime.length; i < len; i++) {
+                datetime[i] = parseInt(datetime[i], 10);
+                if (i == 2) datetime[i] -= 1;
+            }
+            return new Date(datetime[1], datetime[2], datetime[3],
+                            datetime[4], datetime[5], datetime[6]);
+        } else if (typeof datetime == 'object') {
+            return tmpl.replace(/YY/, $.padLeft(datetime.getFullYear()))
+                       .replace(/MM/, $.padLeft(datetime.getMonth() + 1))
+                       .replace(/DD/, $.padLeft(datetime.getDate()))
+                       .replace(/hh/, $.padLeft(datetime.getHours()))
+                       .replace(/mm/, $.padLeft(datetime.getMinutes()))
+                       .replace(/ss/, $.padLeft(datetime.getSeconds()));
+        } else {
+            throw new Error("Invalid datetime. String or Date object needed");
         }
-        return new Date(date[1], date[2], date[3], date[4], date[5], date[6]);
+    },
+
+    padLeft: function(val, digit) {
+        return val.toString().length >= (digit || 2) ? String(val) : $.padLeft('0' + val, digit);
     },
 
     /* The opposiite of jQuery's native $.param() method.
@@ -199,6 +221,7 @@ var DoubanService = $.klass({
             'collection': CollectionService,
             'miniblog': MiniblogService,
             'recommendation': RecommendationService,
+            'event': EventService,
             'tag': TagService
         }
         for (var name in services) {
@@ -425,6 +448,8 @@ var BaseService = $.klass({
         var self = this;
         return function(data) {
             if (typeof data == 'string') data == 'OK' ? true : false;
+            else if (typeof data == 'object' && data['result'])
+                data['result']['$t'] == 'OK' ? true : false;
             else data = self._response(data, model);
             if ($.isFunction(callback)) callback(data);
         }
@@ -665,12 +690,12 @@ var MiniblogService = $.klass(CommonService, {
 /* Douban Event API Service
  * @method      get             获取活动
  * @method      getForUser      获取用户的所有活动
- * @method      getForCity      获取城市的所有活动
- * @method      search          搜索活动
- * @method      join            参加活动
  * @method      add             创建新活动
  * @method      update          更新活动
  * @method      remove          删除活动
+ * @method      search          搜索活动（未支持）
+ * @method      getForCity      获取城市的所有活动（未支持）
+ * @method      join            参加活动等（未支持）
  */
 var EventService = $.klass(CommonService, {
     init: function($super, service) {
@@ -682,16 +707,20 @@ var EventService = $.klass(CommonService, {
         $super(service);
     },
 
-    getForCity: function(id) {
-        return this._getForObject(user, offset, limit, this._modelEntry, GET_PEOPLE_URL, '/miniblog/contacts');
+    search: function(query, location, offset, limit, callback) {
+        var params = { 'q': query,
+                       'location': location || 'all',
+                       'start-index': (offset || 0) + 1,
+                       'max-results': limit || 50 };
+        var json = this._service.GET(this._addObjectUrl, params, this._onSuccess(callback, this._modelEntry));
+        return this._response(json, this._modelEntry);
     },
 
-    search: function(id) {
-        throw new Error("Not Implemented Yet");
-    },
-
-    join: function(id) {
-        throw new Error("Not Implemented Yet");
+    remove: function(event, data, callback) {
+        if (!data || typeof data == 'object') data = this._model.createRemoveXml(data);
+        var url = this.lazyUrl(event, this._getObjectUrl) + '/delete';
+        var response = this._service.POST(url, data, this._onSuccess(callback));
+        return (response['result'] && response['result']['$t'] == 'OK') ? true : false;
     }
 });
 
@@ -896,10 +925,9 @@ var DoubanObject = $.klass({
 
     // Get the category for miniblog object
     getCategory: function() {
-        if (typeof this._data['category'][0] != 'undefined')
-            return this._data['category'][0]['@term'].match(/\.(\w+)$/)[1];
-        else
-            return this._data['category']['@term'].match(/\.(\w+)$/)[1];
+        if (this._data['category'][0]) var category = this._data['category'][0];
+        else var category = this._data['category'];
+        return category['@term'].match(/\.(\w+)$/)[1];
     },
 
     // Get chinese title for movie object
@@ -1466,12 +1494,43 @@ var Event = $.klass(DoubanObject, {
  * @data        content, String
  */
 Event.createXml = function(data) {
-    throw new Error("Not Implemented Yet");
+    data = $.extend({ category: 'music', title: '', content: '',
+                      isInviteOnly: false, isInviteEnabled: true,
+                      startTime: new Date(), endTime: new Date(),
+                      address: ''
+                    }, data || {});
+    var isInviteOnly = data.isInviteOnly == true ? 'yes' : 'no';
+    var isInviteEnabled = data.isInviteEnabled == true ? 'yes' : 'no';
+    var startTime = $.parseDate(data.startTime);
+    var endTime = $.parseDate(data.endTime);
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/" xmlns:gd="http://schemas.google.com/g/2005" xmlns:opensearch="http://a9.com/-/spec/opensearchrss/1.0/"><title>{TITLE}</title><category scheme="http://www.douban.com/2007#kind" term="http://www.douban.com/2007#event.{CATEGORY}"/><content>{CONTENT}</content><db:attribute name="invite_only">{IS_INVITE_ONLY}</db:attribute><db:attribute name="can_invite">{IS_INVITE_ENABLED}</db:attribute><gd:when endTime="{END_TIME}" startTime="{START_TIME}"/><gd:where valueString="{ADDRESS}"></gd:where></entry>';
+    return xml.replace(/\{TITLE\}/, data.title)
+              .replace(/\{CATEGORY\}/, data.category)
+              .replace(/\{CONTENT\}/, data.content)
+              .replace(/\{IS_INVITE_ONLY\}/, isInviteOnly)
+              .replace(/\{IS_INVITE_ENABLED\}/, isInviteEnabled)
+              .replace(/\{START_TIME\}/, startTime)
+              .replace(/\{END_TIME\}/, endTime)
+              .replace(/\{ADDRESS\}/, data.address);
+};
+Event.createRemoveXml = function(data) {
+    data = $.extend({ reason: "对不起，活动因故取消了" }, data || {});
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><content>{REASON}</content></entry>';
+    return xml.replace(/\{REASON\}/, data.reason);
 };
 
 /* Douban event entry
  */
 var EventEntry = $.klass(DoubanObjectEntry, {
+    init: function($super, data) {
+        this.model = Event;
+        $super(data);
+    }
+});
+
+/* Douban search event entry
+ */
+var EventSearchEntry = $.klass(SearchEntry, {
     init: function($super, data) {
         this.model = Event;
         $super(data);

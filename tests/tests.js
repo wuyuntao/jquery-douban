@@ -299,6 +299,7 @@ test("test music api", function() {
     equals(result.limit, 3, "search music max results ok");
     equals(result.entries.length, 3, "search music ok");
 });
+*/
 
 /* Only ``getForSubject`` should be tested
  */
@@ -495,6 +496,7 @@ test("test tag api", function() {
      */
     tags = service.tag.getForSubject('http://api.douban.com/movie/subject/3158990', 5, 3);
     equals(tags.entries.length, 3);
+    equals(tags.limit, 3);
     equals(tags.entries[0].id, 'http://api.douban.com/movie/tag/范逸臣');
     equals(tags.entries[0].name, '范逸臣');
     ok(tags.entries[0].count >= 684, "get tag count ok");
@@ -503,6 +505,82 @@ test("test tag api", function() {
      */
     tags2 = service.tag.getForUser('wyt', 2, 1, null, 'book');
     equals(tags2.entries.length, 1);
+});
+
+test("test event api", function() {
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+
+    /* get event
+     */
+    var evento = service.event.get('10288075');
+    equals(evento.id, 'http://api.douban.com/event/10288075');
+    equals(evento.title, '蜷川実花个展  ');
+
+    /* get participants of event
+    var participants = service.event.participants('10288075');
+    ok(participants.total > 900, "get participants of event: " + participants.total);
+     */
+
+    /* get wishers of event
+    var wishers = service.wishers('10288075');
+    ok(wishers.total > 900, "get wishers of event: " + wishers.total);
+     */
+
+    /* get event for user
+     */
+    var eventos = service.event.getForUser('iloveshutuo');
+    ok(eventos.total > 1, "get total ok: " + eventos.total);
+    // equals(eventos.limit, 50, "get limit ok: " + eventos.limit);
+    ok(eventos.entries[0].id.match(/http:\/\/api\.douban\.com\/event\/\d+/), "get id ok: ");
+
+    /* get events for city
+    var eventos2 = service.event.getForCity('iloveshutuo');
+    ok(eventos2.total > 1000, "get events for city: " + eventos2.total);
+     */
+
+    /* search events
+    var eventos3 = service.event.search("蛋糕");
+    ok(eventos3.total >= 7, "search events: " + eventos3.total);
+    equals(eventos3.offset, 0, "get offset ok: " + eventos3.offset);
+    equals(eventos3.limit, 50, "get limit ok: " + eventos3.limit);
+    equals(eventos3.entries.length, 5, "get length ok: " + eventos3.entries.length);
+     */
+
+    /* create event
+     */
+    var evento2 = service.event.add({
+        category: 'film',
+        title: '测试添加活动',
+        content: '测试添加活动内容',
+        isInviteOnly: true,
+        isInviteEnabled: false,
+        startTime: new Date(2009, 1, 12, 20),
+        endTime: new Date(2009, 2, 30, 9),
+        address: '测试添加活动地址'
+    });
+    ok(evento2.id.match(/http:\/\/api\.douban\.com\/event\/\d+/), "get event id ok: " + evento2.id);
+
+    /* update event
+     */
+    var evento3 = service.event.update(evento2, {
+        category: 'film',
+        title: '测试更新活动',
+        content: '测试更新活动内容',
+        isInviteOnly: true,
+        isInviteEnabled: false,
+        startTime: new Date(2009, 1, 12, 20),
+        endTime: new Date(2009, 2, 30, 9),
+        address: '测试更新活动地址'
+    });
+    equals(evento3.title, '测试更新活动');
+    equals(evento3.address, '武汉 测试更新活动地址');
+
+    /* delete event
+     */
+    var response = service.event.remove(evento2);
+    ok(response, 'event removed');
 });
 
 module("Douban Object Testcases");
@@ -714,5 +792,14 @@ test("test event object", function() {
     equals(evento.participants, 371);
     equals(evento.wishers, 939);
 
+    var xml = $.douban.createXml('event', {
+        title: '标题',
+        content: '内容',
+        isInviteOnly: true,
+        startTime: new Date(1990, 10, 22, 12),
+        endTime: new Date(2008, 3, 21, 4),
+        address: '地址'
+    });
+    equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/" xmlns:gd="http://schemas.google.com/g/2005" xmlns:opensearch="http://a9.com/-/spec/opensearchrss/1.0/"><title>标题</title><category scheme="http://www.douban.com/2007#kind" term="http://www.douban.com/2007#event.music"/><content>内容</content><db:attribute name="invite_only">yes</db:attribute><db:attribute name="can_invite">yes</db:attribute><gd:when endTime="2008-04-21T04:00:00+08:00" startTime="1990-11-22T12:00:00+08:00"/><gd:where valueString="地址"></gd:where></entry>');
 });
 // vim: foldmethod=indent
