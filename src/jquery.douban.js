@@ -1404,6 +1404,49 @@ var CommentEntry = $.klass(AuthorEntry, {
     }
 });
 
+/* Douban event class
+ * @param           data            Well-formatted json feed
+ * @attribute       id              活动ID
+ * @attribute       title           活动标题
+ * @attribute       owner           活动发起者，User object
+ * @attribute       summary         活动摘要
+ * @attribute       content         活动全文
+ * @attribute       startTime       活动开始时间
+ * @attribute       endTime         活动结束时间
+ * @attribute       url             活动URL
+ * @attribute       imageUrl        活动封面URL
+ * @attribute       category        活动类别
+ * @attribute       location        活动城市
+ * @attribute       address         活动地点
+ * @attribute       isInviteOnly    是否只允许受邀请者参加
+ * @attribute       isInviteEnabled 是否能够邀请参加
+ * @attribute       participants    活动参与者数量
+ * @attribute       wishers         活动感兴趣者数量
+ * @method          createFromJson  由豆瓣返回的JSON，初始化数据
+ */
+var Event = $.klass(DoubanObject, {
+    init: function($super, feed) {
+        this.all = ['id', 'title', 'owner', 'category', 'location', 'startTime', 'endTime', 'summary', 'content', 'url', 'imageUrl', 'isInviteOnly', 'isInviteEnabled', 'participants', 'wishers', 'address' ];
+        $super(feed);
+    }
+});
+// Class methods
+/* create POST or PUT xml
+ * @param       data, Object
+ * @data        content, String
+ */
+Event.createXml = function(data) {
+    throw new Error("Not Implemented Yet");
+};
+
+/* Douban event entry
+ */
+var EventEntry = $.class(DoubanObjectEntry, {
+    createFromJson: function($super) {
+        $super(Event);
+    }
+});
+
 /* Douban tag class
  * @param           data            Well-formatted json feed
  * @attribute       id              标签ID
@@ -1701,6 +1744,7 @@ $.douban.http.setActive = function(name) {
 /* Default http settings
  */
 $.douban.http.settings = {
+    async: false,
     url: location.href,
     type: 'GET',
     data: null,
@@ -1728,7 +1772,7 @@ $.douban.http.unregister = function(name) {
 /* Built-in HTTP request handlers: 'jquery'
  */
 function jqueryHandler(s) {
-    s = $.extend($.douban.http.settings, s || {});
+    s = $.extend({}, $.douban.http.settings, s || {});
     $.extend(s, {
         async: false,
         headers: undefined,
@@ -1744,7 +1788,7 @@ jqueryHandler.name = 'jquery';
 
 function greasemonkeyHandler(s) {
     if (!GM_xmlhttpRequest) return;
-    s = $.extend($.douban.http.settings, s || {});
+    s = $.extend({}, $.douban.http.settings, s || {});
     if (s.data && typeof s.data != "string") s.data = $.param(s.data);
     if (s.data && s.type == "GET") {
         s.url += (s.url.match(/\?/) ? "&" : "?") + s.data;
