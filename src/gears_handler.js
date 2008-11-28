@@ -35,7 +35,7 @@ var gearsHandler = function(s) {
     // Handle on success
     workerPool.onmessage = function(a, b, message) {
         var data = message.body;
-        if (s.dataType == 'json') data = eval("(" + data + ")");
+        if (data && s.dataType == 'json') data = eval("(" + data + ")");
         success(data);
     };
 

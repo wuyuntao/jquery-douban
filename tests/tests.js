@@ -531,7 +531,7 @@ test("test event api", function() {
     /* get event for user
      */
     var eventos = service.event.getForUser('iloveshutuo');
-    ok(eventos.total > 1, "get total ok: " + eventos.total);
+    ok(eventos.total >= 1, "get total ok: " + eventos.total);
     // equals(eventos.limit, 50, "get limit ok: " + eventos.limit);
     ok(eventos.entries[0].id.match(/http:\/\/api\.douban\.com\/event\/\d+/), "get id ok: ");
 

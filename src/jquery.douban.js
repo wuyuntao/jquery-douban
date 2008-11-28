@@ -202,15 +202,14 @@ var DoubanService = $.klass({
         var defaults = {
             key: '',
             secret: '',
-            type: 'jquery'
+            type: 'jquery',
+            async: false
         };
         this.options = $.extend(defaults, options || {});;
         this.api = new Token(this.options.key, this.options.secret);
 
         this._http = $.douban.http.factory({ type: this.options.type });
-        this._client = $.douban('client', { key: this.api.key,
-                                            secret: this.api.secret,
-                                            type: this.options.type });
+        this._client = $.douban('client', this.options);
         var services = {
             'user': UserService,
             'note': NoteService,
@@ -261,7 +260,8 @@ var DoubanService = $.klass({
         var json = null;
         var params = this.setParams(params);
         var headers = this.getHeaders(url, 'GET', params);
-        this._http({ url: url,
+        this._http({ async: this.options.async,
+                     url: url,
                      type: 'GET',
                      data: params,
                      dataType: 'json',
@@ -288,7 +288,8 @@ var DoubanService = $.klass({
         var params = this.setParams();
         var headers = this.getHeaders(url, type, params);
         url += (url.match(/\?/) ? '&' : '?') + $.param(params);
-        this._http({ url: url,
+        this._http({ async: this.options.async,
+                     url: url,
                      data: data,
                      dataType: 'json',
                      type: type,
@@ -306,7 +307,8 @@ var DoubanService = $.klass({
         var response = null;
         var params = this.setParams();
         var headers = this.getHeaders(url, 'DELETE', params);
-        this._http({ url: url,
+        this._http({ async: this.options.async,
+                     url: url,
                      type: 'DELETE',
                      data: params,
                      dataType: 'text',
@@ -1575,7 +1577,8 @@ function OAuthClient(options) {
     var defaults = {
         key: '',
         secret: '',
-        type: 'jquery'
+        type: 'jquery',
+        async: false
     };
     this.options = $.extend(defaults, options || {});;
     this.api = new Token(this.options.key, this.options.secret);
@@ -1718,7 +1721,7 @@ $.extend(OAuthClient.prototype, {
      */
     oauthRequest: function(url, data, callback) {
         var data = this.getParameters(url, 'GET', data);
-        this._http({ url: url, data: data, success: callback });
+        this._http({ async: this.options.async, url: url, data: data, success: callback });
     }
 });
 

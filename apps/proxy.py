@@ -34,6 +34,9 @@ def proxy(handler):
 
         # Fetch result
         response = urlfetch.fetch(payload=payload, url=url, method=handler.request.method, headers=headers)
+
+        # Set status code and return the response
+        handler.response.set_status(response.status_code)
         handler.response.out.write(response.content)
     else:
         handler.response.out.write("Invalid URL")

@@ -35,10 +35,12 @@ $(function() {
                 $.each(books.entries, function() {
                     insertBook(this.subject);
                 });
-
-                // Hide loading
-                $('#loading').hide();
+            } else {
+                alert('这个用户不存在或这个用户未收藏任何书目');
             }
+
+            // Hide loading
+            $('#loading').hide();
         }, 'book');
 
         // Show Loading
