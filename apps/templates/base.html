@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Language" content="zh-cn" />
+    <meta name="ROBOTS" content="ALL" />
+    <meta name="Copyright" content="Copyright (c) 2008 Wu Yuntao." />
+    <meta name="keywords" content="Douban, Python, Mashup, AppEngine" />
+    <meta name="description" content="Examples for jQuery Douban" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" /> 
+
+    <title>{% block title %}jQuery Douban Examples{% endblock %}</title>
+
+    <link rel="stylesheet" type="text/css" href="/media/styles/general.css" />
+
+    <script type="text/javascript" src="/media/scripts/jquery.js" ></script>
+    <script type="text/javascript" src="/media/scripts/sha1.js" ></script>
+    <script type="text/javascript" src="/media/scripts/oauth.js" ></script>
+    <script type="text/javascript" src="/media/scripts/jquery.douban.js" ></script>
+    <script type="text/javascript" src="/media/scripts/gears_init.js" ></script>
+    <script type="text/javascript" src="/media/scripts/gears_handler.js" ></script>
+    {% block script %}{% endblock %}
+
+</head>
+
+
+<body id="{% block body_id %}{% endblock %}">
+
+<div id="outer-wrapper">
+        
+    <div id="header-wrapper"><div class="inner-wrapper">
+        <div id="navbar"></div>
+
+        <h1 class="title">
+            {% block header_title %}jQuery Douban Examples{% endblock %}
+        </h1>
+
+        <div class="clear"></div>
+
+    </div></div>
+
+    <div id="warning">这个应用需要Javascript和Google Gears的支持。请不要禁用 Javascript，并点击这里安装 <a href="http://gears.google.com/?action=install&name=豆瓣书单&message=运行豆瓣书单需要 Google Gears 的支持。请先安装 Google Gears。&return=http://jquery-douban.luliban.com/example/book_list/">Google Gears</a>。</div>
+
+    <div id="main-wrapper"><div class="inner-wrapper">
+
+        <div id="content-wrapper">{% block content %}{% endblock %}</div>
+
+        <div id="sidebar-wrapper">{% block sidebar %}{% endblock %}</div>
+
+        <div class="clear"></div>
+
+    </div></div>
+
+    <div class="clear"></div>
+
+    <div id="footer-wrapper"><div class="inner-wrapper">
+
+        <div id="footer">
+            <p>Cobyright &copy; 2008 Some Right Reserved <a href="http://blog.luliban.com/">Wu Yuntao</a></p>
+        </div>
+
+    </div></div>
+
+</div>
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-514579-19");
+pageTracker._trackPageview();
+</script>
+
+</body>
+
+</html>

@@ -223,7 +223,7 @@ var DoubanService = $.klass({
             'recommendation': RecommendationService,
             'event': EventService,
             'tag': TagService
-        }
+        };
         for (var name in services) {
             this[name] = new services[name](this);
         }
@@ -1119,7 +1119,7 @@ Note.createXml = function(data) {
  */
 var NoteEntry = $.klass(AuthorEntry, {
     init: function($super, data) {
-        this.model = Note
+        this.model = Note;
         $super(data);
     }
 });
@@ -1451,7 +1451,7 @@ Comment.createXml = function(data) {
     data = $.extend({ content: '' }, data || {});
     var xml = '<entry><content>{CONTENT}</content></entry>';
     return xml.replace(/\{CONTENT\}/, data.content);
-}
+};
 
 /* Douban recommendation comment entry
  */

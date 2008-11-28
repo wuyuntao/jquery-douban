@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}jQuery Douban Demo：获取用户最近的10本收藏书本{% endblock %}
+
+{% block header_title %}jQuery Douban Demo：获取用户最近的10本收藏书本{% endblock %}
+
+{% block script %}
+<script type="text/javascript" src="/media/scripts/book_list.js" ></script>
+{% endblock %}
+
+{% block body_id %}book_list{% endblock %}
+
+{% block content %}
+<div id="loading" style="display: none;"><span>Loading...</span></div>
+
+<div id="form">
+    <p>输入用户ID，比如'ahbei'，</p>
+    <p>
+        <form id="get_username_form" action=".">
+            <input type="text" id="username" name="username" disabled="disabled" ></input>
+            <input type="submit" id="submit" name="submit" value="Go" disabled="disabled" ></input>
+        </form>
+    </p>
+</div>
+
+<div id="result">
+    <table id="book_table">
+        <tbody>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<a id="show_code" href="http://github.com/wuyuntao/jquery-douban/tree/master/apps/media/scripts/book_list.js">显示源代码 book_list.js</a>
+
+<div id="code" style="display: none"><pre style="font-family: &quot;monospace&quot;,&quot;Consolas&quot;,&quot;Courier New&quot;,&quot;Bitstream Vera Sans Mono&quot;; background-color: rgb(255, 255, 255);" class="source"><code><span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> <span style="color: rgb(96, 160, 176); font-style: italic;">// Main entry</span>
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> $(<span style="color: rgb(0, 112, 32); font-weight: bold;">function</span>() {
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp; <span style="color: rgb(0, 112, 32); font-weight: bold;">if</span> (<span style="color: rgb(102, 102, 102);">!</span><span style="color: rgb(0, 112, 32);">window</span>.google <span style="color: rgb(102, 102, 102);">||</span> <span style="color: rgb(102, 102, 102);">!</span>google.gears) <span style="color: rgb(0, 112, 32); font-weight: bold;">return</span><span style="color: rgb(102, 102, 102);">;</span>
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> 
+<span class="lineno special"></span> &nbsp;&nbsp;&nbsp; <span style="color: rgb(96, 160, 176); font-style: italic;">// 初始化 UI</span>
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp; $(<span style="color: rgb(64, 112, 160);">&#39;#warning&#39;</span>).hide();
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp; $(<span style="color: rgb(64, 112, 160);">&#39;#username&#39;</span>).attr(<span style="color: rgb(64, 112, 160);">&#39;disabled&#39;</span><span style="color: rgb(102, 102, 102);">,</span> <span style="color: rgb(0, 112, 32); font-weight: bold;">false</span>);
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp; $(<span style="color: rgb(64, 112, 160);">&#39;#submit&#39;</span>).attr(<span style="color: rgb(64, 112, 160);">&#39;disabled&#39;</span><span style="color: rgb(102, 102, 102);">,</span> <span style="color: rgb(0, 112, 32); font-weight: bold;">false</span>);
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> 
+<span class="lineno special"></span> &nbsp;&nbsp;&nbsp; <span style="color: rgb(96, 160, 176); font-style: italic;">// 初始化 service，用 Gears 发送 HTTP 请求</span>
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp; $.douban.http.register(<span style="color: rgb(64, 112, 160);">&#39;gears&#39;</span><span style="color: rgb(102, 102, 102);">,</span> gearsHandler);
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp; <span style="color: rgb(0, 112, 32); font-weight: bold;">var</span> service <span style="color: rgb(102, 102, 102);">=</span> $.douban(<span style="color: rgb(64, 112, 160);">&#39;service&#39;</span><span style="color: rgb(102, 102, 102);">,</span> {
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; key<span style="color: rgb(102, 102, 102);">:</span> <span style="color: rgb(64, 112, 160);">&#39;0107c5c3c9d4ecc40317514b5d7ec64c&#39;</span><span style="color: rgb(102, 102, 102);">,</span>
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; secret<span style="color: rgb(102, 102, 102);">:</span> <span style="color: rgb(64, 112, 160);">&#39;7feaf4ec7b6989f8&#39;</span><span style="color: rgb(102, 102, 102);">,</span>
+<span class="lineno special"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; type<span style="color: rgb(102, 102, 102);">:</span> <span style="color: rgb(64, 112, 160);">&#39;gears&#39;</span>
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp; });
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> 
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp; <span style="color: rgb(96, 160, 176); font-style: italic;">// 响应表单提交</span>
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp; $(<span style="color: rgb(64, 112, 160);">&#39;#get_username_form&#39;</span>).submit(<span style="color: rgb(0, 112, 32); font-weight: bold;">function</span>() {
+<span class="lineno special"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: rgb(0, 112, 32); font-weight: bold;">var</span> username <span style="color: rgb(102, 102, 102);">=</span> $(<span style="color: rgb(64, 112, 160);">&#39;#username&#39;</span>).val();
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> 
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: rgb(96, 160, 176); font-style: italic;">// 获取用户最近的十个书本收藏</span>
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; service.collection.getForUser(username<span style="color: rgb(102, 102, 102);">,</span> <span style="color: rgb(64, 160, 112);">0</span><span style="color: rgb(102, 102, 102);">,</span> <span style="color: rgb(64, 160, 112);">10</span><span style="color: rgb(102, 102, 102);">,</span> <span style="color: rgb(0, 112, 32); font-weight: bold;">function</span>(books) {
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> 
+<span class="lineno special"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: rgb(96, 160, 176); font-style: italic;">// 如果获取成功的话</span>
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: rgb(0, 112, 32); font-weight: bold;">if</span> (books.total <span style="color: rgb(102, 102, 102);">&amp;&amp;</span> books.total <span style="color: rgb(102, 102, 102);">&gt;</span> <span style="color: rgb(64, 160, 112);">0</span>) {
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $(<span style="color: rgb(64, 112, 160);">&#39;#result tbody&#39;</span>).empty();
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> 
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: rgb(96, 160, 176); font-style: italic;">// 插入书本的信息</span>
+<span class="lineno special"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $.each(books.entries<span style="color: rgb(102, 102, 102);">,</span> <span style="color: rgb(0, 112, 32); font-weight: bold;">function</span>() {
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; insertBook(<span style="color: rgb(0, 112, 32); font-weight: bold;">this</span>.subject);
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; });
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> 
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: rgb(96, 160, 176); font-style: italic;">// 隐藏 loading</span>
+<span class="lineno special"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $(<span style="color: rgb(64, 112, 160);">&#39;#loading&#39;</span>).hide();
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<span style="color: rgb(102, 102, 102);">,</span> <span style="color: rgb(64, 112, 160);">&#39;book&#39;</span>);
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> 
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: rgb(96, 160, 176); font-style: italic;">// 显示 Loading</span>
+<span class="lineno special"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; $(<span style="color: rgb(64, 112, 160);">&#39;#loading&#39;</span>).show();
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: rgb(0, 112, 32); font-weight: bold;">return</span> <span style="color: rgb(0, 112, 32); font-weight: bold;">false</span><span style="color: rgb(102, 102, 102);">;</span>
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> &nbsp;&nbsp;&nbsp; });
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> });
+<span style="color: rgb(96, 160, 176); font-style: italic;" class="lineno"></span> 
+</code>
+</pre>
+</div>
+{% endblock %}
+

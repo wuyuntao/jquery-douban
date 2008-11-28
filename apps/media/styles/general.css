@@ -1,0 +1,128 @@
+@charset "utf-8"; 
+
+* { margin: 0; padding: 0; }
+
+body {
+    font: x-small Arial, Verdana, Helvetica, Sans-serif;
+    color: #222;
+    text-align: center;
+    font-size/* */:/**/small;
+    font-size: /**/small;
+    line-height: 125%;
+}
+html > body { font-size: small; }
+
+a:link, a:visited { text-decoration: underline; }
+a:hover, a:active { }
+a img { border: none; }
+
+pre, code {
+    font-size: 100%;
+}
+
+.clear { clear: both; }
+
+.inner-wrapper {
+    width: 960px;
+    margin: 0 auto;
+    padding: 0;
+    text-align: left;
+}
+
+#header-wrapper {
+    border-bottom: 1px solid #3366cc;
+    background: #e5ecf8;
+}
+
+h1.title {
+    font-size: 130%;
+    font-weight: bold;
+    color: #3366cc;
+    padding: 10px 0;
+    line-height: 24px;
+}
+
+h1.title a, h1.title a:visited {
+  text-decoration: none;
+}
+
+div#warning {
+    padding: 4px;
+    text-align: center;
+    background: #ffdd88;
+    font-weight: bold;
+}
+
+#main-wrapper {
+    padding: 20px 0 15px;
+}
+
+#content-wrapper {
+    float: left;
+}
+
+#sidebar-wrapper {
+    float: right;
+}
+
+#footer-wrapper {
+    border-top: 1px solid #3366cc;
+    background: #e5ecf8;
+}
+
+#footer {
+    padding: 4px;
+    text-align: right;
+}
+
+#code {
+    width: 420px;
+    height: 420px;
+    margin: 10px;
+    overflow: scroll;
+}
+
+/* book list */
+#book_list #form p {
+    font-weight: bold;
+}
+
+#book_list #loading {
+    text-align: center;
+    position: relative;
+    top: -20px;
+}
+
+#book_list #loading span {
+    display: block;
+    float: right;
+    padding: 2px 8px;
+    background: #ffdd88;
+}
+
+#book_list #content-wrapper {
+    width: 450px;
+}
+
+#book_list #sidebar-wrapper {
+    width: 450px;
+}
+
+#book_list #result {
+    margin: 10px 0 15px;
+}
+
+#book_list #book_table .cover img {
+    border: 1px solid #cccccc;
+    margin: 5px 20px 5px 0;
+}
+
+#book_list #book_table .info {
+    line-height: 120%;
+}
+
+#book_list #book_table .title {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 130%;
+}

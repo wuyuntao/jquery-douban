@@ -22,5 +22,8 @@ handlers:
 - url: /proxy
   script: proxy.py
 
+- url: /example/.*
+  script: example.py
+
 - url: /.*
   script: main.py
