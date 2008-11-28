@@ -46,8 +46,6 @@ var gearsHandler = function(s) {
 
 gearsHandler.name = 'gears';
 
-// gearsHandler.proxy = 'http://jquery-douban.appspot.com/proxy?url=';
-gearsHandler.proxy = 'http://localhost:8080/proxy?url=';
+gearsHandler.proxy = 'http://jquery-douban.appspot.com/proxy?url=';
 
-// gearsHandler.workerUrl = 'http://jquery-douban.appspot.com/worker.js';
-gearsHandler.workerUrl = 'http://localhost:8080/worker.js';
+gearsHandler.workerUrl = 'http://jquery-douban.appspot.com/worker.js';
