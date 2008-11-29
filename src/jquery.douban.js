@@ -1303,6 +1303,7 @@ var ReviewForSubjectEntry = $.klass(DoubanObjectEntry, {
  * @attribute       id              收藏ID
  * @attribute       title           收藏标题
  * @attribute       author          收藏者，User object
+ * @attribute       subject         收藏条目，Subject object
  * @attribute       content         收藏评论
  * @attribute       updated         收藏最近更新时间
  * @attribute       status          收藏状态，查表可去：http://tinyurl.com/59rqm2
@@ -1599,7 +1600,7 @@ $.extend(OAuthClient.prototype, {
             data = $.unparam(data);
             token = { key: data.oauth_token,
                       secret: data.oauth_token_secret };
-            if ($.isFunction(callback)) callback(data);
+            if ($.isFunction(callback)) callback(token);
         });
         this.requestToken = token;
         return this.requestToken
@@ -1628,22 +1629,23 @@ $.extend(OAuthClient.prototype, {
      * @param       requestToken Token. If not specified, using
      *              ``this.requestToken`` instead
      */
-    getAccessToken: function(requestToken) {
+    getAccessToken: function(requestToken, callback) {
         var token = null;
         var userId = null;
         requestToken = requestToken || this.requestToken;
         this.oauthRequest(ACCESS_TOKEN_URL,
                           { oauth_token: requestToken.key },
-                          callback);
+                          onSuccess);
         this.userId = userId;
         this.accessToken = token;
         return this.accessToken;
 
-        function callback(data) {
+        function onSuccess(data) {
             data = $.unparam(data);
             token = { key: data.oauth_token,
                       secret: data.oauth_token_secret };
             userId = data.douban_user_id;
+            if ($.isFunction(callback)) callback(token, userId);
         }
     },
 
