@@ -1593,6 +1593,7 @@ function OAuthClient(options) {
 $.extend(OAuthClient.prototype, {
     /* Get request token
      * @returns         Token object
+     * @param           callback, Function
      */ 
     getRequestToken: function(callback) {
         var token = null;
@@ -1619,7 +1620,7 @@ $.extend(OAuthClient.prototype, {
             requestToken = this.requestToken;
         }
         var params = $.param({ oauth_token: requestToken.key,
-                               oauth_callback: encodeURIComponent(callbackUrl) });
+                               oauth_callback: encodeURIComponent(callbackUrl || '') });
         this.authorizationUrl = AUTHORIZATION_URL + '?' + params;
         return this.authorizationUrl
     },
@@ -1628,24 +1629,23 @@ $.extend(OAuthClient.prototype, {
      * @returns     token object
      * @param       requestToken Token. If not specified, using
      *              ``this.requestToken`` instead
+     * @param       callback, Function
      */
     getAccessToken: function(requestToken, callback) {
-        var token = null;
-        var userId = null;
-        requestToken = requestToken || this.requestToken;
+        var self = this;
+        if (requestToken) self.requestToken = requestToken;
         this.oauthRequest(ACCESS_TOKEN_URL,
-                          { oauth_token: requestToken.key },
+                          { oauth_token: self.requestToken.key },
                           onSuccess);
-        this.userId = userId;
-        this.accessToken = token;
-        return this.accessToken;
+        return self.accessToken;
 
         function onSuccess(data) {
             data = $.unparam(data);
-            token = { key: data.oauth_token,
-                      secret: data.oauth_token_secret };
-            userId = data.douban_user_id;
-            if ($.isFunction(callback)) callback(token, userId);
+            console.debug(data);
+            self.accessToken = { key: data.oauth_token,
+                                 secret: data.oauth_token_secret };
+            self.userId = data.douban_user_id;
+            if ($.isFunction(callback)) callback(self.accessToken, self.userId);
         }
     },
 
