@@ -1133,7 +1133,7 @@ var NoteEntry = $.klass(AuthorEntry, {
  * @attribute       aka             又名
  * @attribute       subtitle        副标题
  * @attribute       authors         作者
- * @attribute       translator      译者
+ * @attribute       translators     译者
  * @attribute       isbn10          10位ISBN
  * @attribute       isbn13          13位ISBN
  * @attribute       releaseDate     发布时间
