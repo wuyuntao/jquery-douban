@@ -15,8 +15,6 @@ var ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
 
 var API_HOST = 'http://api.douban.com';
 var PEOPLE_URL = API_HOST + '/people';
-// API Bug => http://www.douban.com/group/topic/4655057/ 
-var SEARCH_PEOPLE_URL = PEOPLE_URL + '/';
 var GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}';
 var GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
 
@@ -544,7 +542,7 @@ var UserService = $.klass(BaseService, {
     },
 
     search: function(query, offset, limit, callback) {
-        return this._search(query, offset, limit, callback, SEARCH_PEOPLE_URL, UserEntry);
+        return this._search(query, offset, limit, callback, PEOPLE_URL, UserEntry);
     },
 
     current: function(callback) {
