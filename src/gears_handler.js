@@ -18,8 +18,9 @@ var gearsHandler = function(s) {
         s.data = null;
     }
 
-    // Set proxy for url
-    s.url = gearsHandler.proxy + encodeURIComponent(s.url);
+    // Set proxy for url if proxy URL is available
+    if (gearsHandler.proxyUrl)
+        s.url = gearsHandler.proxyUrl + encodeURIComponent(s.url);
 
     // Set Content-Type header
     if (s.data)
@@ -45,7 +46,5 @@ var gearsHandler = function(s) {
 };
 
 gearsHandler.name = 'gears';
-
-gearsHandler.proxy = 'http://jquery-douban.appspot.com/proxy?url=';
-
-gearsHandler.workerUrl = 'http://jquery-douban.appspot.com/worker.js';
+gearsHandler.proxyUrl = '/proxy?url=';
+gearsHandler.workerUrl = '/worker.js';

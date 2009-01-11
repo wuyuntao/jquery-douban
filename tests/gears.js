@@ -1,4 +1,6 @@
 function createService() {
+    gearsHandler.proxyUrl = null;
+    gearsHandler.workerUrl = '../src/gears_worker.js';
     $.douban.http.register('gears', gearsHandler);
     var service = $.douban('service', {
         key: '0107c5c3c9d4ecc40317514b5d7ec64c',
