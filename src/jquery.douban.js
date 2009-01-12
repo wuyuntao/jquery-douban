@@ -24,6 +24,7 @@ var ADD_NOTE_URL = API_HOST + '/notes';
 
 var BOOK_URL = API_HOST + '/book/subject';
 var GET_BOOK_URL = BOOK_URL + '/{ID}';
+var GET_BOOK_BY_ISBN_URL = BOOK_URL + '/isbn/{ID}';
 var SEARCH_BOOK_URL = BOOK_URL + 's';
 
 var MOVIE_URL = API_HOST + '/movie/subject';
@@ -351,7 +352,7 @@ var BaseService = $.klass({
      */
     lazyUrl: function(obj, tmpl) {
         if (typeof obj == 'object') return obj.id;
-        else if (obj.match(/^\w+$/) && tmpl) return tmpl.replace(/\{ID\}/, obj);
+        else if (/^\w+$/.test('' + obj) && tmpl) return tmpl.replace(/\{ID\}/, obj);
         else return obj;
     },
 
@@ -578,6 +579,7 @@ var NoteService = $.klass(CommonService, {
 
 /* Douban Book API Service
  * @method      get         获取书籍信息
+ * @method      isbn        通过ISBN获取书籍信息
  * @method      search      搜索书籍
  */
 var BookService = $.klass(SubjectService, {
@@ -587,6 +589,10 @@ var BookService = $.klass(SubjectService, {
         this._getSubjectUrl = GET_BOOK_URL;
         this._searchSubjectUrl = SEARCH_BOOK_URL;
         $super(service);
+    },
+
+    isbn: function(isbn, callback) {
+        return this._get(isbn, callback, Book, GET_BOOK_BY_ISBN_URL);
     }
 });
 
