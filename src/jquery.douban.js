@@ -380,12 +380,10 @@ var BaseService = $.klass({
      * @param       suffix, String
      */
     _getForObject: function(object, offset, limit, callback, model, templateUrl, suffix, extraParams) {
-        console.debug(extraParams);
         var url = this.lazyUrl(object, templateUrl) + suffix;
         var params = $.extend({ 'start-index': (offset || 0) + 1,
                                 'max-results': limit || 50 },
                               extraParams || {});
-        console.debug(params);
         var json = this._service.GET(url, params, this._onSuccess(callback, model));
         return this._response(json, model);
     },
@@ -1658,7 +1656,6 @@ $.extend(OAuthClient.prototype, {
 
         function onSuccess(data) {
             data = $.unparam(data);
-            console.debug(data);
             self.accessToken = { key: data.oauth_token,
                                  secret: data.oauth_token_secret };
             self.userId = data.douban_user_id;
