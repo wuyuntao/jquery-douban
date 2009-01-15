@@ -380,10 +380,12 @@ var BaseService = $.klass({
      * @param       suffix, String
      */
     _getForObject: function(object, offset, limit, callback, model, templateUrl, suffix, extraParams) {
+        console.debug(extraParams);
         var url = this.lazyUrl(object, templateUrl) + suffix;
         var params = $.extend({ 'start-index': (offset || 0) + 1,
                                 'max-results': limit || 50 },
                               extraParams || {});
+        console.debug(params);
         var json = this._service.GET(url, params, this._onSuccess(callback, model));
         return this._response(json, model);
     },
@@ -664,8 +666,19 @@ var CollectionService = $.klass(CommonService, {
         $super(service);
     },
 
-    getForUser: function(user, offset, limit, callback, type) {
-        return this._getForObject(user, offset, limit, callback, CollectionEntry, GET_PEOPLE_URL, '/collection', { 'cat': type });
+    /* 
+     * @argument    params          可选参数包括：
+     * tag  	    搜索特定tag的收藏  	
+     * status 	    搜索特定状态的收藏 	
+     *      book:   [wish, reading, read]
+     *      movie:  [wish, watched]
+     *      tv:     [wish, watching, watched]
+     *      music:  [wish, listening, listened]
+     * updated-max 	收藏的最晚时间 	格式: 2007-12-28T21:47:00+08:00
+     * updated-min 	收藏的最早时间 	格式: 2007-12-28T21:47:00+08:00
+     */
+    getForUser: function(user, offset, limit, callback, params) {
+        return this._getForObject(user, offset, limit, callback, CollectionEntry, GET_PEOPLE_URL, '/collection', params);
     }
 });
 
