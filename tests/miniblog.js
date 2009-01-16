@@ -1,6 +1,10 @@
+module("Douban Miniblog Testcases");
+
 /* Only ``getForContacts`` should be tested
  */
 test("test miniblog api", function() {
+    expect(6);
+
     if (typeof netscape != 'undefined')
         netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
@@ -29,6 +33,8 @@ test("test miniblog api", function() {
 });
 
 test("test miniblog object", function() {
+    expect(7);
+
     var json = {"content":{"$t":"在看康熙卸妆那集，google广告提示“如何去掉脸上的豆豆，豆印”～～","@type":"html"},"category":[{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#miniblog.saying"}],"title":{"$t":"在看康熙卸妆那集，google广告提示“如何去掉脸上的豆豆，豆印”～～"},"id":{"$t":"http://api.douban.com/miniblog/80210749"},"published":{"$t":"2008-11-20T20:43:25+08:00"}};
 
     var miniblog = $.douban('miniblog', json);

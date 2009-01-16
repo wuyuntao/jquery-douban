@@ -1,3 +1,5 @@
+module("Douban Collection Testcases");
+
 /* Only ``getForUser`` needed be tested
  */
 test("test collection api", function() {
@@ -59,6 +61,8 @@ test("test collection api", function() {
 });
 
 test("test collection object", function() {
+    expect(6);
+
     var json = {"updated":{"$t":"2006-03-30T00:10:03+08:00"},"author":{"link":[{"@rel":"self","@href":"http://api.douban.com/people/1025061"},{"@rel":"alternate","@href":"http://www.douban.com/people/Fenng/"},{"@rel":"icon","@href":"http://otho.douban.com/icon/u1025061-3.jpg"}],"uri":{"$t":"http://api.douban.com/people/1025061"},"name":{"$t":"Fenng(DBAnotes)"}},"title":{"$t":"Fenng(DBAnotes) 想读 国际经济学（第五版）"},"db:subject":{"category":{"@scheme":"http://www.douban.com/2007#kind","@term":"http://www.douban.com/2007#book"},"author":[{"name":{"$t":"(美)克鲁格曼"}}],"title":{"$t":"国际经济学（第五版）"},"link":[{"@rel":"self","@href":"http://api.douban.com/book/subject/1263907"},{"@rel":"alternate","@href":"http://www.douban.com/subject/1263907/"},{"@rel":"image","@href":"http://otho.douban.com/spic/s2701851.jpg"}],"db:attribute":[{"$t":"7300040187","@name":"isbn10"},{"$t":"9787300040189","@name":"isbn13"},{"$t":"79.0","@name":"price"},{"$t":"(美)克鲁格曼","@name":"author"},{"$t":"中国人民大学出版社","@name":"publisher"},{"$t":"海闻等","@name":"translator"},{"$t":"2002-11-1","@name":"pubdate"}],"id":{"$t":"http://api.douban.com/book/subject/1263907"}},"link":[{"@rel":"self","@href":"http://api.douban.com/collection/2165271"},{"@rel":"http://www.douban.com/2007#subject","@href":"http://api.douban.com/book/subject/1263907"}],"id":{"$t":"http://api.douban.com/collection/2165271"},"db:status":{"$t":"wish"}};
     
     var collection = $.douban('collection', json);

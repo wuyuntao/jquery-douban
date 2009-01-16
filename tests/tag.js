@@ -1,3 +1,5 @@
+module("Douban Tag Testcases");
+
 test("test tag api", function() {
     expect(6);
 

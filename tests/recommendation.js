@@ -1,3 +1,5 @@
+module("Douban Recommendation Testcases");
+
 test("test recommendation api", function() {
     expect(12);
     if (typeof netscape != 'undefined')
@@ -46,6 +48,8 @@ test("test recommendation api", function() {
 });
 
 test("test recommendation object", function() {
+    expect(6);
+
     var json = {"title":{"$t":"推荐喵喵喵之小团子"},"content":{"$t":"推荐<a href=\"http://www.douban.com/photos/album/12573993/\">喵喵喵之小团子</a>","@type":"html"},"link":[],"published":{"$t":"2008-11-07T08:28:40+08:00"},"db:attribute":[{"$t":"photo_album","@name":"category"},{"$t":"团子，我家团子，以前觉得她小时候很丑，现在觉得一点也不丑啊～哇哈哈哈","@name":"comment"},{"$t":7,"@name":"comments_count"}],"id":{"$t":"http://api.douban.com/recommendation/3673470"}};
 
     var recommendation = $.douban('recommendation', json);
