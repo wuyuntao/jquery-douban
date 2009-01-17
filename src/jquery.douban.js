@@ -380,7 +380,7 @@ var BaseService = $.klass({
      * @param       suffix, String
      */
     _getForObject: function(object, offset, limit, callback, model, templateUrl, suffix, extraParams) {
-        var url = this.lazyUrl(object, templateUrl) + suffix;
+        var url = this.lazyUrl(object, templateUrl) + (suffix || '');
         var params = $.extend({ 'start-index': (offset || 0) + 1,
                                 'max-results': limit || 50 },
                               extraParams || {});
@@ -705,14 +705,19 @@ var MiniblogService = $.klass(CommonService, {
 });
 
 /* Douban Event API Service
- * @method      get             获取活动
- * @method      getForUser      获取用户的所有活动
- * @method      add             创建新活动
- * @method      update          更新活动
- * @method      remove          删除活动
- * @method      search          搜索活动（未支持）
- * @method      getForCity      获取城市的所有活动（未支持）
- * @method      join            参加活动等（未支持）
+ * @method      get                     获取活动
+ * @method      participants            获取参加活动的用户
+ * @method      wishers                 获取活动感兴趣的用户
+ * @method      getForUser              获取用户的所有活动
+ * @method      getInitiateForUser      获取用户发起的活动
+ * @method      getParticipateForUser   获取用户参加的活动
+ * @method      getWishForUser          获取用户感兴趣的活动
+ * @method      getForCity              获取城市的所有活动
+ * @method      search                  搜索活动
+ * @method      add                     创建新活动
+ * @method      update                  更新活动
+ * @method      remove                  删除活动
+ * @method      join                    参加活动等（未支持）
  */
 var EventService = $.klass(CommonService, {
     init: function($super, service) {
@@ -724,11 +729,49 @@ var EventService = $.klass(CommonService, {
         $super(service);
     },
 
+    participants: function(event, offset, limit, callback) {
+        return this._getForObject(event, offset, limit, callback, UserEntry, GET_EVENT_URL, '/participants');
+    },
+
+    wishers: function(event, offset, limit, callback) {
+        return this._getForObject(event, offset, limit, callback, UserEntry, GET_EVENT_URL, '/wishers');
+    },
+
+    getForUser: function(user, offset, limit, callback, type) {
+        switch (type) {
+            case 'initiate':
+            case 'participate':
+            case 'wish':
+                var suffix = this._suffix + '/' + type; break;
+            default:
+                var suffix = this._suffix; break;
+        }
+        return this._getForObject(user, offset, limit, callback, this._modelEntry, GET_PEOPLE_URL, suffix);
+    },
+
+    getInitiateForUser: function(user, offset, limit, callback) {
+        return this.getForUser(user, offset, limit, callback, 'initiate');
+    },
+
+    getParticipateForUser: function(user, offset, limit, callback) {
+        return this.getForUser(user, offset, limit, callback, 'participate');
+    },
+
+    getWishForUser: function(user, offset, limit, callback) {
+        return this.getForUser(user, offset, limit, callback, 'wish');
+    },
+
+    getForCity: function(city, offset, limit, callback) {
+        return this._getForObject(city, offset, limit, callback, this._modelEntry, GET_EVENT_FOR_CITY_URL);
+    },
+
     search: function(query, location, offset, limit, callback) {
-        var params = { 'q': query,
-                       'location': location || 'all',
-                       'start-index': (offset || 0) + 1,
-                       'max-results': limit || 50 };
+        var params = {
+            'q': query,
+            'location': location || 'all',
+            'start-index': (offset || 0) + 1,
+            'max-results': limit || 50
+        };
         var json = this._service.GET(this._addObjectUrl, params, this._onSuccess(callback, this._modelEntry));
         return this._response(json, this._modelEntry);
     },
