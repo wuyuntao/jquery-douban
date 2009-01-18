@@ -717,7 +717,10 @@ var MiniblogService = $.klass(CommonService, {
  * @method      add                     创建新活动
  * @method      update                  更新活动
  * @method      remove                  删除活动
- * @method      join                    参加活动等（未支持）
+ * @method      participate             参加活动（未支持）
+ * @method      notParticipate          不参加活动了（未支持）
+ * @method      wish                    对活动感兴趣（未支持）
+ * @method      unwish                  对活动不感兴趣（未支持）
  */
 var EventService = $.klass(CommonService, {
     init: function($super, service) {
@@ -781,6 +784,22 @@ var EventService = $.klass(CommonService, {
         var url = this.lazyUrl(event, this._getObjectUrl) + '/delete';
         var response = this._service.POST(url, data, this._onSuccess(callback));
         return (response['result'] && response['result']['$t'] == 'OK') ? true : false;
+    },
+
+    participate: function(event, callback) {
+        throw new Error("Not Implemented");
+    },
+
+    notParticipate: function(event, callback) {
+        throw new Error("Not Implemented");
+    },
+
+    wish: function(event, callback) {
+        throw new Error("Not Implemented");
+    },
+
+    unwish: function(event, callback) {
+        throw new Error("Not Implemented");
     }
 });
 
@@ -1930,7 +1949,7 @@ function jqueryHandler(s) {
     $.extend(s, {
         async: false,
         headers: undefined,
-        processData: s.type.match(/^P(OS|U)T$/) ? false : true,
+        processData: s.type.match(/^P(OS|U)T$/) && s.data ? false : true,
         beforeSend: function(xhr) {
             for (var name in s.headers)
                 xhr.setRequestHeader(name, s.headers[name]);

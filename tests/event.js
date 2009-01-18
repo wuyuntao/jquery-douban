@@ -39,13 +39,14 @@ test("活动 API", function() {
     ok(eventos3.total > 100, "获取城市的所有活动 okay: " + eventos3.total);
 
     // 搜索活动
-    var eventos4 = service.event.search("蛋糕");
+    var eventos4 = service.event.search("蛋糕", 'shanghai', 5, 8);
     ok(eventos4.total >= 7, "search events: " + eventos4.total);
-    equals(eventos4.offset, 0, "get offset ok: " + eventos4.offset);
-    equals(eventos4.limit, 50, "get limit ok: " + eventos4.limit);
-    equals(eventos4.entries.length, 5, "get length ok: " + eventos4.entries.length);
+    equals(eventos4.offset, 5, "get offset ok: " + eventos4.offset);
+    equals(eventos4.limit, 8, "get limit ok: " + eventos4.limit);
+    equals(eventos4.entries.length, 8, "get length ok: " + eventos4.entries.length);
 
-    /* create event
+    /*
+    // 创建新活动
     var evento2 = service.event.add({
         category: 'film',
         title: '测试添加活动',
@@ -57,9 +58,8 @@ test("活动 API", function() {
         address: '测试添加活动地址'
     });
     ok(evento2.id.match(/http:\/\/api\.douban\.com\/event\/\d+/), "get event id ok: " + evento2.id);
-     */
 
-    /* update event
+    // 更新活动
     var evento3 = service.event.update(evento2, {
         category: 'film',
         title: '测试更新活动',
@@ -72,12 +72,23 @@ test("活动 API", function() {
     });
     equals(evento3.title, '测试更新活动');
     equals(evento3.address, '武汉 测试更新活动地址');
-     */
 
-    /* delete event
+    // 删除活动
     var response = service.event.remove(evento2);
     ok(response, 'event removed');
-     */
+
+    // 参加活动
+    service.event.participate('10381709');
+
+    // 不参加活动了
+    service.event.notParticipate('10381709');
+
+    // 对活动感兴趣
+    service.event.wish('10440432');
+
+    // 对活动不感兴趣
+    service.event.unwish('10440432');
+    */
 });
 
 test("活动 object", function() {
