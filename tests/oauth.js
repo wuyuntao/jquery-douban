@@ -21,7 +21,7 @@ test("test authorization step 1: get request token synchronously", function() {
     equals(requestToken.secret.length, 16, "check the length of request secret ( \"" + requestToken.secret + "\" )");
     
     // Print authorization URL
-    console.debug(client.getAuthorizationUrl(requestToken));
+    // console.debug(client.getAuthorizationUrl(requestToken));
 });
 
 test("test authorization step 1: get request token asynchronously", function() {
