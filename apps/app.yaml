@@ -1,5 +1,5 @@
 application: jquery-douban
-version: 1
+version: 0-1-20090228
 runtime: python
 api_version: 1
 
@@ -24,6 +24,9 @@ handlers:
 
 - url: /example/.*
   script: example.py
+
+- url: /test/.*
+  script: test.py
 
 - url: /.*
   script: main.py

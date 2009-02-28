@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Language" content="zh-cn" />
+
+    <title>Douban {{ testcase_name|capfirst }} Testcases</title>
+
+    <link rel="stylesheet" type="text/css" href="/media/qunit/testsuite.css" />
+
+    <script type="text/javascript" src="/media/scripts/jquery.js" ></script>
+    <script type="text/javascript" src="/media/qunit/testrunner.js" ></script>
+
+    <script type="text/javascript" src="/media/scripts/sha1.js" ></script>
+    <script type="text/javascript" src="/media/scripts/oauth.js" ></script>
+    <script type="text/javascript" src="/media/scripts/jquery.douban.js"></script>
+
+    <script type="text/javascript" src="/media/scripts/gears_init.js" ></script>
+    <script type="text/javascript" src="/media/scripts/gears_handler.js" ></script>
+
+    <script type="text/javascript" src="/media/tests/base.js"></script>
+    <script type="text/javascript" src="/media/tests/{{ testcase_name }}.js"></script>
+
+</head>
+
+<body>
+
+    <h1>Douban {{ testcase_name|capfirst }} Testcases</h1>
+
+    <h2 id="banner"></h2>
+    <h2 id="userAgent"></h2>
+    <ol id="tests"></ol>
+    <div id="main"></div>
+
+</body>
+
+</html>
