@@ -1,6 +1,6 @@
 (function($) {
 /* 
- * jQuery Douban
+ * jQuery Douban Plugin
  *
  * Copyright (c) 2008 Wu Yuntao <http://blog.luliban.com/>
  * Licensed under the Apache 2.0 license.
@@ -15,8 +15,6 @@ var ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
 
 var API_HOST = 'http://api.douban.com';
 var PEOPLE_URL = API_HOST + '/people';
-// API Bug => http://www.douban.com/group/topic/4655057/ 
-var SEARCH_PEOPLE_URL = PEOPLE_URL + '/';
 var GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}';
 var GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
 
@@ -26,6 +24,7 @@ var ADD_NOTE_URL = API_HOST + '/notes';
 
 var BOOK_URL = API_HOST + '/book/subject';
 var GET_BOOK_URL = BOOK_URL + '/{ID}';
+var GET_BOOK_BY_ISBN_URL = BOOK_URL + '/isbn/{ID}';
 var SEARCH_BOOK_URL = BOOK_URL + 's';
 
 var MOVIE_URL = API_HOST + '/movie/subject';
@@ -353,7 +352,7 @@ var BaseService = $.klass({
      */
     lazyUrl: function(obj, tmpl) {
         if (typeof obj == 'object') return obj.id;
-        else if (obj.match(/^\w+$/) && tmpl) return tmpl.replace(/\{ID\}/, obj);
+        else if (/^\w+$/.test('' + obj) && tmpl) return tmpl.replace(/\{ID\}/, obj);
         else return obj;
     },
 
@@ -381,7 +380,7 @@ var BaseService = $.klass({
      * @param       suffix, String
      */
     _getForObject: function(object, offset, limit, callback, model, templateUrl, suffix, extraParams) {
-        var url = this.lazyUrl(object, templateUrl) + suffix;
+        var url = this.lazyUrl(object, templateUrl) + (suffix || '');
         var params = $.extend({ 'start-index': (offset || 0) + 1,
                                 'max-results': limit || 50 },
                               extraParams || {});
@@ -544,7 +543,7 @@ var UserService = $.klass(BaseService, {
     },
 
     search: function(query, offset, limit, callback) {
-        return this._search(query, offset, limit, callback, SEARCH_PEOPLE_URL, UserEntry);
+        return this._search(query, offset, limit, callback, PEOPLE_URL, UserEntry);
     },
 
     current: function(callback) {
@@ -580,6 +579,7 @@ var NoteService = $.klass(CommonService, {
 
 /* Douban Book API Service
  * @method      get         获取书籍信息
+ * @method      isbn        通过ISBN获取书籍信息
  * @method      search      搜索书籍
  */
 var BookService = $.klass(SubjectService, {
@@ -589,6 +589,10 @@ var BookService = $.klass(SubjectService, {
         this._getSubjectUrl = GET_BOOK_URL;
         this._searchSubjectUrl = SEARCH_BOOK_URL;
         $super(service);
+    },
+
+    isbn: function(isbn, callback) {
+        return this._get(isbn, callback, Book, GET_BOOK_BY_ISBN_URL);
     }
 });
 
@@ -660,8 +664,19 @@ var CollectionService = $.klass(CommonService, {
         $super(service);
     },
 
-    getForUser: function(user, offset, limit, callback, type) {
-        return this._getForObject(user, offset, limit, callback, CollectionEntry, GET_PEOPLE_URL, '/collection', { 'cat': type });
+    /* 
+     * @argument    params          可选参数包括：
+     * tag  	    搜索特定tag的收藏  	
+     * status 	    搜索特定状态的收藏 	
+     *      book:   [wish, reading, read]
+     *      movie:  [wish, watched]
+     *      tv:     [wish, watching, watched]
+     *      music:  [wish, listening, listened]
+     * updated-max 	收藏的最晚时间 	格式: 2007-12-28T21:47:00+08:00
+     * updated-min 	收藏的最早时间 	格式: 2007-12-28T21:47:00+08:00
+     */
+    getForUser: function(user, offset, limit, callback, params) {
+        return this._getForObject(user, offset, limit, callback, CollectionEntry, GET_PEOPLE_URL, '/collection', params);
     }
 });
 
@@ -690,14 +705,22 @@ var MiniblogService = $.klass(CommonService, {
 });
 
 /* Douban Event API Service
- * @method      get             获取活动
- * @method      getForUser      获取用户的所有活动
- * @method      add             创建新活动
- * @method      update          更新活动
- * @method      remove          删除活动
- * @method      search          搜索活动（未支持）
- * @method      getForCity      获取城市的所有活动（未支持）
- * @method      join            参加活动等（未支持）
+ * @method      get                     获取活动
+ * @method      participants            获取参加活动的用户
+ * @method      wishers                 获取活动感兴趣的用户
+ * @method      getForUser              获取用户的所有活动
+ * @method      getInitiateForUser      获取用户发起的活动
+ * @method      getParticipateForUser   获取用户参加的活动
+ * @method      getWishForUser          获取用户感兴趣的活动
+ * @method      getForCity              获取城市的所有活动
+ * @method      search                  搜索活动
+ * @method      add                     创建新活动
+ * @method      update                  更新活动
+ * @method      remove                  删除活动
+ * @method      participate             参加活动（未支持）
+ * @method      notParticipate          不参加活动了（未支持）
+ * @method      wish                    对活动感兴趣（未支持）
+ * @method      unwish                  对活动不感兴趣（未支持）
  */
 var EventService = $.klass(CommonService, {
     init: function($super, service) {
@@ -709,11 +732,49 @@ var EventService = $.klass(CommonService, {
         $super(service);
     },
 
+    participants: function(event, offset, limit, callback) {
+        return this._getForObject(event, offset, limit, callback, UserEntry, GET_EVENT_URL, '/participants');
+    },
+
+    wishers: function(event, offset, limit, callback) {
+        return this._getForObject(event, offset, limit, callback, UserEntry, GET_EVENT_URL, '/wishers');
+    },
+
+    getForUser: function(user, offset, limit, callback, type) {
+        switch (type) {
+            case 'initiate':
+            case 'participate':
+            case 'wish':
+                var suffix = this._suffix + '/' + type; break;
+            default:
+                var suffix = this._suffix; break;
+        }
+        return this._getForObject(user, offset, limit, callback, this._modelEntry, GET_PEOPLE_URL, suffix);
+    },
+
+    getInitiateForUser: function(user, offset, limit, callback) {
+        return this.getForUser(user, offset, limit, callback, 'initiate');
+    },
+
+    getParticipateForUser: function(user, offset, limit, callback) {
+        return this.getForUser(user, offset, limit, callback, 'participate');
+    },
+
+    getWishForUser: function(user, offset, limit, callback) {
+        return this.getForUser(user, offset, limit, callback, 'wish');
+    },
+
+    getForCity: function(city, offset, limit, callback) {
+        return this._getForObject(city, offset, limit, callback, this._modelEntry, GET_EVENT_FOR_CITY_URL);
+    },
+
     search: function(query, location, offset, limit, callback) {
-        var params = { 'q': query,
-                       'location': location || 'all',
-                       'start-index': (offset || 0) + 1,
-                       'max-results': limit || 50 };
+        var params = {
+            'q': query,
+            'location': location || 'all',
+            'start-index': (offset || 0) + 1,
+            'max-results': limit || 50
+        };
         var json = this._service.GET(this._addObjectUrl, params, this._onSuccess(callback, this._modelEntry));
         return this._response(json, this._modelEntry);
     },
@@ -723,6 +784,22 @@ var EventService = $.klass(CommonService, {
         var url = this.lazyUrl(event, this._getObjectUrl) + '/delete';
         var response = this._service.POST(url, data, this._onSuccess(callback));
         return (response['result'] && response['result']['$t'] == 'OK') ? true : false;
+    },
+
+    participate: function(event, callback) {
+        throw new Error("Not Implemented");
+    },
+
+    notParticipate: function(event, callback) {
+        throw new Error("Not Implemented");
+    },
+
+    wish: function(event, callback) {
+        throw new Error("Not Implemented");
+    },
+
+    unwish: function(event, callback) {
+        throw new Error("Not Implemented");
     }
 });
 
@@ -1133,7 +1210,7 @@ var NoteEntry = $.klass(AuthorEntry, {
  * @attribute       aka             又名
  * @attribute       subtitle        副标题
  * @attribute       authors         作者
- * @attribute       translator      译者
+ * @attribute       translators     译者
  * @attribute       isbn10          10位ISBN
  * @attribute       isbn13          13位ISBN
  * @attribute       releaseDate     发布时间
@@ -1641,7 +1718,6 @@ $.extend(OAuthClient.prototype, {
 
         function onSuccess(data) {
             data = $.unparam(data);
-            console.debug(data);
             self.accessToken = { key: data.oauth_token,
                                  secret: data.oauth_token_secret };
             self.userId = data.douban_user_id;
@@ -1873,7 +1949,7 @@ function jqueryHandler(s) {
     $.extend(s, {
         async: false,
         headers: undefined,
-        processData: s.type.match(/^P(OS|U)T$/) ? false : true,
+        processData: s.type.match(/^P(OS|U)T$/) && s.data ? false : true,
         beforeSend: function(xhr) {
             for (var name in s.headers)
                 xhr.setRequestHeader(name, s.headers[name]);
