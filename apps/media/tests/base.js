@@ -14,8 +14,8 @@ function createService(type) {
     });
 
     service.login({
-        key: '242968ea69f7cbc46c7c3abf3de7634c',
-        secret: '9858f453d21ab6e0'
+        key: 'c002c5818edc6c1340085084ac954439',
+        secret: '4687aa78ddedf5f6'
     });
     return service;
 }
