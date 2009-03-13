@@ -1,6 +1,7 @@
 (function($) {
 /* 
  * jQuery Douban Plugin
+ * @VERSION
  *
  * Copyright (c) 2008 Wu Yuntao <http://blog.luliban.com/>
  * Licensed under the Apache 2.0 license.
@@ -8,53 +9,53 @@
  */
 
 // {{{ Douban authentication and API URLs
-var AUTH_HOST = 'http://www.douban.com';
-var REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token';
-var AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize';
-var ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
+var AUTH_HOST = 'http://www.douban.com',
+    REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token',
+    AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize',
+    ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token',
 
-var API_HOST = 'http://api.douban.com';
-var PEOPLE_URL = API_HOST + '/people';
-var GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}';
-var GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
+    API_HOST = 'http://api.douban.com',
+    PEOPLE_URL = API_HOST + '/people',
+    GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}',
+    GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
 
-var NOTE_URL = API_HOST + '/note';
-var GET_NOTE_URL = NOTE_URL + '/{ID}';
-var ADD_NOTE_URL = API_HOST + '/notes';
+    NOTE_URL = API_HOST + '/note',
+    GET_NOTE_URL = NOTE_URL + '/{ID}',
+    ADD_NOTE_URL = API_HOST + '/notes',
 
-var BOOK_URL = API_HOST + '/book/subject';
-var GET_BOOK_URL = BOOK_URL + '/{ID}';
-var GET_BOOK_BY_ISBN_URL = BOOK_URL + '/isbn/{ID}';
-var SEARCH_BOOK_URL = BOOK_URL + 's';
+    BOOK_URL = API_HOST + '/book/subject',
+    GET_BOOK_URL = BOOK_URL + '/{ID}',
+    GET_BOOK_BY_ISBN_URL = BOOK_URL + '/isbn/{ID}',
+    SEARCH_BOOK_URL = BOOK_URL + 's',
 
-var MOVIE_URL = API_HOST + '/movie/subject';
-var GET_MOVIE_URL = MOVIE_URL + '/{ID}';
-var SEARCH_MOVIE_URL = MOVIE_URL + 's';
+    MOVIE_URL = API_HOST + '/movie/subject',
+    GET_MOVIE_URL = MOVIE_URL + '/{ID}',
+    SEARCH_MOVIE_URL = MOVIE_URL + 's',
 
-var MUSIC_URL = API_HOST + '/music/subject';
-var GET_MUSIC_URL = MUSIC_URL + '/{ID}';
-var SEARCH_MUSIC_URL = MUSIC_URL + 's';
+    MUSIC_URL = API_HOST + '/music/subject',
+    GET_MUSIC_URL = MUSIC_URL + '/{ID}',
+    SEARCH_MUSIC_URL = MUSIC_URL + 's',
 
-var REVIEW_URL = API_HOST + '/review';
-var GET_REVIEW_URL = REVIEW_URL + '/{ID}';
-var ADD_REVIEW_URL = REVIEW_URL + 's';
+    REVIEW_URL = API_HOST + '/review',
+    GET_REVIEW_URL = REVIEW_URL + '/{ID}',
+    ADD_REVIEW_URL = REVIEW_URL + 's',
 
-var COLLECTION_URL = API_HOST + '/collection';
-var GET_COLLECTION_URL = COLLECTION_URL + '/{ID}';
-var ADD_COLLECTION_URL = COLLECTION_URL;
+    COLLECTION_URL = API_HOST + '/collection',
+    GET_COLLECTION_URL = COLLECTION_URL + '/{ID}',
+    ADD_COLLECTION_URL = COLLECTION_URL,
 
-var MINIBLOG_URL = API_HOST + '/miniblog';
-var GET_MINIBLOG_URL = MINIBLOG_URL + '/{ID}';
-var ADD_MINIBLOG_URL = MINIBLOG_URL + '/saying';
+    MINIBLOG_URL = API_HOST + '/miniblog',
+    GET_MINIBLOG_URL = MINIBLOG_URL + '/{ID}',
+    ADD_MINIBLOG_URL = MINIBLOG_URL + '/saying',
 
-var RECOMMENDATION_URL = API_HOST + '/recommendation';
-var GET_RECOMMENDATION_URL = RECOMMENDATION_URL + '/{ID}';
-var ADD_RECOMMENDATION_URL = RECOMMENDATION_URL + 's';
+    RECOMMENDATION_URL = API_HOST + '/recommendation',
+    GET_RECOMMENDATION_URL = RECOMMENDATION_URL + '/{ID}',
+    ADD_RECOMMENDATION_URL = RECOMMENDATION_URL + 's',
 
-var EVENT_URL = API_HOST + '/event';
-var GET_EVENT_URL = EVENT_URL + '/{ID}';
-var ADD_EVENT_URL = EVENT_URL + 's';
-var GET_EVENT_FOR_CITY_URL = EVENT_URL + '/location/{ID}';
+    EVENT_URL = API_HOST + '/event',
+    GET_EVENT_URL = EVENT_URL + '/{ID}',
+    ADD_EVENT_URL = EVENT_URL + 's',
+    GET_EVENT_FOR_CITY_URL = EVENT_URL + '/location/{ID}';
 // }}}
 
 /* {{{ Some utilities
@@ -187,6 +188,170 @@ $.extend({
 });
 // }}}
 
+/* {{{ OAuth client
+ * @usage
+ * var apiToken = { key: 'blah', secret: 'blah' };
+ * var client = $.douban('client', { key: 'blah', secret: 'blah' });
+ * var requestToken = client.getRequestToken();
+ * var url = client.getAuthorizationUrl(requestToken);
+ * var accessToken = client.getAccessToken(requestToken);
+ * var login = client.login(accessToken);
+ */
+var OAuthClient = $.klass({
+    init: function(options) {
+        /* Default options */
+        var defaults = {
+            key: '',
+            secret: '',
+            type: 'jquery',
+            async: false
+        };
+        this.options = $.extend(defaults, options || {});;
+        this.api = { key: this.options.key, secret: this.options.secret };
+        this._http = douban.http.factory({ type: this.options.type });
+
+        this.requestToken = { key: '', secret: '' };
+        this.accessToken = { key: '', secret: '' };
+        this.authorizationUrl = '';
+        this.userId = '';
+    },
+
+    /* Get request token
+     * @returns         Token object
+     * @param           callback, Function
+     */ 
+    getRequestToken: function(callback) {
+        var token = null;
+        this.oauthRequest(REQUEST_TOKEN_URL, null, function(data) {
+            data = $.unparam(data);
+            token = { key: data.oauth_token,
+                      secret: data.oauth_token_secret };
+            if ($.isFunction(callback)) callback(token);
+        });
+        this.requestToken = token;
+        return this.requestToken
+    },
+
+    /* Get authorization URL
+     * @returns     url string
+     * @param       requestToken Token. If not specified, using
+     *              ``this.requestToken`` instead
+     * @param       callbackUrl String
+     */
+    getAuthorizationUrl: function(requestToken, callbackUrl) {
+        // shift arguments if ``requestToken`` was ommited
+        if (typeof requestToken == 'string') {
+            callbackUrl = requestToken;
+            requestToken = this.requestToken;
+        }
+        var params = $.param({ oauth_token: requestToken.key,
+                               oauth_callback: encodeURIComponent(callbackUrl || '') });
+        this.authorizationUrl = AUTHORIZATION_URL + '?' + params;
+        return this.authorizationUrl
+    },
+
+    /* Get access token
+     * @returns     token object
+     * @param       requestToken Token. If not specified, using
+     *              ``this.requestToken`` instead
+     * @param       callback, Function
+     */
+    getAccessToken: function(requestToken, callback) {
+        var self = this;
+        if (requestToken) self.requestToken = requestToken;
+        this.oauthRequest(ACCESS_TOKEN_URL,
+                          { oauth_token: self.requestToken.key },
+                          onSuccess);
+        return self.accessToken;
+
+        function onSuccess(data) {
+            data = $.unparam(data);
+            self.accessToken = { key: data.oauth_token,
+                                 secret: data.oauth_token_secret };
+            self.userId = data.douban_user_id;
+            if ($.isFunction(callback)) callback(self.accessToken, self.userId);
+        }
+    },
+
+    /* Save access token
+     * returns      if login Boolean
+     */
+    login: function(accessToken) {
+        accessToken = accessToken || this.accessToken;
+        // check length of access token
+        if (accessToken.key.length == 32 && accessToken.secret.length == 16) {
+            this.accessToken = accessToken;
+            return true;
+        }
+    },
+
+    /* Check if useris authenticated
+     * returns      if authenticated Boolean
+     */
+    isAuthenticated: function() {
+        return this.login();
+    },
+
+    /* Get OAuth headers
+     */
+    getAuthHeaders: function(url, method, parameters) {
+        var params = this.getParameters(url, method, parameters);
+        var header = 'OAuth realm=""';
+        for (var key in params) {
+            header += ', ' + key + '="' + params[key] + '"';
+        }
+        return header;
+    },
+
+    /* Get an OAuth message represented as an object like this:
+     * { method: "GET", action: "http://server.com/path", parameters: ... }
+     * Look into oauth.js for details
+     */
+    getMessage: function(url, method, parameters) {
+        var token = this.isAuthenticated() ? this.accessToken : this.requestToken;
+        var accessor = { consumerSecret: this.api.secret,
+                         tokenSecret: token.secret };
+        var parameters = $.extend({
+            oauth_consumer_key: this.api.key,
+            oauth_token: this.accessToken.key,
+            oauth_signature_method: 'HMAC-SHA1',
+            oauth_version: '1.0'
+        }, parameters || {});
+        var message = {
+            action: url,
+            method: method,
+            parameters: parameters
+        };
+        OAuth.setTimestampAndNonce(message);
+        OAuth.SignatureMethod.sign(message, accessor);
+        return message;
+    },
+
+    /* Get Oauth paramters
+     * @param url       URL string 
+     * @param type      'GET' or 'POST'
+     * @param data      Parameter object
+     *
+     * @return          Parameter object
+     */
+    getParameters: function(url, method, parameters) {
+        var message = this.getMessage(url, method, parameters);
+        return OAuth.getParameterMap(message.parameters);
+    },
+
+    /* OAuth Request
+     * @returns         null
+     * @param           url String 
+     * @param           data Dict 
+     * @param           callback Function
+     */
+    oauthRequest: function(url, data, callback) {
+        var data = this.getParameters(url, 'GET', data);
+        this._http({ async: this.options.async, url: url, data: data, success: callback });
+    }
+});
+// }}}
+
 /* {{{ Douban service classes, like ``DoubanService`` and ``UserService``
 
 /* Douban service
@@ -205,10 +370,10 @@ var DoubanService = $.klass({
             async: false
         };
         this.options = $.extend(defaults, options || {});;
-        this.api = new Token(this.options.key, this.options.secret);
+        this.api = { key: this.options.key, secret: this.options.secret };
 
-        this._http = $.douban.http.factory({ type: this.options.type });
-        this._client = $.douban('client', this.options);
+        this._http = douban.http.factory({ type: this.options.type });
+        this._client = douban('client', this.options);
         var services = {
             'user': UserService,
             'note': NoteService,
@@ -1641,175 +1806,6 @@ var TagEntry = $.klass(DoubanObjectEntry, {
 });
 // }}}
 
-/* {{{ OAuth client
- * @usage
- * var apiToken = { key: 'blah', secret: 'blah' };
- * var client = $.douban('client', { key: 'blah', secret: 'blah' });
- * var requestToken = client.getRequestToken();
- * var url = client.getAuthorizationUrl(requestToken);
- * var accessToken = client.getAccessToken(requestToken);
- * var login = client.login(accessToken);
- */
-function OAuthClient(options) {
-    /* Default options */
-    var defaults = {
-        key: '',
-        secret: '',
-        type: 'jquery',
-        async: false
-    };
-    this.options = $.extend(defaults, options || {});;
-    this.api = new Token(this.options.key, this.options.secret);
-    this._http = $.douban.http.factory({ type: this.options.type });
-
-    this.requestToken = new Token();
-    this.accessToken = new Token();
-    this.authorizationUrl = '';
-    this.userId = '';
-}
-$.extend(OAuthClient.prototype, {
-    /* Get request token
-     * @returns         Token object
-     * @param           callback, Function
-     */ 
-    getRequestToken: function(callback) {
-        var token = null;
-        this.oauthRequest(REQUEST_TOKEN_URL, null, function(data) {
-            data = $.unparam(data);
-            token = { key: data.oauth_token,
-                      secret: data.oauth_token_secret };
-            if ($.isFunction(callback)) callback(token);
-        });
-        this.requestToken = token;
-        return this.requestToken
-    },
-
-    /* Get authorization URL
-     * @returns     url string
-     * @param       requestToken Token. If not specified, using
-     *              ``this.requestToken`` instead
-     * @param       callbackUrl String
-     */
-    getAuthorizationUrl: function(requestToken, callbackUrl) {
-        // shift arguments if ``requestToken`` was ommited
-        if (typeof requestToken == 'string') {
-            callbackUrl = requestToken;
-            requestToken = this.requestToken;
-        }
-        var params = $.param({ oauth_token: requestToken.key,
-                               oauth_callback: encodeURIComponent(callbackUrl || '') });
-        this.authorizationUrl = AUTHORIZATION_URL + '?' + params;
-        return this.authorizationUrl
-    },
-
-    /* Get access token
-     * @returns     token object
-     * @param       requestToken Token. If not specified, using
-     *              ``this.requestToken`` instead
-     * @param       callback, Function
-     */
-    getAccessToken: function(requestToken, callback) {
-        var self = this;
-        if (requestToken) self.requestToken = requestToken;
-        this.oauthRequest(ACCESS_TOKEN_URL,
-                          { oauth_token: self.requestToken.key },
-                          onSuccess);
-        return self.accessToken;
-
-        function onSuccess(data) {
-            data = $.unparam(data);
-            self.accessToken = { key: data.oauth_token,
-                                 secret: data.oauth_token_secret };
-            self.userId = data.douban_user_id;
-            if ($.isFunction(callback)) callback(self.accessToken, self.userId);
-        }
-    },
-
-    /* Save access token
-     * returns      if login Boolean
-     */
-    login: function(accessToken) {
-        accessToken = accessToken || this.accessToken;
-        // check length of access token
-        if (accessToken.key.length == 32 && accessToken.secret.length == 16) {
-            this.accessToken = accessToken;
-            return true;
-        }
-    },
-
-    /* Check if useris authenticated
-     * returns      if authenticated Boolean
-     */
-    isAuthenticated: function() {
-        return this.login();
-    },
-
-    /* Get OAuth headers
-     */
-    getAuthHeaders: function(url, method, parameters) {
-        var params = this.getParameters(url, method, parameters);
-        var header = 'OAuth realm=""';
-        for (var key in params) {
-            header += ', ' + key + '="' + params[key] + '"';
-        }
-        return header;
-    },
-
-    /* Get an OAuth message represented as an object like this:
-     * { method: "GET", action: "http://server.com/path", parameters: ... }
-     * Look into oauth.js for details
-     */
-    getMessage: function(url, method, parameters) {
-        var token = this.isAuthenticated() ? this.accessToken : this.requestToken;
-        var accessor = { consumerSecret: this.api.secret,
-                         tokenSecret: token.secret };
-        var parameters = $.extend({
-            oauth_consumer_key: this.api.key,
-            oauth_token: this.accessToken.key,
-            oauth_signature_method: 'HMAC-SHA1',
-            oauth_version: '1.0'
-        }, parameters || {});
-        var message = {
-            action: url,
-            method: method,
-            parameters: parameters
-        };
-        OAuth.setTimestampAndNonce(message);
-        OAuth.SignatureMethod.sign(message, accessor);
-        return message;
-    },
-
-    /* Get Oauth paramters
-     * @param url       URL string 
-     * @param type      'GET' or 'POST'
-     * @param data      Parameter object
-     *
-     * @return          Parameter object
-     */
-    getParameters: function(url, method, parameters) {
-        var message = this.getMessage(url, method, parameters);
-        return OAuth.getParameterMap(message.parameters);
-    },
-
-    /* OAuth Request
-     * @returns         null
-     * @param           url String 
-     * @param           data Dict 
-     * @param           callback Function
-     */
-    oauthRequest: function(url, data, callback) {
-        var data = this.getParameters(url, 'GET', data);
-        this._http({ async: this.options.async, url: url, data: data, success: callback });
-    }
-});
-
-/* A simple token object */
-function Token(key, secret) {
-    this.key = key || '';
-    this.secret = secret || '';
-}
-// }}}
-
 // {{{ jQuery Douban
 /* Model dict for factory method
  */
@@ -1840,13 +1836,13 @@ var factoryDict = {
  *     var id = service.miniblog.add("发送一条广播");
  * }
  */
-$.douban = function(factory, options) {
+var douban = function(factory, options) {
     if (typeof factory != 'string') {
         options = factory;
         factory = 'service';
     }
     if (factory == 'http')
-        return $.douban.http.factory(options);
+        return douban.http.factory(options);
     return new factoryDict[factory](options);
 };
 /* Create XML by given factory
@@ -1854,7 +1850,7 @@ $.douban = function(factory, options) {
  * @param       factory, String
  * @param       data, Object
  */
-$.douban.createXml = function(factory, data) {
+douban.createXml = function(factory, data) {
     return factoryDict[factory].createXml(data);
 };
 
@@ -1870,8 +1866,8 @@ $.douban.createXml = function(factory, data) {
  * $.douban.http.unregister('air');
  *
  */
-$.douban.http = function(options) {
-    return $.douban.http.activeHandler(options);
+douban.http = function(options) {
+    return douban.http.activeHandler(options);
 };
 
 /* Create HTTP request handler by the default 'jquery' handler 
@@ -1879,44 +1875,44 @@ $.douban.http = function(options) {
  * by passing arguments ``type`` and ``handler`` to the factory
  * method
  */
-$.douban.http.factory = function(options) {
+douban.http.factory = function(options) {
     /* Default options */
     var defaults = {
         type: 'jquery',
         handler: null
     },
     options = $.extend(defaults, options || {});
-    if (typeof $.douban.http.handlers[options.type] == 'undefined') {
+    if (typeof douban.http.handlers[options.type] == 'undefined') {
         // Register and set active the new handler
         if ($.isFunction(options.handler)) {
-            $.douban.http.register(options.type, options.handler);
+            douban.http.register(options.type, options.handler);
         } else {
             throw new Error("Invalid HTTP request handler");
         }
     }
-    return $.douban.http.handlers[options.type];
+    return douban.http.handlers[options.type];
 };
 
 /* Default handler is jquery
  */
-$.douban.http.activeHandler = jqueryHandler;
+douban.http.activeHandler = jqueryHandler;
 
 /* A dict of HTTP request name and its constructor,
  */
-$.douban.http.handlers = {
+douban.http.handlers = {
     jquery: jqueryHandler,
     greasemonkey: greasemonkeyHandler
 };
 
 /* Set active handler
  */
-$.douban.http.setActive = function(name) {
-    $.douban.http.activeHandler = $.douban.http.handlers[name];
+douban.http.setActive = function(name) {
+    douban.http.activeHandler = douban.http.handlers[name];
 };
 
 /* Default http settings
  */
-$.douban.http.settings = {
+douban.http.settings = {
     async: false,
     url: location.href,
     type: 'GET',
@@ -1930,22 +1926,22 @@ $.douban.http.settings = {
 
 /* Register new HTTP request handler to ``handlers``
  */
-$.douban.http.register = function(name, handler) {
+douban.http.register = function(name, handler) {
     if ($.isFunction(handler)) {
-        $.douban.http.handlers[name] = handler;
+        douban.http.handlers[name] = handler;
     }
 };
 
 /* Unregister an existed HTTP request handler
  */
-$.douban.http.unregister = function(name) {
-    $.douban.http.handlers[name] = undefined;
+douban.http.unregister = function(name) {
+    douban.http.handlers[name] = undefined;
 };
 
 /* Built-in HTTP request handlers: 'jquery'
  */
 function jqueryHandler(s) {
-    s = $.extend({}, $.douban.http.settings, s || {});
+    s = $.extend({}, douban.http.settings, s || {});
     $.extend(s, {
         async: false,
         headers: undefined,
@@ -1961,7 +1957,7 @@ jqueryHandler.name = 'jquery';
 
 function greasemonkeyHandler(s) {
     if (!GM_xmlhttpRequest) return;
-    s = $.extend({}, $.douban.http.settings, s || {});
+    s = $.extend({}, douban.http.settings, s || {});
     if (s.data && typeof s.data != "string") s.data = $.param(s.data);
     if (s.data && s.type == "GET") {
         s.url += (s.url.match(/\?/) ? "&" : "?") + s.data;
@@ -1984,5 +1980,8 @@ function greasemonkeyHandler(s) {
 }
 greasemonkeyHandler.name = 'greasemonkey';
 // }}}
+
+// Expose
+$.douban = douban;
 
 })(jQuery);
