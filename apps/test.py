@@ -1,5 +1,9 @@
 # -*- coding: UTF-8 -*-
+
 import os
+import cgi
+import logging
+from django.utils import simplejson as json
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -18,6 +22,30 @@ testcases = (
     'user',
 )
 
+class TestHandler(webapp.RequestHandler):
+    def get(self):
+        self.response.out.write(self.build_json())
+
+    def post(self):
+        self.response.out.write(self.build_json())
+
+    def put(self):
+        self.response.out.write(self.build_json())
+
+    def delete(self):
+        self.response.out.write(self.build_json())
+
+    def build_json(self):
+        return json.dumps({
+            'url': self.request.url,
+            'params': dict(cgi.parse_qsl(self.request.query_string)),
+            'headers': {
+                'h1': self.request.headers['H1'],
+                'h2': self.request.headers['H2'],
+            },
+            'data': self.request.body,
+        })
+
 class TestcasePage(webapp.RequestHandler):
     def get(self, testcase_name):
         if testcase_name not in testcases:
@@ -31,6 +59,7 @@ class TestcasePage(webapp.RequestHandler):
         return self.response.out.write(template.render(path, template_values))
 
 urls = (
+    (r'/test/handler/', TestHandler),
     (r'/test/(.*)/', TestcasePage),
 )
 
