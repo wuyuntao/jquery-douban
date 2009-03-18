@@ -2,8 +2,22 @@ var reList = /(aka|cast|country|language|singer|author|director|translator|write
     reBool = /(privacy|can_reply|invite_only|can_invite)/,
     reTrue = /(public|yes)/;
 
+Douban.user = function(feed) {
+    return Parser.isEntry(feed) ?
+        new Parser(feed).entries(Douban.user) :
+        new Parser(feed).attr('id').attr('uri', 'id')
+                        .attr('db:uid')
+                        .attr('title', 'name').attr('name')
+                        .attr('db:location')
+                        .attr('content', 'intro')
+                        .links({ 'alternate': 'home',
+                                 'icon': 'image',
+                                 'homepage': 'blog' });
+};
+
 Douban.subject = function(feed) {
-    return Parser.isEntry(feed) ? new Parser(feed).entries(Douban.subject) :
+    return Parser.isEntry(feed) ?
+        new Parser(feed).entries(Douban.subject) :
         new Parser(feed).cat()
                         .attr('id')
                         .attr('title')
@@ -13,10 +27,12 @@ Douban.subject = function(feed) {
                         .links({ 'alternate': 'home' })
                         .rating()
                         .tags();
-},
+};
+Douban.book = Douban.movie = Douban.music = Douban.subject;
 
 Douban.collection = function(feed) {
-    return Parser.isEntry(feed) ? new Parser(feed).entries(Douban.collection) :
+    return Parser.isEntry(feed) ?
+        new Parser(feed).entries(Douban.collection) :
         new Parser(feed).attr('id')
                         .attr('title')
                         .attr('author', 'owner', Douban.user)
@@ -26,10 +42,11 @@ Douban.collection = function(feed) {
                         .attr('db:status')
                         .rating()
                         .tags();
-},
+};
 
 Douban.review = function(feed) {
-    return Parser.isEntry(feed) ? new Parser(feed).entries(Douban.review) :
+    return Parser.isEntry(feed) ?
+        new Parser(feed).entries(Douban.review) :
         new Parser(feed).attr('id')
                         .attr('title')
                         .attr('author', Douban.user)
@@ -40,10 +57,11 @@ Douban.review = function(feed) {
                         .links({ 'alternate': 'home',
                                  'http://www.Douban.com/2007#subject': 'subject' })
                         .rating();
-},
+};
 
 Douban.miniblog = function(feed) {
-    return Parser.isEntry(feed) ? new Parser(feed).entries(Douban.miniblog) :
+    return Parser.isEntry(feed) ?
+        new Parser(feed).entries(Douban.miniblog) :
         new Parser(feed).cat()
                         .attr('id')
                         .attr('title')
@@ -51,29 +69,32 @@ Douban.miniblog = function(feed) {
                         .attr('published')
                         .attrs({ 'category': 'subcategory' })
                         .links({});
-},
+};
 
 Douban.recommendation = function(feed) {
-    return Parser.isEntry(feed) ? new Parser(feed).entries(Douban.recommendation) :
+    return Parser.isEntry(feed) ?
+        new Parser(feed).entries(Douban.recommendation) :
         new Parser(feed).attr('id')
                         .attr('title')
                         .attr('content')
                         .attr('published')
                         .attrs({})
                         .links({});
-},
+};
 
 Douban.comment = function(feed) {
     // Recommendation comment
-    return Parser.isEntry(feed) ? new Parser(feed).entries(Douban.comment) :
+    return Parser.isEntry(feed) ?
+        new Parser(feed).entries(Douban.comment) :
         new Parser(feed).attr('id')
                         .attr('author', Douban.user)
                         .attr('published')
                         .attr('content');
-},
+};
 
 Douban.note = function(feed) {
-    return Parser.isEntry(feed) ? new Parser(feed).entries(Douban.note) :
+    return Parser.isEntry(feed) ?
+        new Parser(feed).entries(Douban.note) :
         new Parser(feed).attr('id')
                         .attr('author', Douban.user)
                         .attr('title')
@@ -84,10 +105,11 @@ Douban.note = function(feed) {
                         .attrs({ 'privacy': 'isPublic',
                                  'can_reply': 'isReplyEnabled' })
                         .links({ 'alternate': 'home' });
-},
+};
 
 Douban.event = function(feed) {
-    return Parser.isEntry(feed) ? new Parser(feed).entries(Douban.event) :
+    return Parser.isEntry(feed) ?
+        new Parser(feed).entries(Douban.event) :
         new Parser(feed).cat()
                         .attr('id')
                         .attr('author', 'owner', Douban.user)
@@ -98,19 +120,18 @@ Douban.event = function(feed) {
                         .eventContent()
                         .when().where()
                         .links({ 'alternate': 'home' });
-},
+};
 
 Douban.tag = function(feed) {
-    return Parser.isEntry(feed) ? new Parser(feed).entries(Douban.tag) :
+    return Parser.isEntry(feed) ?
+        new Parser(feed).entries(Douban.tag) :
         new Parser(feed).tag();
-},
-Douban.book = Douban.movie = Douban.music = Douban.subject;
+};
 
 var Parser = function(json) {
     this.raw = json;
     this.all = [];
 };
-
 Parser.prototype = {
     add: function() {
         for (var i = 0, ilen = arguments.length; i < ilen; ++i) {

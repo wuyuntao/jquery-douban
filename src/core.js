@@ -19,8 +19,7 @@ var Service = function(options) {
     for (var name in Douban.service)
         this[name] = new Douban.service[name](this);
 };
-
-Service.fn = Service.prototype = {
+Service.prototype = {
     login: function(token) {
         return this.client.login(token);
     },

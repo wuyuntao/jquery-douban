@@ -31,17 +31,3 @@ User.prototype = {
                                   Douban.user, GET_PEOPLE_URL + '/contacts');
     }
 };
-
-// Douban user parser
-Douban.user = function(feed) {
-    return Parser.isEntry(feed) ?
-        new Parser(feed).entries(Douban.user) :
-        new Parser(feed).attr('id').attr('uri', 'id')
-                        .attr('db:uid')
-                        .attr('title', 'name').attr('name')
-                        .attr('db:location')
-                        .attr('content', 'intro')
-                        .links({ 'alternate': 'home',
-                                 'icon': 'image',
-                                 'homepage': 'blog' });
-};

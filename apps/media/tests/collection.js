@@ -75,5 +75,3 @@ test("test collection object", function() {
     var xml = $.douban.createXml('collection', { subject: '条目', status: '状态', content: '评价', rating: 5, tags: ['标签一', '标签二', '标签三'], isPrivate: true });
     equals(xml, '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><db:subject><id>条目</id></db:subject><db:status>状态</db:status><db:tag name="标签一"></db:tag><db:tag name="标签二"></db:tag><db:tag name="标签三"></db:tag><content>评价</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="5" ></gd:rating><db:attribute name="privacy">private</db:attribute></entry>');
 });
-
-// vim: foldmethod=indent

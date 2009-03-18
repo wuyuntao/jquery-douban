@@ -72,5 +72,3 @@ test("test client login", function() {
     var login = service.login(accessToken);
     ok(login, "login successful");
 });
-
-// vim: foldmethod=indent
