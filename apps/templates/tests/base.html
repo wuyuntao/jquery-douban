@@ -11,29 +11,33 @@
 
     <link rel="stylesheet" type="text/css" href="/media/qunit/testsuite.css" />
 
-    <script type="text/javascript" src="/media/scripts/jquery.js" ></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js" ></script>
+    {% block qunit %}
     <script type="text/javascript" src="/media/qunit/testrunner.js" ></script>
+    {% endblock %}
 
+    {% block js %}
     <script type="text/javascript" src="/media/scripts/sha1.js" ></script>
     <script type="text/javascript" src="/media/scripts/oauth.js" ></script>
     <script type="text/javascript" src="/media/scripts/jquery.douban.js"></script>
-
-    <script type="text/javascript" src="/media/scripts/gears_init.js" ></script>
     <script type="text/javascript" src="/media/scripts/gears_handler.js" ></script>
+    {% endblock %}
 
     <script type="text/javascript" src="/media/tests/base.js"></script>
+    <script type="text/javascript" src="/media/tests/fixtures.js"></script>
     <script type="text/javascript" src="/media/tests/{{ testcase_name }}.js"></script>
 
 </head>
 
 <body>
 
+    {% block main %}
     <h1>Douban {{ testcase_name|capfirst }} Testcases</h1>
-
     <h2 id="banner"></h2>
     <h2 id="userAgent"></h2>
     <ol id="tests"></ol>
     <div id="main"></div>
+    {% endblock %}
 
 </body>
 

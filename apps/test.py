@@ -20,6 +20,7 @@ testcases = (
     'subject',
     'tag',
     'user',
+    'gears',
 )
 
 class TestHandler(webapp.RequestHandler):
@@ -40,8 +41,8 @@ class TestHandler(webapp.RequestHandler):
             'url': self.request.url,
             'params': dict(cgi.parse_qsl(self.request.query_string)),
             'headers': {
-                'h1': self.request.headers['H1'],
-                'h2': self.request.headers['H2'],
+                'h1': self.request.headers.get('H1'),
+                'h2': self.request.headers.get('H2'),
             },
             'data': self.request.body,
         })
@@ -51,7 +52,7 @@ class TestcasePage(webapp.RequestHandler):
         if testcase_name not in testcases:
             return self.error(404)
 
-        template_path = 'templates/tests.html'
+        template_path = 'templates/tests/%s.html' % testcase_name
         template_values = {
             'testcase_name': testcase_name,
         }
