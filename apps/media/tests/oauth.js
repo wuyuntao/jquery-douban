@@ -46,11 +46,10 @@ test("test authorization step 3: get access token", function() {
         secret: '7feaf4ec7b6989f8'
     });
     requestToken = {
-        key: '40124b62c57031c6c036e22850509552',
-        secret: '4fb86fde66ae75c0'
+        key: '88d04025e89c77bb9a70c071b9d56731',
+        secret: '21916217444e9509'
     };
 
-    /*
     stop();
     client.accessToken(requestToken, function(token, uid) {
         // When the client is authenticated, the request token will be invalid
@@ -61,7 +60,6 @@ test("test authorization step 3: get access token", function() {
         equals(uid, '2133418', "get username");
         start();
     });
-    */
 });
 
 test("test programmatic login", function() {
