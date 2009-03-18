@@ -6,6 +6,8 @@ var AUTH_HOST = 'http://www.douban.com',
 var Client = function(options) {
     this.api = { key: options.key || '', secret: options.secret || '' };
     this.request = options.handler || Douban.handler.jquery;
+    // Access token
+    this.token = { key: '', secret: '' };
 };
 
 Client.prototype = {
@@ -47,6 +49,7 @@ Client.prototype = {
     login: function(token) {
         // check length of access token
         if (token.key.length == 32 && token.secret.length == 16) {
+            this.token = token;
             return true;
         } else {
             return false;
@@ -55,7 +58,7 @@ Client.prototype = {
 
     // Get an OAuth header. Look into oauth.js for details
     header: function(url, method, params, token) {
-        token = token || { key: '', secret: '' };
+        token = token || this.token;
         var accessor = {
             consumerSecret: this.api.secret,
             tokenSecret: token.secret
