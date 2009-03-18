@@ -11,42 +11,42 @@ Douban.util = {
 var jQueryHandler = Douban.handler.jquery = {
     name: 'jquery',
 
-    GET: function(url, params, headers, success) {
+    GET: function(url, params, headers, success, type) {
         return jQuery.ajax({ url: url,
                              type: 'GET',
                              data: params,
-                             dataType: 'json',
+                             dataType: type || 'json',
                              success: success,
                              beforeSend: jQueryHandler.beforeSend(headers) });
     },
 
-    POST: function(url, params, data, headers, success) {
+    POST: function(url, params, data, headers, success, type) {
         return jQuery.ajax({ url: Douban.util.buildUri(url, params),
                              type: 'POST',
                              data: data,
-                             dataType: 'json',
+                             dataType: type || 'json',
                              processData: false,
                              contentType: 'application/atom+xml',
                              success: success,
                              beforeSend: jQueryHandler.beforeSend(headers) });
     },
 
-    PUT: function(url, params, data, headers, success) {
+    PUT: function(url, params, data, headers, success, type) {
         return jQuery.ajax({ url: Douban.util.buildUri(url, params),
                              type: 'PUT',
                              data: data,
-                             dataType: 'json',
+                             dataType: type || 'json',
                              processData: false,
                              contentType: 'application/atom+xml',
                              success: success,
                              beforeSend: jQueryHandler.beforeSend(headers) });
     },
 
-    DELETE: function(url, params, headers, success) {
+    DELETE: function(url, params, headers, success, type) {
         return jQuery.ajax({ url: url,
                              type: 'DELETE',
                              data: params,
-                             dataType: 'text',
+                             dataType: type || 'text',
                              success: success,
                              beforeSend: jQueryHandler.beforeSend(headers) });
     },
