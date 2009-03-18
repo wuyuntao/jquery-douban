@@ -124,3 +124,11 @@ $.extend({
         return obj;
     }
 });
+
+Douban.util = {
+    buildUri: function(url, params, proxy) {
+        url += (/\?/.test(url) ? '&' : '?') + $.param(params);
+        if (proxy) url = proxy + encodeURIComponent(url);
+        return url;
+    }
+};

@@ -1,14 +1,4 @@
-if (google && google.gears) {
-
-var Douban = {};
-Douban.handler = {};
-Douban.util = {
-    buildUri: function(url, params, proxy) {
-        url += (/\?/.test(url) ? '&' : '?') + $.param(params);
-        if (proxy) url = proxy + encodeURIComponent(url);
-        return url
-    }
-};
+if (window.google && google.gears) {
 
 var GearsHandler = Douban.handler.gears = {
     name: 'gears',

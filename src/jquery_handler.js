@@ -1,12 +1,4 @@
-if (jQuery) {
-
-var Douban = {};
-Douban.handler = {};
-Douban.util = {
-    buildUri: function(url, params) {
-        return url + (/\?/.test(url) ? '&' : '?') + $.param(params);
-    }
-};
+if (window.jQuery) {
 
 var jQueryHandler = Douban.handler.jquery = {
     name: 'jquery',

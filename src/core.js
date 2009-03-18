@@ -1,8 +1,11 @@
-var API_HOST = 'http://api.douban.com',
+var API_HOST = 'http://api.douban.com';
 
 var Douban = function(options) {
     return new Service(options);
 };
+
+// HTTP Request handlers
+Douban.handler = {};
 
 var Service = function(options) {
     this.api = { key: this.options.key || '', secret: this.options.secret || '' };
