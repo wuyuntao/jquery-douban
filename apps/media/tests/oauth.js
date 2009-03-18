@@ -20,22 +20,20 @@ test("test authorization step 1: get request token", function() {
     });
 
     stop();
-    client.getRequestToken(function(token) {
+    client.requestToken(function(token) {
         equals(token.key.length, 32,
                "check the length of request key ( \"" + token.key + "\" )");
         equals(token.secret.length, 16,
                "check the length of request secret ( \"" + token.secret + "\" )");
+        ok(client.authorizationUrl(token), client.authorizationUrl(token));
         start();
     });
-    
-    // Print authorization URL
-    // console.debug(client.getAuthorizationUrl(requestToken));
 });
 
 test("test authorization step 2: get authorization url", function() {
     var client = new Client({ key: '1', secret: '2' });
     var callback = 'mycallback';
-    var url = client.getAuthorizationUrl({ key: '3', secret: '4' }, callback);
+    var url = client.authorizationUrl({ key: '3', secret: '4' }, callback);
     equals(url, 'http://www.douban.com/service/auth/authorize?oauth_token=3&oauth_callback=mycallback');
 });
 
@@ -48,19 +46,19 @@ test("test authorization step 3: get access token", function() {
         secret: '7feaf4ec7b6989f8'
     });
     requestToken = {
-        key: '35856283b122f38ba090278b1368daa1',
-        secret: '7b85d5bb9fc0d167'
+        key: '40124b62c57031c6c036e22850509552',
+        secret: '4fb86fde66ae75c0'
     };
 
     /*
     stop();
-    client.getAccessToken(requestToken, function(token, uid) {
+    client.accessToken(requestToken, function(token, uid) {
         // When the client is authenticated, the request token will be invalid
         equals(token.key.length, 32,
                "check the length of access key ( \"" + token.key + "\" )");
         equals(token.secret.length, 16,
                "check the length of access secret ( \"" + token.secret + "\" )");
-        equals(uid, '1139389', "get username");
+        equals(uid, '2133418', "get username");
         start();
     });
     */
