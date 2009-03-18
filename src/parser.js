@@ -1,6 +1,6 @@
-var reList = /(aka|cast|country|language|singer|author|director|translator|writer)/,
-    reBool = /(privacy|can_reply|invite_only|can_invite)/,
-    reTrue = /(public|yes)/;
+var reList = /^(aka|cast|country|language|singer|author|director|translator|writer)$/,
+    reBool = /^(privacy|can_reply|invite_only|can_invite)$/,
+    reTrue = /^(public|yes)$/;
 
 Douban.user = function(feed) {
     return Parser.isEntry(feed) ?
@@ -23,7 +23,8 @@ Douban.subject = function(feed) {
                         .attr('title')
                         .attr('summary')
                         .attrs({ 'pubdate': 'releaseDate',
-                                 'singer': 'artist' })
+                                 'singer': 'artist',
+                                 'author-intro': 'authorIntro' })
                         .links({ 'alternate': 'home' })
                         .rating()
                         .tags();
