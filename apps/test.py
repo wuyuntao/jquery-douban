@@ -22,6 +22,7 @@ testcases = (
     'user',
     'gears',
     'jquery',
+    'parser',
 )
 
 class TestHandler(webapp.RequestHandler):

@@ -1,15 +1,8 @@
-{% extends 'base.html' %}
-
-{% block qunit %}{% endblock %}
+{% extends 'fireunit.html' %}
 
 {% block js %}
 <script type="text/javascript" src="/media/scripts/gears_init.js" ></script>
 <script type="text/javascript" src="/media/scripts/core.js" ></script>
 <script type="text/javascript" src="/media/scripts/utils.js" ></script>
 <script type="text/javascript" src="/media/scripts/gears_handler.js" ></script>
-{% endblock %}
-
-{% block main %}
-<h1>Douban {{ testcase_name|capfirst }} Testcases</h1>
-<h2>See testcases in FireUnit</h2>
 {% endblock %}

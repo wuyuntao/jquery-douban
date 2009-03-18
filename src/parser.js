@@ -2,8 +2,6 @@ var reList = /(aka|cast|country|language|singer|author|director|translator|write
     reBool = /(privacy|can_reply|invite_only|can_invite)/,
     reTrue = /(public|yes)/;
 
-Douban = {};
-
 Douban.user = function(feed) {
     return Parser.isEntry(feed) ? new Parser(feed).entries(Douban.user) :
         new Parser(feed).attr('id').attr('uri', 'id')
