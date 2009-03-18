@@ -1,10 +1,4 @@
-var AUTH_HOST = 'http://www.douban.com',
-    REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token',
-    AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize',
-    ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token',
-
-    API_HOST = 'http://api.douban.com',
-    PEOPLE_URL = API_HOST + '/people',
+var PEOPLE_URL = API_HOST + '/people',
     GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}',
     GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
 

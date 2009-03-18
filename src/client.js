@@ -1,109 +1,62 @@
-/* OAuth client
- * @usage
- * var apiToken = { key: 'blah', secret: 'blah' };
- * var client = $.douban('client', { key: 'blah', secret: 'blah' });
- * var requestToken = client.getRequestToken();
- * var url = client.getAuthorizationUrl(requestToken);
- * var accessToken = client.getAccessToken(requestToken);
- * var login = client.login(accessToken);
- */
-var OAuthClient = $.klass({
-    init: function(options) {
-        /* Default options */
-        var defaults = {
-            key: '',
-            secret: '',
-            type: 'jquery',
-            async: false
-        };
-        this.options = $.extend(defaults, options || {});;
-        this.api = { key: this.options.key, secret: this.options.secret };
-        this._http = douban.http.factory({ type: this.options.type });
+var AUTH_HOST = 'http://www.douban.com',
+    REQUEST_TOKEN_URL = AUTH_HOST + '/service/auth/request_token',
+    AUTHORIZATION_URL = AUTH_HOST + '/service/auth/authorize',
+    ACCESS_TOKEN_URL = AUTH_HOST + '/service/auth/access_token';
 
-        this.requestToken = { key: '', secret: '' };
-        this.accessToken = { key: '', secret: '' };
-        this.authorizationUrl = '';
-        this.userId = '';
-    },
+var Client = function(options) {
+    this.api = { key: this.options.key || '', secret: this.options.secret || '' };
+    this.request = options.handler || Douban.handler.jquery;
 
-    /* Get request token
-     * @returns         Token object
-     * @param           callback, Function
-     */ 
+    this.requestToken = { key: '', secret: '' };
+    this.accessToken = { key: '', secret: '' };
+    this.uid = '';
+};
+
+Client.prototype = {
     getRequestToken: function(callback) {
         var token = null;
-        this.oauthRequest(REQUEST_TOKEN_URL, null, function(data) {
+        this.request.GET(REQUEST_TOKEN_URL, null, response, 'text');
+
+        function response(data) {
             data = $.unparam(data);
-            token = { key: data.oauth_token,
-                      secret: data.oauth_token_secret };
-            if ($.isFunction(callback)) callback(token);
-        });
-        this.requestToken = token;
-        return this.requestToken
+            this.requestToken = { key: data.oauth_token,
+                                  secret: data.oauth_token_secret };
+            callback && callback(this.requestToken);
+        }
     },
 
-    /* Get authorization URL
-     * @returns     url string
-     * @param       requestToken Token. If not specified, using
-     *              ``this.requestToken`` instead
-     * @param       callbackUrl String
-     */
     getAuthorizationUrl: function(requestToken, callbackUrl) {
-        // shift arguments if ``requestToken`` was ommited
-        if (typeof requestToken == 'string') {
-            callbackUrl = requestToken;
-            requestToken = this.requestToken;
-        }
-        var params = $.param({ oauth_token: requestToken.key,
-                               oauth_callback: encodeURIComponent(callbackUrl || '') });
-        this.authorizationUrl = AUTHORIZATION_URL + '?' + params;
-        return this.authorizationUrl
+        var params = $.param({
+            oauth_token: requestToken.key,
+            oauth_callback: encodeURIComponent(callbackUrl || '')
+        });
+        return AUTHORIZATION_URL + '?' + params;
     },
 
-    /* Get access token
-     * @returns     token object
-     * @param       requestToken Token. If not specified, using
-     *              ``this.requestToken`` instead
-     * @param       callback, Function
-     */
     getAccessToken: function(requestToken, callback) {
-        var self = this;
-        if (requestToken) self.requestToken = requestToken;
-        this.oauthRequest(ACCESS_TOKEN_URL,
-                          { oauth_token: self.requestToken.key },
-                          onSuccess);
-        return self.accessToken;
+        this.request.GET(ACCESS_TOKEN_URL,
+                         { oauth_token: requestToken.key },
+                         response);
 
-        function onSuccess(data) {
+        function response(data) {
             data = $.unparam(data);
-            self.accessToken = { key: data.oauth_token,
+            this.accessToken = { key: data.oauth_token,
                                  secret: data.oauth_token_secret };
-            self.userId = data.douban_user_id;
-            if ($.isFunction(callback)) callback(self.accessToken, self.userId);
+            this.uid = data.douban_user_id;
+            callback && callback(this.accessToken, this.uid);
         }
     },
 
-    /* Save access token
-     * returns      if login Boolean
-     */
     login: function(accessToken) {
-        accessToken = accessToken || this.accessToken;
         // check length of access token
         if (accessToken.key.length == 32 && accessToken.secret.length == 16) {
             this.accessToken = accessToken;
             return true;
+        } else {
+            return false;
         }
     },
 
-    /* Check if useris authenticated
-     * returns      if authenticated Boolean
-     */
-    isAuthenticated: function() {
-        return this.login();
-    },
-
-    /* Get OAuth headers
-     */
     getAuthHeaders: function(url, method, parameters) {
         var params = this.getParameters(url, method, parameters);
         var header = 'OAuth realm=""';
@@ -118,9 +71,8 @@ var OAuthClient = $.klass({
      * Look into oauth.js for details
      */
     getMessage: function(url, method, parameters) {
-        var token = this.isAuthenticated() ? this.accessToken : this.requestToken;
         var accessor = { consumerSecret: this.api.secret,
-                         tokenSecret: token.secret };
+                         tokenSecret: this.accessToken.secret };
         var parameters = $.extend({
             oauth_consumer_key: this.api.key,
             oauth_token: this.accessToken.key,
@@ -137,26 +89,8 @@ var OAuthClient = $.klass({
         return message;
     },
 
-    /* Get Oauth paramters
-     * @param url       URL string 
-     * @param type      'GET' or 'POST'
-     * @param data      Parameter object
-     *
-     * @return          Parameter object
-     */
     getParameters: function(url, method, parameters) {
         var message = this.getMessage(url, method, parameters);
         return OAuth.getParameterMap(message.parameters);
-    },
-
-    /* OAuth Request
-     * @returns         null
-     * @param           url String 
-     * @param           data Dict 
-     * @param           callback Function
-     */
-    oauthRequest: function(url, data, callback) {
-        var data = this.getParameters(url, 'GET', data);
-        this._http({ async: this.options.async, url: url, data: data, success: callback });
     }
-});
+};
