@@ -1,8 +1,4 @@
-var PEOPLE_URL = API_HOST + '/people',
-    GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}',
-    GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
-
-    NOTE_URL = API_HOST + '/note',
+var NOTE_URL = API_HOST + '/note',
     GET_NOTE_URL = NOTE_URL + '/{ID}',
     ADD_NOTE_URL = API_HOST + '/notes',
 

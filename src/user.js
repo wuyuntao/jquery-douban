@@ -1,56 +1,48 @@
-/* Douban User API Service
- * @method      get             获取用户信息
- * @method      search          搜索用户
- * @method      current         获取当前授权用户信息
- * @method      friends         获取用户朋友
- * @method      contacts        获取用户关注的人
- */
-var UserService = $.klass(BaseService, {
+var PEOPLE_URL = API_HOST + '/people',
+    GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}',
+    GET_CURRENT_URL = PEOPLE_URL  + '/%40me';     // %40 => @
+
+var User = Douban.user = Douban.service.user = function(feed) {
+    if (feed.api) this.service = feed;      // As service
+    else return Parser.isEntry(feed) ?      // As parser
+        new Parser(feed).entries(User) :
+        new Parser(feed).attr('id').attr('uri', 'id')
+                        .attr('db:uid')
+                        .attr('title', 'name').attr('name')
+                        .attr('db:location')
+                        .attr('content', 'intro')
+                        .links({ 'alternate': 'home',
+                                 'icon': 'image',
+                                 'homepage': 'blog' });
+};
+
+// Douban User API Service
+// @method      get             获取用户信息
+// @method      search          搜索用户
+// @method      current         获取当前授权用户信息
+// @method      friends         获取用户朋友
+// @method      contacts        获取用户关注的人
+User.prototype = {
     get: function(user, callback) {
-        return this._get(user, callback, User, GET_PEOPLE_URL);
+        return this.service.get(user, callback, User, GET_PEOPLE_URL);
     },
 
     search: function(query, offset, limit, callback) {
-        return this._search(query, offset, limit, callback, PEOPLE_URL, UserEntry);
+        return this.service.search(query, offset, limit, callback,
+                                   User, PEOPLE_URL);
     },
 
     current: function(callback) {
-        return this._get(GET_CURRENT_URL, callback, User);
+        return this.service.get(GET_CURRENT_URL, callback, User);
     },
 
     friends: function(user, offset, limit, callback) {
-        return this._getForObject(user, offset, limit, callback, UserEntry, GET_PEOPLE_URL, '/friends');
+        return this.service.entry(user, offset, limit, callback,
+                                  User, GET_PEOPLE_URL + '/friends');
     },
 
     contacts: function(user, offset, limit, callback) {
-        return this._getForObject(user, offset, limit, callback, UserEntry, GET_PEOPLE_URL, '/contacts');
+        return this.service.entry(user, offset, limit, callback,
+                                  User, GET_PEOPLE_URL + '/contacts');
     }
-});
-
-/* Douban user class
- * @param           data            Well-formatted json feed
- * @attribute       id              用户ID
- * @attribute       userName        用户名
- * @attribute       screenName      昵称
- * @attribute       location        常居地
- * @attribute       blog            网志主页
- * @attribute       intro           自我介绍
- * @attribute       url             豆瓣主页
- * @attribute       iamgeUrl        头像
- * @method          createFromJson  由豆瓣返回的JSON，初始化数据
- */
-var User = $.klass(DoubanObject, {
-    init: function($super, data) {
-        this.all = ['id', 'userName', 'screenName', 'location', 'blog', 'intro', 'url', 'imageUrl'];
-        $super(data);
-    }
-});
-
-/* Douban user entries
- */
-var UserEntry = $.klass(SearchEntry, {
-    init: function($super, data) {
-        this.model = User;
-        $super(data);
-    }
-});
+};

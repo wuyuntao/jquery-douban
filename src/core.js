@@ -7,13 +7,17 @@ var Douban = function(options) {
 // Expose
 window.Douban = Douban;
 
-// HTTP Request handlers
+// HTTP Request handlers and API services
 Douban.handler = {};
+Douban.service = {};
 
+// Base service class
 var Service = function(options) {
-    this.api = { key: this.options.key || '', secret: this.options.secret || '' };
+    this.api = { key: options.key || '', secret: options.secret || '' };
     this.request = options.handler || Douban.handler.jquery;
     this.client = new Client(options);
+    for (var name in Douban.service)
+        this[name] = new Douban.service[name](this);
 };
 
 Service.fn = Service.prototype = {
@@ -38,8 +42,8 @@ Service.fn = Service.prototype = {
         this.request.GET(url, params, headers, this.response(callback, parser));
     },
 
-    entry: function(obj, offset, limit, callback, parser, url, suffix, extras) {
-        url = this.lazyURL(obj, url) + (suffix || '');
+    entry: function(obj, offset, limit, callback, parser, url, extras) {
+        url = this.lazyURL(obj, url);
         extras = $.extend(extras || {}, {
             'start-index': (offset || 0) + 1,
             'max-results': limit || 50
@@ -50,8 +54,8 @@ Service.fn = Service.prototype = {
     },
 
     search: function(query, offset, limit, callback, parser, url, extras) {
-        $.extend(extras || {}, { 'q': query });
-        return this.entry(url, offset, limit, parser, null, null, extras);
+        extras = $.extend(extras || {}, { 'q': query });
+        return this.entry(url, offset, limit, callback, parser, null, extras);
     },
 
     add: function(data, callback, url, parser) {
