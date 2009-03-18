@@ -7,7 +7,7 @@ test("test get user profile", function() {
 
     stop();
     service.user.get('ahbei', function(ahbei) {
-        console.debug(ahbei);
+        console.debug("ahbei: ", ahbei);
         equals(ahbei.id, "http://api.douban.com/people/1000001", "get user id ok");
         equals(ahbei.uid, "ahbei", "get user name ok");
         equals(ahbei.name, "阿北", "get screen name ok");
@@ -27,7 +27,7 @@ test("test get user friends", function() {
 
     stop();
     service.user.friends('wyt', 7, 4, function(friends) {
-        console.debug(friends);
+        console.debug("friends: ", friends);
         ok(friends.total > 72, "get user's total friends ok");
         equals(friends.entry.length, 4, "get user's friends ok");
         start();
@@ -41,6 +41,7 @@ test("test get user contacts", function() {
 
     stop();
     service.user.contacts('wyt', 2, 5, function(contacts) {
+        console.debug("contacts: ", contacts);
         ok(contacts.total > 111);
         equals(contacts.entry.length, 5, "get user's contacts ok");
         start();
@@ -54,6 +55,7 @@ test("test get current authenticated user", function() {
 
     stop();
     service.user.current(function(me) {
+        console.debug("me: ", me);
         equals(me.id, "http://api.douban.com/people/2133418", "get current user name ok");
         equals(me.uid, "iloveshutuo", "get current user id ok");
         start();
@@ -68,6 +70,7 @@ test("test search people", function() {
 
     stop();
     service.user.search('ke', 2, 3, function(result) {
+        console.debug("search results: ", result);
         ok(result.total, "okay: search people total results is " + result.total);
         equals(result.offset, 2, "search people start index ok");
         equals(result.limit, 3, "search people max results ok");
