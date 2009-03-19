@@ -29,9 +29,11 @@ Note.prototype = {
 };
 
 Douban.note.createXML = function(data) {
-    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>{TITLE}</title><content>{CONTENT}</content><db:attribute name="privacy">{PUBLIC}</db:attribute><db:attribute name="can_reply">{REPLY}</db:attribute></entry>';
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><title>{TITLE}</title><content>{CONTENT}</content><db:attribute name="privacy">{PUBLIC}</db:attribute><db:attribute name="can_reply">{REPLY}</db:attribute></entry>',
+    isPublic = typeof data.isPublic == 'undefined' ? true : data.isPublic,
+    isReplyEnabled = typeof data.isReplyEnabled == 'undefined' ? true : data.isReplyEnabled;
     return xml.replace(/\{TITLE\}/, data.title || '')
               .replace(/\{CONTENT\}/, data.content || '')
-              .replace(/\{PUBLIC\}/, !data.isPublic ? 'private' : 'public')
-              .replace(/\{REPLY\}/, !data.isReplyEnabled ? 'no' : 'yes');
+              .replace(/\{PUBLIC\}/, isPublic ? 'public' : 'private')
+              .replace(/\{REPLY\}/, isReplyEnabled ? 'yes' : 'no');
 };

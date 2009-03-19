@@ -166,7 +166,7 @@ Parser.prototype = {
         }
         rename = rename ? rename : name.replace(/^\w+:/, '');
         if (this.raw[name]) {
-            this[rename] = parser ? parser(this.raw[name]) : this.raw[name].$t;
+            this[rename] = parser ? parser(this.raw[name]) : this.raw[name]['$t'];
             this.add(rename);
         }
         return this;

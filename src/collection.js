@@ -29,9 +29,9 @@ Collection.prototype = {
 };
 
 Douban.collection.createXML = function(data) {
-    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><db:subject><id>{ID}</id></db:subject><db:status>{STATUS}</db:status>{TAGS}<content>{CONTENT}</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="{RATING}" ></gd:rating><db:attribute name="privacy">{PRIVATE}</db:attribute></entry>';
-    var id = typeof data.subject == 'object' ? data.subject.id : data.subject;
-    var tags = data.tags ? data.tags : [];
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns:ns0="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/"><db:subject><id>{ID}</id></db:subject><db:status>{STATUS}</db:status>{TAGS}<content>{CONTENT}</content><gd:rating xmlns:gd="http://schemas.google.com/g/2005" value="{RATING}" ></gd:rating><db:attribute name="privacy">{PRIVATE}</db:attribute></entry>',
+        id = typeof data.subject == 'object' ? data.subject.id : data.subject,
+        tags = data.tags ? data.tags : [];
     for (var i = 0, len = tags.length; i < len; ++i)
         tags[i] = '<db:tag name="' + tags[i] + '"></db:tag>';
     return xml.replace(/\{ID\}/, id || '')

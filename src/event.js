@@ -8,7 +8,7 @@ var Event = Douban.service.event = function(service) {
 };
 Event.prototype = {
     // 获取活动
-    get: function() {
+    get: function(event, callback) {
         this.service.get(event, callback, Douban.event, GET_EVENT_URL);
     },
     // 获取参加活动的用户
@@ -35,58 +35,59 @@ Event.prototype = {
     getWishForUser: function(user, offset, limit, callback) {
         this.getForUser(user, offset, limit, callback, 'wish');
     },
-    getForCity: function(city, offset, limit, callback) {
-        this.service.entry(city, offset, limit, callback, Douban.event, GET_EVENT_FOR_CITY_URL);
+    getForCity: function(city, offset, limit, callback, extras) {
+        this.service.entry(city, offset, limit, callback, Douban.event, GET_EVENT_FOR_CITY_URL, extras);
     },
     // 搜索活动
     search: function(query, location, offset, limit, callback, extras) {
-        var url = this.service.lazyURL(location, GET_EVENT_FOR_CITY_URL);
-        this.service.search(query, offset, limit, callback, Douban.event, url);
+        this.service.search(query, offset, limit, callback, Douban.event, EVENT_URL + 's', { location: location || 'all' });
     },
-    // 创建新活动
+    // TODO 创建新活动
     add: function(data, callback) {
         this.service.add(data, callback, EVENT_URL + 's' , Douban.event);
     },
-    // 更新活动
+    // TODO 更新活动
     update: function(event, data, callback) {
         this.service.update(event, data, callback, GET_EVENT_URL, Douban.event);
     },
-    // 删除活动。需要用 POST 方法提交删除原因
+    // TODO 删除活动。需要用 POST 方法提交删除原因
     remove: function(event, reason, callback) {
         var url = this.service.lazyURL(event, GET_EVENT_URL);
         this.service.add(reason, callback, url + '/delete');
     },
-    // 参加活动
+    // TODO 参加活动
     participate: function(event, callback) {
         var url = this.service.lazyURL(event, GET_EVENT_URL);
         this.service.add('', callback, url + '/participants');
     },
-    // 不参加活动
+    // TODO 不参加活动
     notParticipate: function(event, callback) {
         var url = this.service.lazyURL(event, GET_EVENT_URL);
         this.service.remove(url + '/participants', callback);
     },
-    // 对活动感兴趣
+    // TODO 对活动感兴趣
     wish: function(event, callback) {
         var url = this.service.lazyURL(event, GET_EVENT_URL);
         this.service.add('', callback, url + '/wishers');
     },
-    // 对活动不感兴趣
+    // TODO 对活动不感兴趣
     unwish: function(event, callback) {
         var url = this.service.lazyURL(event, GET_EVENT_URL);
         this.service.remove(url + '/wishes', callback);
     }
 };
 
-Douban.event.createXml = function(data) {
-    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/" xmlns:gd="http://schemas.google.com/g/2005" xmlns:opensearch="http://a9.com/-/spec/opensearchrss/1.0/"><title>{TITLE}</title><category scheme="http://www.douban.com/2007#kind" term="http://www.douban.com/2007#event.{CATEGORY}"/><content>{CONTENT}</content><db:attribute name="invite_only">{INVITE_ONLY}</db:attribute><db:attribute name="can_invite">{INVITE_ENABLED}</db:attribute><gd:when endTime="{END_TIME}" startTime="{START_TIME}"/><gd:where valueString="{ADDRESS}"></gd:where></entry>';
-    var startTime = $.parseDate(data.startTime || new Date());
-    var endTime = $.parseDate(data.endTime || new Date());
+Douban.event.createXML = function(data) {
+    var xml = '<?xml version="1.0" encoding="UTF-8"?><entry xmlns="http://www.w3.org/2005/Atom" xmlns:db="http://www.douban.com/xmlns/" xmlns:gd="http://schemas.google.com/g/2005" xmlns:opensearch="http://a9.com/-/spec/opensearchrss/1.0/"><title>{TITLE}</title><category scheme="http://www.douban.com/2007#kind" term="http://www.douban.com/2007#event.{CATEGORY}"/><content>{CONTENT}</content><db:attribute name="invite_only">{INVITE_ONLY}</db:attribute><db:attribute name="can_invite">{INVITE_ENABLED}</db:attribute><gd:when endTime="{END_TIME}" startTime="{START_TIME}"/><gd:where valueString="{ADDRESS}"></gd:where></entry>',
+        isInviteOnly = typeof data.isInviteOnly == 'undefined' ? false : data.isInviteOnly,
+        isInviteEnabled = typeof data.isInviteEnabled == 'undefined' ? true : data.isInviteOnly,
+        startTime = Douban.util.parseDate(data.startTime || new Date()),
+        endTime = Douban.util.parseDate(data.endTime || new Date());
     return xml.replace(/\{TITLE\}/, data.title || '')
               .replace(/\{CATEGORY\}/, data.category || 'music')
               .replace(/\{CONTENT\}/, data.content || '')
-              .replace(/\{INVITE_ONLY\}/, data.isInviteOnly ? 'yes' : 'no')
-              .replace(/\{INVITE_ENABLED\}/, !data.isInviteEnabled ? 'no' : 'yes')
+              .replace(/\{INVITE_ONLY\}/,  isInviteOnly ? 'yes' : 'no')
+              .replace(/\{INVITE_ENABLED\}/, isInviteEnabled ? 'yes' : 'no')
               .replace(/\{START_TIME\}/, startTime)
               .replace(/\{END_TIME\}/, endTime)
               .replace(/\{ADDRESS\}/, data.address || '');

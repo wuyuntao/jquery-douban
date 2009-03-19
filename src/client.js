@@ -16,7 +16,7 @@ Client.prototype = {
         this.request.GET(REQUEST_TOKEN_URL, null, headers, response, 'text');
 
         function response(data) {
-            data = $.unparam(data);
+            data = Douban.util.unparam(data);
             var token = { key: data.oauth_token,
                           secret: data.oauth_token_secret };
             callback && callback(token);
@@ -38,7 +38,7 @@ Client.prototype = {
         this.request.GET(ACCESS_TOKEN_URL, null, headers, response, 'text');
 
         function response(data) {
-            data = $.unparam(data);
+            data = Douban.util.unparam(data);
             var token = { key: data.oauth_token,
                           secret: data.oauth_token_secret };
             uid = data.douban_user_id;
