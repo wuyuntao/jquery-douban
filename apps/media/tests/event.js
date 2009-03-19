@@ -112,6 +112,7 @@ test("测试搜索活动", function() {
     });
 });
 
+/*
 test("测试创建新活动", function() {
     if (typeof netscape != 'undefined')
         netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
@@ -133,7 +134,6 @@ test("测试创建新活动", function() {
     });
 });
 
-/*
 test("测试更新活动", function() {
     if (typeof netscape != 'undefined')
         netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
@@ -167,9 +167,7 @@ test("测试删除活动", function() {
         start();
     });
 });
-*/
 
-/*
 test("测试参加活动", function() {
     if (typeof netscape != 'undefined')
         netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");

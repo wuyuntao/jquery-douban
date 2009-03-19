@@ -48,7 +48,7 @@ var GearsHandler = Douban.handler.gears = {
                 request.status >= 200 && request.status < 304) {
                 var data = request.responseText;
                 if (type == 'json') data = eval('(' + data + ')');
-                success(data);
+                success && success(data);
             }
         }
     },

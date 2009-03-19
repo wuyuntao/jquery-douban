@@ -1,24 +1,47 @@
-function greasemonkeyHandler(s) {
-    if (!GM_xmlhttpRequest) return;
-    s = $.extend({}, douban.http.settings, s || {});
-    if (s.data && typeof s.data != "string") s.data = $.param(s.data);
-    if (s.data && s.type == "GET") {
-        s.url += (s.url.match(/\?/) ? "&" : "?") + s.data;
-        s.data = null;
+if (GM_xmlhttpRequest) {
+
+var GreasemonkeyHandler = Douban.handler.greasemonkey = {
+    name: 'greasemonkey',
+
+    GET: function(url, params, headers, success, type) {
+        return GM_xmlhttpRequest({ url: Douban.util.buildUri(url, params),
+                                   method: 'GET',
+                                   headers: headers,
+                                   onload: this.onload(type || 'json', success) });
+    },
+
+    POST: function(url, params, data, headers, success, type) {
+        headers['Content-Type'] = 'application/atom+xml';
+        return GM_xmlhttpRequest({ url: Douban.util.buildUri(url, params),
+                                   method: 'POST',
+                                   data: data,
+                                   headers: headers,
+                                   onload: this.onload(type || 'json', success) });
+    },
+
+    PUT: function(url, params, data, headers, success, type) {
+        headers['Content-Type'] = 'application/atom+xml';
+        return GM_xmlhttpRequest({ url: Douban.util.buildUri(url, params),
+                                   method: 'PUT',
+                                   data: data,
+                                   headers: headers,
+                                   onload: this.onload(type || 'json', success) });
+    },
+
+    DELETE: function(url, params, headers, success, type) {
+        return GM_xmlhttpRequest({ url: Douban.util.buildUri(url, params),
+                                   method: 'DELETE',
+                                   headers: headers,
+                                   onload: this.onload(type || 'text', success) });
+    },
+
+    onload: function(type, success) {
+        return function(response) {
+            var data = response.responseText;
+            if (type == 'json') data = eval("(" + data + ")");
+            success && success(data);
+        }
     }
-    $.extend(s.headers, { 'Content-Type': s.contentType });
-    return GM_xmlhttpRequest({
-        method: s.type,
-        url: s.url,
-        data: s.data,
-        headers: s.headers,
-        onload: onLoad
-        // 'onerror': s.error
-    });
-    function onLoad(response) {
-        var data = response.responseText;
-        if (s.dataType == 'json') data = eval("(" + data + ")");
-        return s.success(data);
-    }
+};
+
 }
-greasemonkeyHandler.name = 'greasemonkey';

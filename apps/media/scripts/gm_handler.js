@@ -1,0 +1,1 @@
+../../../src/gm_handler.js
