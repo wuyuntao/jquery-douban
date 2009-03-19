@@ -1,4 +1,6 @@
-var API_HOST = 'http://api.douban.com';
+var API_HOST = 'http://api.douban.com',
+    PEOPLE_URL = API_HOST + '/people',
+    GET_PEOPLE_URL = PEOPLE_URL  + '/{ID}';
 
 var Douban = function(options) {
     return new Service(options);
@@ -54,7 +56,7 @@ Service.prototype = {
 
     search: function(query, offset, limit, callback, parser, url, extras) {
         extras = $.extend(extras || {}, { 'q': query });
-        return this.entry(url, offset, limit, callback, parser, null, extras);
+        this.entry(url, offset, limit, callback, parser, null, extras);
     },
 
     add: function(data, callback, url, parser) {
@@ -76,7 +78,7 @@ Service.prototype = {
         url = this.lazyURL(obj, url);
         var params = this.params();
         var headers = this.client.header(url, 'DELETE', params);
-        this.request.DELETE(url, params, headers, this.response(callback, parser));
+        this.request.DELETE(url, params, headers, this.response(callback));
     },
 
     response: function(callback, parser) {

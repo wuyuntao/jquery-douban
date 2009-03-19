@@ -2,6 +2,9 @@ var reList = /^(aka|cast|country|language|singer|author|director|translator|writ
     reBool = /^(privacy|can_reply|invite_only|can_invite)$/,
     reTrue = /^(public|yes)$/;
 
+// Uncomment for independent use
+// var Douban = {};
+
 Douban.user = function(feed) {
     return Parser.isEntry(feed) ?
         new Parser(feed).entries(Douban.user) :
@@ -41,6 +44,7 @@ Douban.collection = function(feed) {
                         .attr('summary')
                         .attr('updated')
                         .attr('db:status')
+                        .attrs({ 'privacy': 'isPublic' })
                         .rating()
                         .tags();
 };
