@@ -57,7 +57,6 @@ var GearsHandler = Douban.handler.gears = {
         for (var name in headers)
             req.setRequestHeader(name, headers[name]);
     }
-
 };
 
 }

@@ -4,14 +4,12 @@ BUILD_DIR = build
 PREFIX = .
 DIST_DIR = ${PREFIX}/dist
 
-BASE_FILES = ${SRC_DIR}/urls.js\
+BASE_FILES = ${SRC_DIR}/core.js\
 	${SRC_DIR}/utils.js\
-	${SRC_DIR}/klass.js\
+	${SRC_DIR}/parser.js\
 	${SRC_DIR}/client.js\
 	${SRC_DIR}/user.js\
-	${SRC_DIR}/book.js\
-	${SRC_DIR}/movie.js\
-	${SRC_DIR}/music.js\
+	${SRC_DIR}/subject.js\
 	${SRC_DIR}/collection.js\
 	${SRC_DIR}/review.js\
 	${SRC_DIR}/miniblog.js\
@@ -19,10 +17,10 @@ BASE_FILES = ${SRC_DIR}/urls.js\
 	${SRC_DIR}/note.js\
 	${SRC_DIR}/event.js\
 	${SRC_DIR}/tag.js\
-	${SRC_DIR}/core.js\
 	${SRC_DIR}/jquery_handler.js\
-	${SRC_DIR}/gm_handler.js\
-	${SRC_DIR}/gears_handler.js
+	${SRC_DIR}/gears_handler.js\
+	${SRC_DIR}/gadget_handler.js\
+	${SRC_DIR}/gm_handler.js
 
 MODULES = ${SRC_DIR}/intro.js\
 	${BASE_FILES}\

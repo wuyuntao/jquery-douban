@@ -1,12 +1,4 @@
-if (gadgets) {
-
-var Douban = {};
-Douban.handler = {};
-Douban.util = {
-    buildUri: function(url, params) {
-        return url + (/\?/.test(url) ? '&' : '?') + $.param(params);
-    }
-};
+if (window.gadgets) {
 
 var GadgetHandler = Douban.handler.gadget = {
     name: 'gadget',
@@ -43,4 +35,6 @@ var GadgetHandler = Douban.handler.gadget = {
         if (data) params[gadgets.io.RequestParameters.POST_DATA] = data;
         return params;
     }
+};
+
 }

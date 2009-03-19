@@ -90,4 +90,4 @@ Service.prototype = {
             callback && callback(data);
         }
     }
-}
+};
