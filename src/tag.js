@@ -9,6 +9,6 @@ Tag.prototype = {
     },
     // 用户对书籍、电影、音乐标记的所有标签
     getForUser: function(user, offset, limit, callback, type) {
-        return this._getForObject(user, offset, limit, callback, Douban.tag, GET_PEOPLE_URL + '/tags', { 'cat': type });
+        this.service.entry(user, offset, limit, callback, Douban.tag, GET_PEOPLE_URL + '/tags', { 'cat': type || 'book' });
     }
-});
+};
