@@ -56,6 +56,7 @@ Douban.review = function(feed) {
                         .attr('title')
                         .attr('author', Douban.user)
                         .attr('db:subject', Douban.subject)
+                        .attr('content')
                         .attr('summary')
                         .attr('published')
                         .attr('updated')

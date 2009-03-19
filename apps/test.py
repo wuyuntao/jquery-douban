@@ -15,7 +15,7 @@ testcases = (
     'miniblog',
     'note',
     'oauth',
-    'recommendation'
+    'recommendation',
     'review',
     'subject',
     'tag',
@@ -52,7 +52,8 @@ class TestHandler(webapp.RequestHandler):
 class TestcasePage(webapp.RequestHandler):
     def get(self, testcase_name):
         if testcase_name not in testcases:
-            return self.error(404)
+            # return self.error(404)
+            return self.response.out.write(testcase_name)
 
         template_path = 'templates/tests/%s.html' % testcase_name
         template_values = {

@@ -19,17 +19,15 @@ var Book = Douban.service.book = function(service) {
 Book.prototype = {
     // 获取书籍信息
     get: function(book, callback) {
-        return this.service.get(book, callback, Douban.book, GET_BOOK_URL);
+        this.service.get(book, callback, Douban.book, GET_BOOK_URL);
     },
     // 通过ISBN获取书籍信息
     isbn: function(isbn, callback) {
-        return this.service.get(isbn, callback, Douban.book,
-                                GET_BOOK_BY_ISBN_URL);
+        this.service.get(isbn, callback, Douban.book, GET_BOOK_BY_ISBN_URL);
     },
     // 搜索书籍
     search: function(query, offset, limit, callback, extras) {
-        return this.service.search(query, offset, limit, callback,
-                                   Douban.book, SEARCH_BOOK_URL, extras);
+        this.service.search(query, offset, limit, callback, Douban.book, SEARCH_BOOK_URL, extras);
     }
 };
 
@@ -40,17 +38,15 @@ var Movie = Douban.service.movie = function(service) {
 Movie.prototype = {
     // 获取电影信息
     get: function(movie, callback) {
-        return this.service.get(movie, callback, Douban.movie, GET_MOVIE_URL);
+        this.service.get(movie, callback, Douban.movie, GET_MOVIE_URL);
     },
     // 通过IMDB获取电影信息
     imdb: function(imdb, callback) {
-        return this.service.get(imdb, callback, Douban.movie,
-                                GET_MOVIE_BY_IMDB_URL);
+        this.service.get(imdb, callback, Douban.movie, GET_MOVIE_BY_IMDB_URL);
     },
     // 搜索电影
     search: function(query, offset, limit, callback, extras) {
-        return this.service.search(query, offset, limit, callback,
-                                   Douban.movie, SEARCH_MOVIE_URL, extras);
+        this.service.search(query, offset, limit, callback, Douban.movie, SEARCH_MOVIE_URL, extras);
     }
 };
 
@@ -61,11 +57,10 @@ var Music = Douban.service.music = function(service) {
 Music.prototype = {
     // 获取电影信息
     get: function(music, callback) {
-        return this.service.get(music, callback, Douban.music, GET_MUSIC_URL);
+        this.service.get(music, callback, Douban.music, GET_MUSIC_URL);
     },
     // 搜索电影
     search: function(query, offset, limit, callback, extras) {
-        return this.service.search(query, offset, limit, callback,
-                                   Douban.music, SEARCH_MUSIC_URL, extras);
+        this.service.search(query, offset, limit, callback, Douban.music, SEARCH_MUSIC_URL, extras);
     }
 };
