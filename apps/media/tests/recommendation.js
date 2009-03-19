@@ -1,65 +1,109 @@
-module("Douban Recommendation Testcases");
+module("豆瓣推荐 API 测试");
 
-test("test recommendation api", function() {
-    expect(12);
+test("测试获取单个推荐", function() {
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+    var re = /http:\/\/api\.douban\.com\/recommendation\/\d+/;
+
+    stop();
+    service.recommendation.get('3917477', function(recomm) {
+        console.debug(recomm);
+        ok(recomm.id.match(re), "get id ok");
+        equals(recomm.comment, "shogun, ninjia, oneal会的日文还不少么");
+        start();
+    });
+});
+
+test("测试获取用户推荐", function() {
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+    var re = /http:\/\/api\.douban\.com\/recommendation\/\d+/;
+
+    stop();
+    service.recommendation.getForUser('wyt', 10, 10, function(recomms) {
+        console.debug(recomms);
+        equals(recomms.offset, 10);
+        ok(recomms.entry[9].id.match(re), "get recommendation id");
+        ok(recomms.entry[9].category.match(/\w+/), "get type ok");
+        start();
+    });
+});
+
+test("测试添加推荐", function() {
     if (typeof netscape != 'undefined')
         netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
     var service = createService();
 
-    /* get recommendation
-     */
-    var recomm = service.recommendation.get('3917477');
-    equals(recomm.id, 'http://api.douban.com/recommendation/3917477', "get id ok");
-
-    /* get recommendation for user
-     */
-    var recommendations = service.recommendation.getForUser('wyt', 10, 10);
-    equals(recommendations.offset, 10);
-    ok(recommendations.entries[9].id.match(/http:\/\/api\.douban\.com\/recommendation\/\d+/), "get recommendation id");
-    ok(recommendations.entries[9].type.match(/\w+/), "get type ok");
-
-    /* add recommendation
-     */
-    var recomm2 = service.recommendation.add({ title: 'luliban.com', url: 'http://blog.luliban.com/', comment: 'My blog' });
-    equals(recomm2.title, '推荐luliban.com');
-    equals(recomm2.comment, 'My blog');
-
-    /* add comment for recommendation
-     */
-    var comment = service.recommendation.addComment(recomm2, { content: '回复你个头啦' });
-    ok(comment.id.match(/http:\/\/api\.douban\.com\/recommendation\/\d+\/comment\/\d+/), "get id ok");
-    ok(comment.content, '回复你个头啦', "get content ok");
-
-    /* get comment for recommendation
-     */
-    var comments = service.recommendation.getComment(recomm2);
-    equals(comments.total, 1, "get total comments ok");
-    equals(comments.entries[0].id, comment.id, "get comment id ok");
-
-    /* remove comment for recommendation
-     */
-    var response = service.recommendation.removeComment(comment);
-    ok(response, "comment removed");
-
-    /* remove recommendation
-     */
-    var response2 = service.recommendation.remove(recomm2);
-    ok(response2, "recommendation removed");
+    stop();
+    service.recommendation.add({
+        title: 'luliban.com',
+        url: 'http://blog.luliban.com/',
+        comment: 'My blog' }, function(recomm) {
+        console.debug(recomm);
+        equals(recomm.title, '推荐luliban.com');
+        equals(recomm.comment, 'My blog');
+        start();
+    });
 });
 
-test("test recommendation object", function() {
-    expect(6);
+test("测试添加推荐评论", function() {
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+    var re = /http:\/\/api\.douban\.com\/recommendation\/\d+\/comment\/\d+/;
 
-    var json = {"title":{"$t":"推荐喵喵喵之小团子"},"content":{"$t":"推荐<a href=\"http://www.douban.com/photos/album/12573993/\">喵喵喵之小团子</a>","@type":"html"},"link":[],"published":{"$t":"2008-11-07T08:28:40+08:00"},"db:attribute":[{"$t":"photo_album","@name":"category"},{"$t":"团子，我家团子，以前觉得她小时候很丑，现在觉得一点也不丑啊～哇哈哈哈","@name":"comment"},{"$t":7,"@name":"comments_count"}],"id":{"$t":"http://api.douban.com/recommendation/3673470"}};
-
-    var recommendation = $.douban('recommendation', json);
-    var date = new Date(2008, 10, 07, 08, 28, 40);
-    equals(recommendation.id, "http://api.douban.com/recommendation/3673470");
-    equals(recommendation.title, "推荐喵喵喵之小团子", "get title ok");
-    equals(recommendation.content, "推荐<a href=\"http://www.douban.com/photos/album/12573993/\">喵喵喵之小团子</a>");
-    equals(recommendation.published.getTime(), date.getTime(), "get time ok" + recommendation.published);
-    equals(recommendation.type, "photo_album", "get type ok");
-    equals(recommendation.comment, "团子，我家团子，以前觉得她小时候很丑，现在觉得一点也不丑啊～哇哈哈哈", "get comment ok");
+    stop();
+    service.recommendation.addComment("5945817", {
+        content: '回复你个头啦' }, function(comment) {
+        console.debug(comment);
+        ok(comment.id.match(re), "get id ok");
+        ok(comment.content, '回复你个头啦', "get content ok");
+        start();
+    });
 });
 
-// vim: foldmethod=indent
+test("测试获取推荐的评论", function() {
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+    var re = /http:\/\/api\.douban\.com\/recommendation\/\d+\/comment\/\d+/;
+
+    stop();
+    service.recommendation.getComments("5945817", 0, 50, function(comments) {
+        console.debug(comments);
+        ok(comments.total > 0, "get total comments ok");
+        ok(comments.entry[0].id.match(re), "get comment id ok");
+        start();
+    });
+});
+
+test("测试删除推荐的评论", function() {
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+    var comment = "http://api.douban.com/recommendation/5945817/comment/430247";
+
+    /*
+    stop();
+    service.recommendation.removeComment(comment, function(response) {
+        ok(response, "comment removed");
+        start();
+    });
+    */
+});
+
+test("测试删除用户推荐", function() {
+    if (typeof netscape != 'undefined')
+        netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+    var service = createService();
+
+    /*
+    stop();
+    service.recommendation.remove("5945830", function(response) {
+        ok(response, "recommendation removed");
+        start();
+    });
+    */
+});
