@@ -1,1 +1,1 @@
-../../../src/gm_handler.js
+../../../src/greasemonkey_handler.js

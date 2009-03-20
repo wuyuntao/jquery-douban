@@ -4,9 +4,8 @@ var jQueryHandler = Douban.handler.jquery = {
     name: 'jquery',
 
     GET: function(url, params, headers, success, type) {
-        return jQuery.ajax({ url: url,
+        return jQuery.ajax({ url: Douban.util.buildUri(url, params),
                              type: 'GET',
-                             data: params,
                              dataType: type || 'json',
                              success: success,
                              beforeSend: jQueryHandler.beforeSend(headers) });
@@ -35,9 +34,8 @@ var jQueryHandler = Douban.handler.jquery = {
     },
 
     DELETE: function(url, params, headers, success, type) {
-        return jQuery.ajax({ url: url,
+        return jQuery.ajax({ url: Douban.util.buildUri(url, params),
                              type: 'DELETE',
-                             data: params,
                              dataType: type || 'text',
                              success: success,
                              beforeSend: jQueryHandler.beforeSend(headers) });

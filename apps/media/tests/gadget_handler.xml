@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<Module>
+    <ModulePrefs
+        title="jQuery Douban Gadget Handler Testcases"
+        title_url="http://jquery-douban.appspot.com/"
+        description="测试 Gadget Handler"
+        author="Wu Yuntao"
+        author_email="wyt.py@thonic.org"
+        screenshot="http://jquery-douban.appspot.com/media/images/no_picture.jpg"
+        thumbnail="http://jquery-douban.appspot.com/media/images/no_picture.jpg">
+        <Locale lang="zh-cn" country="cn" />
+        <Require feature="opensocial-0.8" /> 
+    </ModulePrefs>
+    <Content type="html"><![CDATA[ 
+        <!-- Javascript -->
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+        <script type="text/javascript" src="http://jquery-douban.appspot.com/media/scripts/sha1.js"></script>
+        <script type="text/javascript" src="http://jquery-douban.appspot.com/media/scripts/oauth.js"></script>
+        <script type="text/javascript" src="http://jquery-douban.appspot.com/media/scripts/core.js"></script>
+        <script type="text/javascript" src="http://jquery-douban.appspot.com/media/scripts/utils.js"></script>
+        <script type="text/javascript" src="http://jquery-douban.appspot.com/media/scripts/gadget_handler.js"></script>
+
+        <script type="text/javascript">
+        var url = 'http://jquery-douban.appspot.com/test/handler/';
+        var params = { 'p1': 'parameter_one', 'p2': 'parameter_two' };
+        var headers = { 'h1': 'header_one', 'h2': 'header_two' };
+        var data = '<?xml version="1.0" encoding="UTF-8"?><entry></entry>';
+
+        Douban.handler.gadget.GET(url, params, headers, testJson, 'json');
+        Douban.handler.gadget.POST(url, params, data, headers, testJson, 'jSon');
+        Douban.handler.gadget.PUT(url, params, data, headers, testJson);
+        Douban.handler.gadget.DELETE(url, params, headers, testText, 'text');
+
+        function testJson(json) {
+            console.debug(json);
+            fireunit.compare(url + '?' + $.param(params), json.url, "URL");
+            fireunit.compare(params.p1, json.params.p1, "Params");
+            fireunit.compare(params.p2, json.params.p2, "Params");
+            fireunit.compare(headers.h1, json.headers.h1, "Headers");
+            fireunit.compare(headers.h2, json.headers.h2, "Headers");
+            if (json.data) fireunit.compare(data, json.data, "Data");
+        }
+
+        function testText(text) {
+            console.debug(text);
+            fireunit.compare('{"url": "http:\\/\\/jquery-douban.appspot.com\\/test\\/handler\\/", "headers": {"h2": "header_two", "h1": "header_one"}, "params": {}, "data": "p1=parameter_one&p2=parameter_two"}', text, "Text");
+        }
+        </script>
+    ]]></Content>
+</Module>

@@ -16,7 +16,7 @@ window.fireunit = {
     }
 };
 
-var url = 'http://localhost:8080/test/handler/';
+var url = 'http://jquery-douban.appspot.com/test/handler/';
 var params = { 'p1': 'parameter_one', 'p2': 'parameter_two' };
 var headers = { 'h1': 'header_one', 'h2': 'header_two' };
 var data = '<?xml version="1.0" encoding="UTF-8"?><entry></entry>';
@@ -38,5 +38,5 @@ function testJson(json) {
 
 function testText(text) {
     console.debug(text);
-    fireunit.compare('{"url": "http:\\/\\/localhost:8080\\/test\\/handler\\/?p1=parameter_one&p2=parameter_two", "headers": {"h2": "header_two", "h1": "header_one"}, "params": {"p2": "parameter_two", "p1": "parameter_one"}, "data": ""}', text, "Text");
+    fireunit.compare('{"url": "http:\\/\\/jquery-douban.appspot.com\\/test\\/handler\\/?p1=parameter_one&p2=parameter_two", "headers": {"h2": "header_two", "h1": "header_one"}, "params": {"p2": "parameter_two", "p1": "parameter_one"}, "data": ""}', text, "Text");
 }

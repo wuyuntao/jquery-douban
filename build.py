@@ -4,7 +4,7 @@
 import os
 from optparse import OptionParser
 
-""" python build.py [-acemnrRstu] [-AgGMj] [-h|--help] """
+""" Usage: python build.py [-acemnrRstu] [-AgGMj] [-h|--help] """
 
 src_dir = 'src'
 build_dir = 'build'
@@ -20,7 +20,6 @@ services = ['collection', 'event', 'miniblog', 'note', 'recommendation', \
             'review', 'subject', 'tag', 'user']
 
 handlers = ['jquery', 'gears', 'gadget', 'greasemonkey']
-
 
 options = (
     ('-a', '--all',             'include all services'),

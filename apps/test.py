@@ -9,7 +9,6 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 testcases = (
-    'basic',
     'collection',
     'event',
     'miniblog',
@@ -52,8 +51,7 @@ class TestHandler(webapp.RequestHandler):
 class TestcasePage(webapp.RequestHandler):
     def get(self, testcase_name):
         if testcase_name not in testcases:
-            # return self.error(404)
-            return self.response.out.write(testcase_name)
+            return self.error(404)
 
         template_path = 'templates/tests/%s.html' % testcase_name
         template_values = {
