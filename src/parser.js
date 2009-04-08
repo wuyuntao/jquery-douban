@@ -252,23 +252,29 @@ Parser.prototype = {
                 max: parseInt(rating['@max']),
                 value: parseInt(rating['@value'])
             };
+            this.add('rating');
         }
         return this;
     },
 
     when: function() {
         var when = this.raw['gd:when'];
-        if (when)
+        if (when) {
             this.time = {
                 start: when['@startTime'],
                 end: when['@endTime']
-            }
+            };
+            this.add('time');
+        }
         return this;
     },
 
     where: function() {
         var where = this.raw['gd:where'];
-        if (where) this.address = where['@valueString'];
+        if (where) {
+            this.address = where['@valueString'];
+            this.add('address');
+        }
         return this;
     },
 
@@ -290,10 +296,9 @@ Parser.prototype = {
         this.tag = [];
         this.add('tag');
         var tags = this.raw['db:tag'];
-        if (tags) {
+        if (tags)
             for (var i = 0, len = tags.length; i < len; ++i)
                 this.tag.push(Douban.tag(tags[i]));
-        }
         return this;
     }
 };

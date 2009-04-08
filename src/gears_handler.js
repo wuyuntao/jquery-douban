@@ -5,40 +5,40 @@ var GearsHandler = Douban.handler.gears = {
     proxy: null,
 
     GET: function(url, params, headers, success, type) {
-        var url = Douban.util.buildUri(url, params, GearsHandler.proxy)
+        var url = Douban.util.buildUri(url, params, this.proxy);
         var req = google.gears.factory.create('beta.httprequest');
-        GearsHandler.setStateChange(req, type || 'json', success);
+        this.setStateChange(req, type || 'json', success);
         req.open('GET', url);
-        GearsHandler.setHeaders(req, headers);
+        this.setHeaders(req, headers);
         req.send();
     },
 
     POST: function(url, params, data, headers, success, type) {
-        var url = Douban.util.buildUri(url, params, GearsHandler.proxy)
+        var url = Douban.util.buildUri(url, params, this.proxy);
         var req = google.gears.factory.create('beta.httprequest');
-        GearsHandler.setStateChange(req, type || 'json', success);
+        this.setStateChange(req, type || 'json', success);
         req.open('POST', url);
         headers['Content-Type'] = 'application/atom+xml';
-        GearsHandler.setHeaders(req, headers);
+        this.setHeaders(req, headers);
         req.send(data);
     },
 
     PUT: function(url, params, data, headers, success, type) {
-        var url = Douban.util.buildUri(url, params, GearsHandler.proxy)
+        var url = Douban.util.buildUri(url, params, this.proxy);
         var req = google.gears.factory.create('beta.httprequest');
         headers['Content-Type'] = 'application/atom+xml';
-        GearsHandler.setStateChange(req, type || 'json', success);
+        this.setStateChange(req, type || 'json', success);
         req.open('PUT', url);
-        GearsHandler.setHeaders(req, headers);
+        this.setHeaders(req, headers);
         req.send(data);
     },
 
     DELETE: function(url, params, headers, success, type) {
-        var url = Douban.util.buildUri(url, params, GearsHandler.proxy)
+        var url = Douban.util.buildUri(url, params, this.proxy);
         var req = google.gears.factory.create('beta.httprequest');
-        GearsHandler.setStateChange(req, type || 'text', success);
+        this.setStateChange(req, type || 'text', success);
         req.open('DELETE', url);
-        GearsHandler.setHeaders(req, headers);
+        this.setHeaders(req, headers);
         req.send();
     },
 

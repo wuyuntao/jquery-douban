@@ -30,7 +30,7 @@ Douban.util = {
     // Deserialises a parameter string to an object:
     unparam: function(params) {
         var obj = new Object();
-        $.each(params.split('&'), function() {
+        $.each((params || '').split('&'), function() {
             var param = this.split('=');
             var key = decodeURIComponent(param[0]);
             var value = decodeURIComponent(param[1]);
@@ -40,7 +40,7 @@ Douban.util = {
     },
 
     buildUri: function(url, params, proxy) {
-        url += (/\?/.test(url) ? '&' : '?') + $.param(params || {});
+        if (params) url += (/\?/.test(url) ? '&' : '?') + $.param(params);
         if (proxy) url = proxy + encodeURIComponent(url);
         return url;
     }

@@ -12,7 +12,8 @@ var Client = function(options) {
 
 Client.prototype = {
     requestToken: function(callback) {
-        var headers = this.header(REQUEST_TOKEN_URL, 'GET');
+        var headers = this.header(REQUEST_TOKEN_URL, 'GET',
+                                  {}, { key: '', secret: '' });
         this.request.GET(REQUEST_TOKEN_URL, null, headers, response, 'text');
 
         function response(data) {

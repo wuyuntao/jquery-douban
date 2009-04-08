@@ -1,4 +1,4 @@
-if (GM_xmlhttpRequest) {
+if (typeof GM_xmlhttpRequest != 'undefined') {
 
 var GreasemonkeyHandler = Douban.handler.greasemonkey = {
     name: 'greasemonkey',

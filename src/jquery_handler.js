@@ -8,7 +8,7 @@ var jQueryHandler = Douban.handler.jquery = {
                              type: 'GET',
                              dataType: type || 'json',
                              success: success,
-                             beforeSend: jQueryHandler.beforeSend(headers) });
+                             beforeSend: this.beforeSend(headers) });
     },
 
     POST: function(url, params, data, headers, success, type) {
@@ -19,7 +19,7 @@ var jQueryHandler = Douban.handler.jquery = {
                              processData: false,
                              contentType: 'application/atom+xml',
                              success: success,
-                             beforeSend: jQueryHandler.beforeSend(headers) });
+                             beforeSend: this.beforeSend(headers) });
     },
 
     PUT: function(url, params, data, headers, success, type) {
@@ -30,7 +30,7 @@ var jQueryHandler = Douban.handler.jquery = {
                              processData: false,
                              contentType: 'application/atom+xml',
                              success: success,
-                             beforeSend: jQueryHandler.beforeSend(headers) });
+                             beforeSend: this.beforeSend(headers) });
     },
 
     DELETE: function(url, params, headers, success, type) {
@@ -38,7 +38,7 @@ var jQueryHandler = Douban.handler.jquery = {
                              type: 'DELETE',
                              dataType: type || 'text',
                              success: success,
-                             beforeSend: jQueryHandler.beforeSend(headers) });
+                             beforeSend: this.beforeSend(headers) });
     },
 
     beforeSend: function(headers) {
