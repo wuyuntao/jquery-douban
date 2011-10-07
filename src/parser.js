@@ -71,6 +71,7 @@ Douban.miniblog = function(feed) {
         new Parser(feed).cat()
                         .attr('id')
                         .attr('title')
+                        .attr('author', Douban.user)
                         .attr('content')
                         .attr('published')
                         .attrs({ 'category': 'subcategory' })
@@ -82,6 +83,7 @@ Douban.recommendation = function(feed) {
         new Parser(feed).entries(Douban.recommendation) :
         new Parser(feed).attr('id')
                         .attr('title')
+                        .attr('author', Douban.user)
                         .attr('content')
                         .attr('published')
                         .attrs({})

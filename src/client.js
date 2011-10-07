@@ -35,7 +35,7 @@ Client.prototype = {
 
     accessToken: function(token, callback) {
         var headers = this.header(ACCESS_TOKEN_URL, 'GET',
-                                          { oauth_token: token.key }, token);
+                                  { oauth_token: token.key }, token);
         this.request.GET(ACCESS_TOKEN_URL, null, headers, response, 'text');
 
         function response(data) {
